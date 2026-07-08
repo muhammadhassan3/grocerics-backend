@@ -1,0 +1,92 @@
+package app
+
+import (
+	"grocerics-backend/internal/auth"
+	"grocerics-backend/internal/config"
+	"grocerics-backend/internal/dto"
+	"grocerics-backend/internal/logging"
+	"grocerics-backend/internal/middleware"
+	"grocerics-backend/internal/repository"
+	v1 "grocerics-backend/internal/route/v1"
+	"grocerics-backend/internal/service"
+
+	docs "grocerics-backend/docs"
+
+	"github.com/gin-gonic/gin"
+	"go.uber.org/zap"
+	"gorm.io/gorm"
+
+	swaggerFile "github.com/swaggo/files"
+	ginSwagger "github.com/swaggo/gin-swagger"
+)
+
+type App struct {
+	Cfg        *config.Config
+	DB         *gorm.DB
+	JWTService *auth.JWTService
+	Router     *gin.Engine
+	UserRepo   *repository.UserRepository
+
+	AuthService *service.AuthService
+}
+
+func New(cfg *config.Config) (*App, error) {
+	db, err := config.ConnectDB(cfg.DB)
+	if err != nil {
+		return nil, err
+	}
+	zap.S().Info("database connected")
+
+	jwt := auth.NewJWTService(cfg.JWT.SecretKey)
+	userRepo := repository.NewUserRepository(db)
+
+	authService := service.NewAuthService(userRepo, nil, nil, jwt, "")
+
+	config.SeedAdmin(db, cfg.Seed, cfg.Env)
+
+	a := &App{
+		Cfg:         cfg,
+		DB:          db,
+		JWTService:  jwt,
+		UserRepo:    userRepo,
+		AuthService: authService,
+	}
+	a.Router = a.buildRouter()
+	return a, nil
+}
+
+func (a *App) buildRouter() *gin.Engine {
+	r := gin.New()
+	r.HandleMethodNotAllowed = true
+	r.SetTrustedProxies([]string{"127.0.0.1"})
+
+	if err := logging.Init(a.Cfg.Env); err != nil {
+		zap.S().Fatalw("failed to initialize logging", "error", err)
+	}
+	r.Use(middleware.RequestID())
+	r.Use(middleware.CORS(a.Cfg.FrontendURL))
+	r.Use(middleware.SecurityHeaders())
+	r.Use(middleware.ErrorHandler())
+	r.Use(middleware.GinZapLogger(logging.Log))
+	r.Use(middleware.GinZapRecovery(logging.Log))
+
+	r.NoRoute(func(c *gin.Context) {
+		c.JSON(404, dto.Response{Status: "failed", Code: "ROUTE_NOT_FOUND", Message: "Route not found"})
+	})
+	r.NoMethod(func(c *gin.Context) {
+		c.JSON(405, dto.Response{Status: "failed", Code: "METHOD_NOT_ALLOWED", Message: "Method not allowed"})
+	})
+
+	v1.RegisterAuthRoutes(r, a.AuthService, a.JWTService, a.UserRepo)
+	v1.RegisterUserRoutes(r, a.JWTService, a.UserRepo)
+
+	docs.SwaggerInfo.BasePath = "/"
+	r.GET("/swagger/*any", ginSwagger.WrapHandler(swaggerFile.Handler))
+	return r
+}
+
+func (a *App) Run() error {
+	addr := ":" + a.Cfg.Port
+	zap.S().Infow("starting server", "addr", addr, "env", a.Cfg.Env)
+	return a.Router.Run(addr)
+}

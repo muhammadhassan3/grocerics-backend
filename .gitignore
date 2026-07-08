@@ -1,0 +1,21 @@
+# Environment
+.env
+.env.local
+
+# Build artifacts
+/bin/
+/tmp/
+*.exe
+*.exe~
+*.dll
+*.so
+*.dylib
+*.test
+*.out
+
+# Go
+vendor/
+
+# IDE
+.vscode/
+.idea/

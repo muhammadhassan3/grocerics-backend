@@ -1,0 +1,124 @@
+definitions:
+  dto.Response:
+    properties:
+      code:
+        type: string
+      data: {}
+      message:
+        type: string
+      status:
+        type: string
+    type: object
+  dto.UserListItemDTO:
+    properties:
+      company_id:
+        type: string
+      created_at:
+        type: string
+      email:
+        type: string
+      id:
+        type: string
+      name:
+        type: string
+      role:
+        type: string
+      status:
+        type: string
+    type: object
+  dto.UserListResponseDTO:
+    properties:
+      items:
+        items:
+          $ref: '#/definitions/dto.UserListItemDTO'
+        type: array
+      meta:
+        $ref: '#/definitions/query.Meta'
+    type: object
+  query.Meta:
+    properties:
+      page:
+        type: integer
+      pages:
+        type: integer
+      per_page:
+        type: integer
+      total:
+        type: integer
+    type: object
+info:
+  contact: {}
+paths:
+  /v1/users:
+    get:
+      description: Paginated list of users. Admins see every tenant (optionally filter
+        via ?company_id or ?unassigned=true). Non-admins are auto-scoped to their
+        own company.
+      parameters:
+      - description: page number (default 1)
+        in: query
+        name: page
+        type: integer
+      - description: page size, max 100 (default 20)
+        in: query
+        name: page_size
+        type: integer
+      - description: 'sort column: created_at | name | email | role (default created_at)'
+        in: query
+        name: sort
+        type: string
+      - description: asc | desc (default desc)
+        in: query
+        name: order
+        type: string
+      - description: filter by company UUID (admin-only override; non-admin mismatching
+          value → 403)
+        in: query
+        name: company_id
+        type: string
+      - description: 'filter by role: admin | client_manager | client'
+        in: query
+        name: role
+        type: string
+      - description: 'filter by status: active | disabled'
+        in: query
+        name: status
+        type: string
+      - description: ILIKE on name + email, max 128 chars
+        in: query
+        name: search
+        type: string
+      - description: 'admin-only: list users with company_id IS NULL'
+        in: query
+        name: unassigned
+        type: boolean
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: Users list
+          schema:
+            allOf:
+            - $ref: '#/definitions/dto.Response'
+            - properties:
+                data:
+                  $ref: '#/definitions/dto.UserListResponseDTO'
+              type: object
+        "400":
+          description: Bad request
+          schema:
+            $ref: '#/definitions/dto.Response'
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/dto.Response'
+        "403":
+          description: Forbidden
+          schema:
+            $ref: '#/definitions/dto.Response'
+      security:
+      - BearerAuth: []
+      summary: List Users
+      tags:
+      - Users
+swagger: "2.0"
