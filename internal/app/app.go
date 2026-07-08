@@ -79,6 +79,14 @@ func (a *App) buildRouter() *gin.Engine {
 
 	v1.RegisterAuthRoutes(r, a.AuthService, a.JWTService, a.UserRepo)
 	v1.RegisterUserRoutes(r, a.JWTService, a.UserRepo)
+	v1.RegisterBannerRoutes(a.JWTService, a.UserRepo, r)
+
+	rg := r.Group("/")
+	v1.RegisterDashboardRoutes(a.JWTService, a.UserRepo, rg)
+	v1.RegisterInventoryManagementRoutes(a.JWTService, a.UserRepo, rg)
+	v1.RegisterBrandsRoutes(a.JWTService, a.UserRepo, rg)
+	v1.RegisterCategoryRoutes(a.JWTService, a.UserRepo, rg)
+	v1.RegisterSubcategoryRoutes(a.JWTService, a.UserRepo, rg)
 
 	docs.SwaggerInfo.BasePath = "/"
 	r.GET("/swagger/*any", ginSwagger.WrapHandler(swaggerFile.Handler))

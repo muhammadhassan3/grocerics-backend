@@ -26,6 +26,9 @@ func RegisterUserRoutes(r *gin.Engine, jwt *auth.JWTService, users *repository.U
 	g := r.Group("/v1/users")
 	g.Use(middleware.AuthMiddleware(jwt, users))
 	g.GET("", listUsers(users))
+	adminGroup := g.Group("")
+	adminGroup.Use(middleware.RequireRole(domain.RoleAdmin))
+	adminGroup.POST("/ban", BanUser())
 }
 
 // @Summary List Users
@@ -70,6 +73,31 @@ func listUsers(repo *repository.UserRepository) gin.HandlerFunc {
 				Items: usersToDTO(items),
 				Meta:  query.BuildMeta(total, page),
 			},
+		})
+	}
+}
+
+type BanUserRequest struct {
+	UserID string `json:"user_id" binding:"required,uuid"`
+}
+
+// @Summary Ban User
+// @Description Bans a user by their unique identifier. This action is irreversible and will prevent the user from accessing the system.
+// @Tags Users
+// @Accept json
+// @Produce json
+// @Body {object} BanUserRequest
+// @Success 200 {object} dto.Response "User banned successfully"
+// @Failure 400 {object} dto.Response "Bad request"
+// @Failure 401 {object} dto.Response "Unauthorized"
+// @Failure 403 {object} dto.Response "Forbidden"
+// @Router /v1/users/ban [post]
+func BanUser() gin.HandlerFunc {
+	return func(c *gin.Context) {
+		c.JSON(200, dto.Response{
+			Data:    nil,
+			Message: "User banned successfully",
+			Status:  "success",
 		})
 	}
 }

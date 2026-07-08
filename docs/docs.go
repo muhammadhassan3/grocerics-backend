@@ -15,6 +15,3108 @@ const docTemplate = `{
     "host": "{{.Host}}",
     "basePath": "{{.BasePath}}",
     "paths": {
+        "/auth/forgot-password": {
+            "post": {
+                "description": "Issue a single-use password-reset token. Always returns 200 to avoid email enumeration.",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Auth"
+                ],
+                "summary": "Forgot Password",
+                "parameters": [
+                    {
+                        "description": "Forgot password request payload",
+                        "name": "forgotPasswordRequest",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/v1.ForgotPasswordRequest"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "If the email exists, a reset link has been sent",
+                        "schema": {
+                            "$ref": "#/definitions/dto.Response"
+                        }
+                    },
+                    "400": {
+                        "description": "Bad request",
+                        "schema": {
+                            "$ref": "#/definitions/dto.Response"
+                        }
+                    }
+                }
+            }
+        },
+        "/auth/login": {
+            "post": {
+                "description": "User login",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Auth"
+                ],
+                "summary": "Login",
+                "parameters": [
+                    {
+                        "description": "Login request payload",
+                        "name": "loginRequest",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/v1.LoginRequest"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Successful login",
+                        "schema": {
+                            "allOf": [
+                                {
+                                    "$ref": "#/definitions/dto.Response"
+                                },
+                                {
+                                    "type": "object",
+                                    "properties": {
+                                        "data": {
+                                            "$ref": "#/definitions/dto.TokenResponse"
+                                        }
+                                    }
+                                }
+                            ]
+                        }
+                    },
+                    "400": {
+                        "description": "Bad request",
+                        "schema": {
+                            "$ref": "#/definitions/dto.Response"
+                        }
+                    },
+                    "401": {
+                        "description": "Unauthorized",
+                        "schema": {
+                            "$ref": "#/definitions/dto.Response"
+                        }
+                    }
+                }
+            }
+        },
+        "/auth/logout": {
+            "post": {
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
+                "description": "Revoke the presented refresh token. Single-device.",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Auth"
+                ],
+                "summary": "Logout",
+                "parameters": [
+                    {
+                        "description": "Logout request payload",
+                        "name": "logoutRequest",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/v1.LogoutRequest"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Logged out",
+                        "schema": {
+                            "$ref": "#/definitions/dto.Response"
+                        }
+                    },
+                    "400": {
+                        "description": "Bad request",
+                        "schema": {
+                            "$ref": "#/definitions/dto.Response"
+                        }
+                    },
+                    "401": {
+                        "description": "Unauthorized",
+                        "schema": {
+                            "$ref": "#/definitions/dto.Response"
+                        }
+                    }
+                }
+            }
+        },
+        "/auth/refresh": {
+            "post": {
+                "description": "Refresh access token using refresh token",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Auth"
+                ],
+                "summary": "Refresh Token",
+                "parameters": [
+                    {
+                        "description": "Refresh token request payload",
+                        "name": "refreshTokenRequest",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/v1.RefreshTokenRequest"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Successful token refresh",
+                        "schema": {
+                            "allOf": [
+                                {
+                                    "$ref": "#/definitions/dto.Response"
+                                },
+                                {
+                                    "type": "object",
+                                    "properties": {
+                                        "data": {
+                                            "$ref": "#/definitions/dto.TokenResponse"
+                                        }
+                                    }
+                                }
+                            ]
+                        }
+                    },
+                    "400": {
+                        "description": "Bad request",
+                        "schema": {
+                            "$ref": "#/definitions/dto.Response"
+                        }
+                    },
+                    "401": {
+                        "description": "Unauthorized",
+                        "schema": {
+                            "$ref": "#/definitions/dto.Response"
+                        }
+                    }
+                }
+            }
+        },
+        "/auth/register": {
+            "post": {
+                "description": "User registration",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Auth"
+                ],
+                "summary": "Register",
+                "parameters": [
+                    {
+                        "description": "Register request payload",
+                        "name": "registerRequest",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/v1.RegisterRequest"
+                        }
+                    }
+                ],
+                "responses": {
+                    "201": {
+                        "description": "Successful registration",
+                        "schema": {
+                            "allOf": [
+                                {
+                                    "$ref": "#/definitions/dto.Response"
+                                },
+                                {
+                                    "type": "object",
+                                    "properties": {
+                                        "data": {
+                                            "$ref": "#/definitions/dto.UserDTO"
+                                        }
+                                    }
+                                }
+                            ]
+                        }
+                    },
+                    "400": {
+                        "description": "Bad request",
+                        "schema": {
+                            "$ref": "#/definitions/dto.Response"
+                        }
+                    }
+                }
+            }
+        },
+        "/auth/reset-password": {
+            "post": {
+                "description": "Consume a reset token and set a new password.",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Auth"
+                ],
+                "summary": "Reset Password",
+                "parameters": [
+                    {
+                        "description": "Reset password request payload",
+                        "name": "resetPasswordRequest",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/v1.ResetPasswordRequest"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Password reset",
+                        "schema": {
+                            "$ref": "#/definitions/dto.Response"
+                        }
+                    },
+                    "400": {
+                        "description": "Bad request",
+                        "schema": {
+                            "$ref": "#/definitions/dto.Response"
+                        }
+                    },
+                    "401": {
+                        "description": "Unauthorized",
+                        "schema": {
+                            "$ref": "#/definitions/dto.Response"
+                        }
+                    }
+                }
+            }
+        },
+        "/v1/banners": {
+            "get": {
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
+                "description": "Fetches a paginated list of banners.",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "banners"
+                ],
+                "summary": "Get banners",
+                "parameters": [
+                    {
+                        "type": "integer",
+                        "description": "Page number",
+                        "name": "page",
+                        "in": "query",
+                        "required": true
+                    },
+                    {
+                        "type": "integer",
+                        "description": "Number of items per page",
+                        "name": "limit",
+                        "in": "query",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "allOf": [
+                                {
+                                    "$ref": "#/definitions/dto.Response"
+                                },
+                                {
+                                    "type": "object",
+                                    "properties": {
+                                        "data": {
+                                            "$ref": "#/definitions/dto.Banners"
+                                        }
+                                    }
+                                }
+                            ]
+                        }
+                    },
+                    "401": {
+                        "description": "Unauthorized",
+                        "schema": {
+                            "allOf": [
+                                {
+                                    "$ref": "#/definitions/dto.Response"
+                                },
+                                {
+                                    "type": "object",
+                                    "properties": {
+                                        "data": {
+                                            "type": "string"
+                                        }
+                                    }
+                                }
+                            ]
+                        }
+                    },
+                    "403": {
+                        "description": "Forbidden",
+                        "schema": {
+                            "allOf": [
+                                {
+                                    "$ref": "#/definitions/dto.Response"
+                                },
+                                {
+                                    "type": "object",
+                                    "properties": {
+                                        "data": {
+                                            "type": "string"
+                                        }
+                                    }
+                                }
+                            ]
+                        }
+                    }
+                }
+            },
+            "post": {
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
+                "description": "Creates a new banner. This endpoint is intended for internal use and should be secured appropriately.",
+                "consumes": [
+                    "multipart/form-data"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "banners"
+                ],
+                "summary": "Create a new banner",
+                "parameters": [
+                    {
+                        "type": "file",
+                        "description": "Image file for the banner",
+                        "name": "image",
+                        "in": "formData",
+                        "required": true
+                    },
+                    {
+                        "type": "string",
+                        "description": "Start date of the banner in YYYY-MM-DD format",
+                        "name": "start_date",
+                        "in": "formData",
+                        "required": true
+                    },
+                    {
+                        "type": "string",
+                        "description": "End date of the banner in YYYY-MM-DD format",
+                        "name": "end_date",
+                        "in": "formData",
+                        "required": true
+                    },
+                    {
+                        "type": "boolean",
+                        "description": "Whether the banner is currently enabled",
+                        "name": "is_active",
+                        "in": "formData",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "201": {
+                        "description": "Created",
+                        "schema": {
+                            "allOf": [
+                                {
+                                    "$ref": "#/definitions/dto.Response"
+                                },
+                                {
+                                    "type": "object",
+                                    "properties": {
+                                        "data": {
+                                            "$ref": "#/definitions/dto.BannerItem"
+                                        }
+                                    }
+                                }
+                            ]
+                        }
+                    },
+                    "400": {
+                        "description": "Bad Request",
+                        "schema": {
+                            "allOf": [
+                                {
+                                    "$ref": "#/definitions/dto.Response"
+                                },
+                                {
+                                    "type": "object",
+                                    "properties": {
+                                        "data": {
+                                            "type": "string"
+                                        }
+                                    }
+                                }
+                            ]
+                        }
+                    },
+                    "401": {
+                        "description": "Unauthorized",
+                        "schema": {
+                            "allOf": [
+                                {
+                                    "$ref": "#/definitions/dto.Response"
+                                },
+                                {
+                                    "type": "object",
+                                    "properties": {
+                                        "data": {
+                                            "type": "string"
+                                        }
+                                    }
+                                }
+                            ]
+                        }
+                    },
+                    "403": {
+                        "description": "Forbidden",
+                        "schema": {
+                            "allOf": [
+                                {
+                                    "$ref": "#/definitions/dto.Response"
+                                },
+                                {
+                                    "type": "object",
+                                    "properties": {
+                                        "data": {
+                                            "type": "string"
+                                        }
+                                    }
+                                }
+                            ]
+                        }
+                    }
+                }
+            },
+            "delete": {
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
+                "description": "Deletes an existing banner. This endpoint is intended for internal use and should be secured appropriately.",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "banners"
+                ],
+                "summary": "Delete an existing banner",
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "allOf": [
+                                {
+                                    "$ref": "#/definitions/dto.Response"
+                                },
+                                {
+                                    "type": "object",
+                                    "properties": {
+                                        "data": {
+                                            "type": "string"
+                                        }
+                                    }
+                                }
+                            ]
+                        }
+                    },
+                    "400": {
+                        "description": "Bad Request",
+                        "schema": {
+                            "allOf": [
+                                {
+                                    "$ref": "#/definitions/dto.Response"
+                                },
+                                {
+                                    "type": "object",
+                                    "properties": {
+                                        "data": {
+                                            "type": "string"
+                                        }
+                                    }
+                                }
+                            ]
+                        }
+                    },
+                    "401": {
+                        "description": "Unauthorized",
+                        "schema": {
+                            "allOf": [
+                                {
+                                    "$ref": "#/definitions/dto.Response"
+                                },
+                                {
+                                    "type": "object",
+                                    "properties": {
+                                        "data": {
+                                            "type": "string"
+                                        }
+                                    }
+                                }
+                            ]
+                        }
+                    },
+                    "403": {
+                        "description": "Forbidden",
+                        "schema": {
+                            "allOf": [
+                                {
+                                    "$ref": "#/definitions/dto.Response"
+                                },
+                                {
+                                    "type": "object",
+                                    "properties": {
+                                        "data": {
+                                            "type": "string"
+                                        }
+                                    }
+                                }
+                            ]
+                        }
+                    }
+                }
+            },
+            "patch": {
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
+                "description": "Updates an existing banner. This endpoint is intended for internal use and should be secured appropriately.",
+                "consumes": [
+                    "multipart/form-data"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "banners"
+                ],
+                "summary": "Update an existing banner (id supplied via form data)",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "Unique identifier for the banner",
+                        "name": "banner_id",
+                        "in": "formData",
+                        "required": true
+                    },
+                    {
+                        "type": "file",
+                        "description": "Image file for the banner",
+                        "name": "image",
+                        "in": "formData"
+                    },
+                    {
+                        "type": "string",
+                        "description": "Start date of the banner in YYYY-MM-DD format",
+                        "name": "start_date",
+                        "in": "formData"
+                    },
+                    {
+                        "type": "string",
+                        "description": "End date of the banner in YYYY-MM-DD format",
+                        "name": "end_date",
+                        "in": "formData"
+                    },
+                    {
+                        "type": "boolean",
+                        "description": "Whether the banner is currently enabled",
+                        "name": "is_active",
+                        "in": "formData"
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "allOf": [
+                                {
+                                    "$ref": "#/definitions/dto.Response"
+                                },
+                                {
+                                    "type": "object",
+                                    "properties": {
+                                        "data": {
+                                            "$ref": "#/definitions/dto.BannerItem"
+                                        }
+                                    }
+                                }
+                            ]
+                        }
+                    },
+                    "400": {
+                        "description": "Bad Request",
+                        "schema": {
+                            "allOf": [
+                                {
+                                    "$ref": "#/definitions/dto.Response"
+                                },
+                                {
+                                    "type": "object",
+                                    "properties": {
+                                        "data": {
+                                            "type": "string"
+                                        }
+                                    }
+                                }
+                            ]
+                        }
+                    },
+                    "401": {
+                        "description": "Unauthorized",
+                        "schema": {
+                            "allOf": [
+                                {
+                                    "$ref": "#/definitions/dto.Response"
+                                },
+                                {
+                                    "type": "object",
+                                    "properties": {
+                                        "data": {
+                                            "type": "string"
+                                        }
+                                    }
+                                }
+                            ]
+                        }
+                    },
+                    "403": {
+                        "description": "Forbidden",
+                        "schema": {
+                            "allOf": [
+                                {
+                                    "$ref": "#/definitions/dto.Response"
+                                },
+                                {
+                                    "type": "object",
+                                    "properties": {
+                                        "data": {
+                                            "type": "string"
+                                        }
+                                    }
+                                }
+                            ]
+                        }
+                    }
+                }
+            }
+        },
+        "/v1/brands": {
+            "get": {
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
+                "description": "Fetches a paginated list of brands.",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "brands"
+                ],
+                "summary": "Get brands",
+                "parameters": [
+                    {
+                        "type": "integer",
+                        "description": "Page number",
+                        "name": "page",
+                        "in": "query",
+                        "required": true
+                    },
+                    {
+                        "type": "integer",
+                        "description": "Number of items per page",
+                        "name": "limit",
+                        "in": "query",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "allOf": [
+                                {
+                                    "$ref": "#/definitions/dto.Response"
+                                },
+                                {
+                                    "type": "object",
+                                    "properties": {
+                                        "data": {
+                                            "$ref": "#/definitions/dto.BrandList"
+                                        }
+                                    }
+                                }
+                            ]
+                        }
+                    },
+                    "401": {
+                        "description": "Unauthorized",
+                        "schema": {
+                            "allOf": [
+                                {
+                                    "$ref": "#/definitions/dto.Response"
+                                },
+                                {
+                                    "type": "object",
+                                    "properties": {
+                                        "data": {
+                                            "type": "string"
+                                        }
+                                    }
+                                }
+                            ]
+                        }
+                    },
+                    "403": {
+                        "description": "Forbidden",
+                        "schema": {
+                            "allOf": [
+                                {
+                                    "$ref": "#/definitions/dto.Response"
+                                },
+                                {
+                                    "type": "object",
+                                    "properties": {
+                                        "data": {
+                                            "type": "string"
+                                        }
+                                    }
+                                }
+                            ]
+                        }
+                    }
+                }
+            },
+            "post": {
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
+                "description": "Creates a new brand. This endpoint is intended for internal use and should be secured appropriately.",
+                "consumes": [
+                    "multipart/form-data"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "brands"
+                ],
+                "summary": "Create a new brand",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "Display name of the brand",
+                        "name": "brand_name",
+                        "in": "formData",
+                        "required": true
+                    },
+                    {
+                        "type": "file",
+                        "description": "Image file for the brand",
+                        "name": "image",
+                        "in": "formData",
+                        "required": true
+                    },
+                    {
+                        "enum": [
+                            "active",
+                            "disabled"
+                        ],
+                        "type": "string",
+                        "description": "Status of the brand",
+                        "name": "status",
+                        "in": "formData",
+                        "required": true
+                    },
+                    {
+                        "type": "boolean",
+                        "description": "Whether the brand is flagged as a top/featured brand",
+                        "name": "is_top_brand",
+                        "in": "formData",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "201": {
+                        "description": "Created",
+                        "schema": {
+                            "allOf": [
+                                {
+                                    "$ref": "#/definitions/dto.Response"
+                                },
+                                {
+                                    "type": "object",
+                                    "properties": {
+                                        "data": {
+                                            "$ref": "#/definitions/dto.BrandItem"
+                                        }
+                                    }
+                                }
+                            ]
+                        }
+                    },
+                    "400": {
+                        "description": "Bad Request",
+                        "schema": {
+                            "allOf": [
+                                {
+                                    "$ref": "#/definitions/dto.Response"
+                                },
+                                {
+                                    "type": "object",
+                                    "properties": {
+                                        "data": {
+                                            "type": "string"
+                                        }
+                                    }
+                                }
+                            ]
+                        }
+                    },
+                    "401": {
+                        "description": "Unauthorized",
+                        "schema": {
+                            "allOf": [
+                                {
+                                    "$ref": "#/definitions/dto.Response"
+                                },
+                                {
+                                    "type": "object",
+                                    "properties": {
+                                        "data": {
+                                            "type": "string"
+                                        }
+                                    }
+                                }
+                            ]
+                        }
+                    },
+                    "403": {
+                        "description": "Forbidden",
+                        "schema": {
+                            "allOf": [
+                                {
+                                    "$ref": "#/definitions/dto.Response"
+                                },
+                                {
+                                    "type": "object",
+                                    "properties": {
+                                        "data": {
+                                            "type": "string"
+                                        }
+                                    }
+                                }
+                            ]
+                        }
+                    }
+                }
+            },
+            "delete": {
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
+                "description": "Deletes a brand. This endpoint is intended for internal use and should be secured appropriately.",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "brands"
+                ],
+                "summary": "Delete a brand",
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "allOf": [
+                                {
+                                    "$ref": "#/definitions/dto.Response"
+                                },
+                                {
+                                    "type": "object",
+                                    "properties": {
+                                        "data": {
+                                            "type": "string"
+                                        }
+                                    }
+                                }
+                            ]
+                        }
+                    },
+                    "400": {
+                        "description": "Bad Request",
+                        "schema": {
+                            "allOf": [
+                                {
+                                    "$ref": "#/definitions/dto.Response"
+                                },
+                                {
+                                    "type": "object",
+                                    "properties": {
+                                        "data": {
+                                            "type": "string"
+                                        }
+                                    }
+                                }
+                            ]
+                        }
+                    },
+                    "401": {
+                        "description": "Unauthorized",
+                        "schema": {
+                            "allOf": [
+                                {
+                                    "$ref": "#/definitions/dto.Response"
+                                },
+                                {
+                                    "type": "object",
+                                    "properties": {
+                                        "data": {
+                                            "type": "string"
+                                        }
+                                    }
+                                }
+                            ]
+                        }
+                    },
+                    "403": {
+                        "description": "Forbidden",
+                        "schema": {
+                            "allOf": [
+                                {
+                                    "$ref": "#/definitions/dto.Response"
+                                },
+                                {
+                                    "type": "object",
+                                    "properties": {
+                                        "data": {
+                                            "type": "string"
+                                        }
+                                    }
+                                }
+                            ]
+                        }
+                    }
+                }
+            },
+            "patch": {
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
+                "description": "Updates an existing brand. This endpoint is intended for internal use and should be secured appropriately.",
+                "consumes": [
+                    "multipart/form-data"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "brands"
+                ],
+                "summary": "Update an existing brand",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "Unique identifier for the brand",
+                        "name": "brand_id",
+                        "in": "formData",
+                        "required": true
+                    },
+                    {
+                        "type": "string",
+                        "description": "Display name of the brand",
+                        "name": "brand_name",
+                        "in": "formData",
+                        "required": true
+                    },
+                    {
+                        "type": "file",
+                        "description": "Image file for the brand",
+                        "name": "image",
+                        "in": "formData"
+                    },
+                    {
+                        "enum": [
+                            "active",
+                            "disabled"
+                        ],
+                        "type": "string",
+                        "description": "Status of the brand",
+                        "name": "status",
+                        "in": "formData",
+                        "required": true
+                    },
+                    {
+                        "type": "boolean",
+                        "description": "Whether the brand is flagged as a top/featured brand",
+                        "name": "is_top_brand",
+                        "in": "formData",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "allOf": [
+                                {
+                                    "$ref": "#/definitions/dto.Response"
+                                },
+                                {
+                                    "type": "object",
+                                    "properties": {
+                                        "data": {
+                                            "$ref": "#/definitions/dto.BrandItem"
+                                        }
+                                    }
+                                }
+                            ]
+                        }
+                    },
+                    "400": {
+                        "description": "Bad Request",
+                        "schema": {
+                            "allOf": [
+                                {
+                                    "$ref": "#/definitions/dto.Response"
+                                },
+                                {
+                                    "type": "object",
+                                    "properties": {
+                                        "data": {
+                                            "type": "string"
+                                        }
+                                    }
+                                }
+                            ]
+                        }
+                    },
+                    "401": {
+                        "description": "Unauthorized",
+                        "schema": {
+                            "allOf": [
+                                {
+                                    "$ref": "#/definitions/dto.Response"
+                                },
+                                {
+                                    "type": "object",
+                                    "properties": {
+                                        "data": {
+                                            "type": "string"
+                                        }
+                                    }
+                                }
+                            ]
+                        }
+                    },
+                    "403": {
+                        "description": "Forbidden",
+                        "schema": {
+                            "allOf": [
+                                {
+                                    "$ref": "#/definitions/dto.Response"
+                                },
+                                {
+                                    "type": "object",
+                                    "properties": {
+                                        "data": {
+                                            "type": "string"
+                                        }
+                                    }
+                                }
+                            ]
+                        }
+                    }
+                }
+            }
+        },
+        "/v1/categories": {
+            "get": {
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
+                "description": "Fetches a paginated list of categories.",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "categories"
+                ],
+                "summary": "Get categories",
+                "parameters": [
+                    {
+                        "type": "integer",
+                        "description": "Page number",
+                        "name": "page",
+                        "in": "query",
+                        "required": true
+                    },
+                    {
+                        "type": "integer",
+                        "description": "Number of items per page",
+                        "name": "limit",
+                        "in": "query",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "allOf": [
+                                {
+                                    "$ref": "#/definitions/dto.Response"
+                                },
+                                {
+                                    "type": "object",
+                                    "properties": {
+                                        "data": {
+                                            "$ref": "#/definitions/dto.Categories"
+                                        }
+                                    }
+                                }
+                            ]
+                        }
+                    },
+                    "401": {
+                        "description": "Unauthorized",
+                        "schema": {
+                            "allOf": [
+                                {
+                                    "$ref": "#/definitions/dto.Response"
+                                },
+                                {
+                                    "type": "object",
+                                    "properties": {
+                                        "data": {
+                                            "type": "string"
+                                        }
+                                    }
+                                }
+                            ]
+                        }
+                    },
+                    "403": {
+                        "description": "Forbidden",
+                        "schema": {
+                            "allOf": [
+                                {
+                                    "$ref": "#/definitions/dto.Response"
+                                },
+                                {
+                                    "type": "object",
+                                    "properties": {
+                                        "data": {
+                                            "type": "string"
+                                        }
+                                    }
+                                }
+                            ]
+                        }
+                    }
+                }
+            },
+            "post": {
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
+                "description": "Creates a new category. This endpoint is intended for internal use and should be secured appropriately.",
+                "consumes": [
+                    "multipart/form-data"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "categories"
+                ],
+                "summary": "Create a new category",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "Display name of the category",
+                        "name": "category_name",
+                        "in": "formData",
+                        "required": true
+                    },
+                    {
+                        "type": "file",
+                        "description": "Image file for the category",
+                        "name": "image",
+                        "in": "formData",
+                        "required": true
+                    },
+                    {
+                        "enum": [
+                            "active",
+                            "disabled"
+                        ],
+                        "type": "string",
+                        "description": "Status of the category",
+                        "name": "status",
+                        "in": "formData",
+                        "required": true
+                    },
+                    {
+                        "type": "boolean",
+                        "description": "Whether the category is flagged as a top/featured category",
+                        "name": "is_top_category",
+                        "in": "formData",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "201": {
+                        "description": "Created",
+                        "schema": {
+                            "allOf": [
+                                {
+                                    "$ref": "#/definitions/dto.Response"
+                                },
+                                {
+                                    "type": "object",
+                                    "properties": {
+                                        "data": {
+                                            "$ref": "#/definitions/dto.Category"
+                                        }
+                                    }
+                                }
+                            ]
+                        }
+                    },
+                    "400": {
+                        "description": "Bad Request",
+                        "schema": {
+                            "allOf": [
+                                {
+                                    "$ref": "#/definitions/dto.Response"
+                                },
+                                {
+                                    "type": "object",
+                                    "properties": {
+                                        "data": {
+                                            "type": "string"
+                                        }
+                                    }
+                                }
+                            ]
+                        }
+                    },
+                    "401": {
+                        "description": "Unauthorized",
+                        "schema": {
+                            "allOf": [
+                                {
+                                    "$ref": "#/definitions/dto.Response"
+                                },
+                                {
+                                    "type": "object",
+                                    "properties": {
+                                        "data": {
+                                            "type": "string"
+                                        }
+                                    }
+                                }
+                            ]
+                        }
+                    },
+                    "403": {
+                        "description": "Forbidden",
+                        "schema": {
+                            "allOf": [
+                                {
+                                    "$ref": "#/definitions/dto.Response"
+                                },
+                                {
+                                    "type": "object",
+                                    "properties": {
+                                        "data": {
+                                            "type": "string"
+                                        }
+                                    }
+                                }
+                            ]
+                        }
+                    }
+                }
+            },
+            "delete": {
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
+                "description": "Deletes an existing category. This endpoint is intended for internal use and should be secured appropriately.",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "categories"
+                ],
+                "summary": "Delete an existing category",
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "allOf": [
+                                {
+                                    "$ref": "#/definitions/dto.Response"
+                                },
+                                {
+                                    "type": "object",
+                                    "properties": {
+                                        "data": {
+                                            "type": "string"
+                                        }
+                                    }
+                                }
+                            ]
+                        }
+                    },
+                    "400": {
+                        "description": "Bad Request",
+                        "schema": {
+                            "allOf": [
+                                {
+                                    "$ref": "#/definitions/dto.Response"
+                                },
+                                {
+                                    "type": "object",
+                                    "properties": {
+                                        "data": {
+                                            "type": "string"
+                                        }
+                                    }
+                                }
+                            ]
+                        }
+                    },
+                    "401": {
+                        "description": "Unauthorized",
+                        "schema": {
+                            "allOf": [
+                                {
+                                    "$ref": "#/definitions/dto.Response"
+                                },
+                                {
+                                    "type": "object",
+                                    "properties": {
+                                        "data": {
+                                            "type": "string"
+                                        }
+                                    }
+                                }
+                            ]
+                        }
+                    },
+                    "403": {
+                        "description": "Forbidden",
+                        "schema": {
+                            "allOf": [
+                                {
+                                    "$ref": "#/definitions/dto.Response"
+                                },
+                                {
+                                    "type": "object",
+                                    "properties": {
+                                        "data": {
+                                            "type": "string"
+                                        }
+                                    }
+                                }
+                            ]
+                        }
+                    }
+                }
+            },
+            "patch": {
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
+                "description": "Updates an existing category. This endpoint is intended for internal use and should be secured appropriately.",
+                "consumes": [
+                    "multipart/form-data"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "categories"
+                ],
+                "summary": "Update an existing category",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "Unique identifier for the category",
+                        "name": "category_id",
+                        "in": "formData",
+                        "required": true
+                    },
+                    {
+                        "type": "string",
+                        "description": "Display name of the category",
+                        "name": "category_name",
+                        "in": "formData",
+                        "required": true
+                    },
+                    {
+                        "type": "file",
+                        "description": "Image file for the category",
+                        "name": "image",
+                        "in": "formData",
+                        "required": true
+                    },
+                    {
+                        "enum": [
+                            "active",
+                            "disabled"
+                        ],
+                        "type": "string",
+                        "description": "Status of the category",
+                        "name": "status",
+                        "in": "formData",
+                        "required": true
+                    },
+                    {
+                        "type": "boolean",
+                        "description": "Whether the category is flagged as a top/featured category",
+                        "name": "is_top_category",
+                        "in": "formData",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "allOf": [
+                                {
+                                    "$ref": "#/definitions/dto.Response"
+                                },
+                                {
+                                    "type": "object",
+                                    "properties": {
+                                        "data": {
+                                            "$ref": "#/definitions/dto.Category"
+                                        }
+                                    }
+                                }
+                            ]
+                        }
+                    },
+                    "400": {
+                        "description": "Bad Request",
+                        "schema": {
+                            "allOf": [
+                                {
+                                    "$ref": "#/definitions/dto.Response"
+                                },
+                                {
+                                    "type": "object",
+                                    "properties": {
+                                        "data": {
+                                            "type": "string"
+                                        }
+                                    }
+                                }
+                            ]
+                        }
+                    },
+                    "401": {
+                        "description": "Unauthorized",
+                        "schema": {
+                            "allOf": [
+                                {
+                                    "$ref": "#/definitions/dto.Response"
+                                },
+                                {
+                                    "type": "object",
+                                    "properties": {
+                                        "data": {
+                                            "type": "string"
+                                        }
+                                    }
+                                }
+                            ]
+                        }
+                    },
+                    "403": {
+                        "description": "Forbidden",
+                        "schema": {
+                            "allOf": [
+                                {
+                                    "$ref": "#/definitions/dto.Response"
+                                },
+                                {
+                                    "type": "object",
+                                    "properties": {
+                                        "data": {
+                                            "type": "string"
+                                        }
+                                    }
+                                }
+                            ]
+                        }
+                    }
+                }
+            }
+        },
+        "/v1/categories/subcategories": {
+            "post": {
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
+                "description": "Creates a new subcategory. This endpoint is intended for internal use and should be secured appropriately.",
+                "consumes": [
+                    "multipart/form-data"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "subcategories"
+                ],
+                "summary": "Create a new subcategory",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "Display name of the subcategory",
+                        "name": "sub_category_name",
+                        "in": "formData",
+                        "required": true
+                    },
+                    {
+                        "type": "string",
+                        "description": "Identifier of the parent category",
+                        "name": "category_id",
+                        "in": "formData",
+                        "required": true
+                    },
+                    {
+                        "type": "file",
+                        "description": "Image file for the subcategory",
+                        "name": "image",
+                        "in": "formData",
+                        "required": true
+                    },
+                    {
+                        "enum": [
+                            "active",
+                            "disabled"
+                        ],
+                        "type": "string",
+                        "description": "Status of the subcategory",
+                        "name": "status",
+                        "in": "formData",
+                        "required": true
+                    },
+                    {
+                        "type": "boolean",
+                        "description": "Whether the subcategory is flagged as a top/featured subcategory",
+                        "name": "is_top_sub_category",
+                        "in": "formData",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "201": {
+                        "description": "Created",
+                        "schema": {
+                            "allOf": [
+                                {
+                                    "$ref": "#/definitions/dto.Response"
+                                },
+                                {
+                                    "type": "object",
+                                    "properties": {
+                                        "data": {
+                                            "$ref": "#/definitions/dto.SubCategory"
+                                        }
+                                    }
+                                }
+                            ]
+                        }
+                    },
+                    "400": {
+                        "description": "Bad Request",
+                        "schema": {
+                            "allOf": [
+                                {
+                                    "$ref": "#/definitions/dto.Response"
+                                },
+                                {
+                                    "type": "object",
+                                    "properties": {
+                                        "data": {
+                                            "type": "string"
+                                        }
+                                    }
+                                }
+                            ]
+                        }
+                    },
+                    "401": {
+                        "description": "Unauthorized",
+                        "schema": {
+                            "allOf": [
+                                {
+                                    "$ref": "#/definitions/dto.Response"
+                                },
+                                {
+                                    "type": "object",
+                                    "properties": {
+                                        "data": {
+                                            "type": "string"
+                                        }
+                                    }
+                                }
+                            ]
+                        }
+                    },
+                    "403": {
+                        "description": "Forbidden",
+                        "schema": {
+                            "allOf": [
+                                {
+                                    "$ref": "#/definitions/dto.Response"
+                                },
+                                {
+                                    "type": "object",
+                                    "properties": {
+                                        "data": {
+                                            "type": "string"
+                                        }
+                                    }
+                                }
+                            ]
+                        }
+                    }
+                }
+            },
+            "delete": {
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
+                "description": "Deletes a subcategory. This endpoint is intended for internal use and should be secured appropriately.",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "subcategories"
+                ],
+                "summary": "Delete a subcategory",
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "allOf": [
+                                {
+                                    "$ref": "#/definitions/dto.Response"
+                                },
+                                {
+                                    "type": "object",
+                                    "properties": {
+                                        "data": {
+                                            "type": "string"
+                                        }
+                                    }
+                                }
+                            ]
+                        }
+                    },
+                    "400": {
+                        "description": "Bad Request",
+                        "schema": {
+                            "allOf": [
+                                {
+                                    "$ref": "#/definitions/dto.Response"
+                                },
+                                {
+                                    "type": "object",
+                                    "properties": {
+                                        "data": {
+                                            "type": "string"
+                                        }
+                                    }
+                                }
+                            ]
+                        }
+                    },
+                    "401": {
+                        "description": "Unauthorized",
+                        "schema": {
+                            "allOf": [
+                                {
+                                    "$ref": "#/definitions/dto.Response"
+                                },
+                                {
+                                    "type": "object",
+                                    "properties": {
+                                        "data": {
+                                            "type": "string"
+                                        }
+                                    }
+                                }
+                            ]
+                        }
+                    },
+                    "403": {
+                        "description": "Forbidden",
+                        "schema": {
+                            "allOf": [
+                                {
+                                    "$ref": "#/definitions/dto.Response"
+                                },
+                                {
+                                    "type": "object",
+                                    "properties": {
+                                        "data": {
+                                            "type": "string"
+                                        }
+                                    }
+                                }
+                            ]
+                        }
+                    }
+                }
+            },
+            "patch": {
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
+                "description": "Updates an existing subcategory. This endpoint is intended for internal use and should be secured appropriately.",
+                "consumes": [
+                    "multipart/form-data"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "subcategories"
+                ],
+                "summary": "Update an existing subcategory (id supplied via form data)",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "Unique identifier for the subcategory",
+                        "name": "sub_category_id",
+                        "in": "formData",
+                        "required": true
+                    },
+                    {
+                        "type": "string",
+                        "description": "Display name of the subcategory",
+                        "name": "sub_category_name",
+                        "in": "formData",
+                        "required": true
+                    },
+                    {
+                        "type": "string",
+                        "description": "Identifier of the parent category",
+                        "name": "category_id",
+                        "in": "formData",
+                        "required": true
+                    },
+                    {
+                        "type": "file",
+                        "description": "Image file for the subcategory",
+                        "name": "image",
+                        "in": "formData",
+                        "required": true
+                    },
+                    {
+                        "enum": [
+                            "active",
+                            "disabled"
+                        ],
+                        "type": "string",
+                        "description": "Status of the subcategory",
+                        "name": "status",
+                        "in": "formData",
+                        "required": true
+                    },
+                    {
+                        "type": "boolean",
+                        "description": "Whether the subcategory is flagged as a top/featured subcategory",
+                        "name": "is_top_sub_category",
+                        "in": "formData",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "allOf": [
+                                {
+                                    "$ref": "#/definitions/dto.Response"
+                                },
+                                {
+                                    "type": "object",
+                                    "properties": {
+                                        "data": {
+                                            "$ref": "#/definitions/dto.SubCategory"
+                                        }
+                                    }
+                                }
+                            ]
+                        }
+                    },
+                    "400": {
+                        "description": "Bad Request",
+                        "schema": {
+                            "allOf": [
+                                {
+                                    "$ref": "#/definitions/dto.Response"
+                                },
+                                {
+                                    "type": "object",
+                                    "properties": {
+                                        "data": {
+                                            "type": "string"
+                                        }
+                                    }
+                                }
+                            ]
+                        }
+                    },
+                    "401": {
+                        "description": "Unauthorized",
+                        "schema": {
+                            "allOf": [
+                                {
+                                    "$ref": "#/definitions/dto.Response"
+                                },
+                                {
+                                    "type": "object",
+                                    "properties": {
+                                        "data": {
+                                            "type": "string"
+                                        }
+                                    }
+                                }
+                            ]
+                        }
+                    },
+                    "403": {
+                        "description": "Forbidden",
+                        "schema": {
+                            "allOf": [
+                                {
+                                    "$ref": "#/definitions/dto.Response"
+                                },
+                                {
+                                    "type": "object",
+                                    "properties": {
+                                        "data": {
+                                            "type": "string"
+                                        }
+                                    }
+                                }
+                            ]
+                        }
+                    }
+                }
+            }
+        },
+        "/v1/categories/{category_id}/subcategories": {
+            "get": {
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
+                "description": "Fetches a paginated list of subcategories.",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "subcategories"
+                ],
+                "summary": "Get subcategories",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "Unique identifier for the category",
+                        "name": "category_id",
+                        "in": "path",
+                        "required": true
+                    },
+                    {
+                        "type": "integer",
+                        "description": "Page number",
+                        "name": "page",
+                        "in": "query",
+                        "required": true
+                    },
+                    {
+                        "type": "integer",
+                        "description": "Number of items per page",
+                        "name": "limit",
+                        "in": "query",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "allOf": [
+                                {
+                                    "$ref": "#/definitions/dto.Response"
+                                },
+                                {
+                                    "type": "object",
+                                    "properties": {
+                                        "data": {
+                                            "$ref": "#/definitions/dto.SubCategories"
+                                        }
+                                    }
+                                }
+                            ]
+                        }
+                    },
+                    "401": {
+                        "description": "Unauthorized",
+                        "schema": {
+                            "allOf": [
+                                {
+                                    "$ref": "#/definitions/dto.Response"
+                                },
+                                {
+                                    "type": "object",
+                                    "properties": {
+                                        "data": {
+                                            "type": "string"
+                                        }
+                                    }
+                                }
+                            ]
+                        }
+                    },
+                    "403": {
+                        "description": "Forbidden",
+                        "schema": {
+                            "allOf": [
+                                {
+                                    "$ref": "#/definitions/dto.Response"
+                                },
+                                {
+                                    "type": "object",
+                                    "properties": {
+                                        "data": {
+                                            "type": "string"
+                                        }
+                                    }
+                                }
+                            ]
+                        }
+                    }
+                }
+            }
+        },
+        "/v1/dashboard": {
+            "get": {
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
+                "description": "Fetches the data needed to populate the admin dashboard, including headline stats, daily active users, and monthly active users.",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "dashboard"
+                ],
+                "summary": "Get dashboard data",
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "allOf": [
+                                {
+                                    "$ref": "#/definitions/dto.Response"
+                                },
+                                {
+                                    "type": "object",
+                                    "properties": {
+                                        "data": {
+                                            "$ref": "#/definitions/dto.DashboardResponse"
+                                        }
+                                    }
+                                }
+                            ]
+                        }
+                    },
+                    "401": {
+                        "description": "Unauthorized",
+                        "schema": {
+                            "allOf": [
+                                {
+                                    "$ref": "#/definitions/dto.Response"
+                                },
+                                {
+                                    "type": "object",
+                                    "properties": {
+                                        "data": {
+                                            "type": "string"
+                                        }
+                                    }
+                                }
+                            ]
+                        }
+                    },
+                    "403": {
+                        "description": "Forbidden",
+                        "schema": {
+                            "allOf": [
+                                {
+                                    "$ref": "#/definitions/dto.Response"
+                                },
+                                {
+                                    "type": "object",
+                                    "properties": {
+                                        "data": {
+                                            "type": "string"
+                                        }
+                                    }
+                                }
+                            ]
+                        }
+                    }
+                }
+            }
+        },
+        "/v1/dashboard/stats": {
+            "get": {
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
+                "description": "Fetches the headline stat cards for the admin dashboard: total users, average basket size, and total searches.",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "dashboard"
+                ],
+                "summary": "Get dashboard stats",
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "allOf": [
+                                {
+                                    "$ref": "#/definitions/dto.Response"
+                                },
+                                {
+                                    "type": "object",
+                                    "properties": {
+                                        "data": {
+                                            "$ref": "#/definitions/dto.DashboardStats"
+                                        }
+                                    }
+                                }
+                            ]
+                        }
+                    },
+                    "401": {
+                        "description": "Unauthorized",
+                        "schema": {
+                            "allOf": [
+                                {
+                                    "$ref": "#/definitions/dto.Response"
+                                },
+                                {
+                                    "type": "object",
+                                    "properties": {
+                                        "data": {
+                                            "type": "string"
+                                        }
+                                    }
+                                }
+                            ]
+                        }
+                    },
+                    "403": {
+                        "description": "Forbidden",
+                        "schema": {
+                            "allOf": [
+                                {
+                                    "$ref": "#/definitions/dto.Response"
+                                },
+                                {
+                                    "type": "object",
+                                    "properties": {
+                                        "data": {
+                                            "type": "string"
+                                        }
+                                    }
+                                }
+                            ]
+                        }
+                    }
+                }
+            }
+        },
+        "/v1/inventory-management": {
+            "get": {
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
+                "description": "Fetches the data needed to populate the inventory management dashboard, including headline stats and a paginated list of products.",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "inventory-management"
+                ],
+                "summary": "Get inventory management data",
+                "parameters": [
+                    {
+                        "type": "integer",
+                        "description": "Page number",
+                        "name": "page",
+                        "in": "query",
+                        "required": true
+                    },
+                    {
+                        "type": "integer",
+                        "description": "Number of items per page",
+                        "name": "limit",
+                        "in": "query",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "allOf": [
+                                {
+                                    "$ref": "#/definitions/dto.Response"
+                                },
+                                {
+                                    "type": "object",
+                                    "properties": {
+                                        "data": {
+                                            "$ref": "#/definitions/dto.InventoryManagements"
+                                        }
+                                    }
+                                }
+                            ]
+                        }
+                    },
+                    "401": {
+                        "description": "Unauthorized",
+                        "schema": {
+                            "allOf": [
+                                {
+                                    "$ref": "#/definitions/dto.Response"
+                                },
+                                {
+                                    "type": "object",
+                                    "properties": {
+                                        "data": {
+                                            "type": "string"
+                                        }
+                                    }
+                                }
+                            ]
+                        }
+                    },
+                    "403": {
+                        "description": "Forbidden",
+                        "schema": {
+                            "allOf": [
+                                {
+                                    "$ref": "#/definitions/dto.Response"
+                                },
+                                {
+                                    "type": "object",
+                                    "properties": {
+                                        "data": {
+                                            "type": "string"
+                                        }
+                                    }
+                                }
+                            ]
+                        }
+                    }
+                }
+            },
+            "post": {
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
+                "description": "Creates a new inventory item in the system. This endpoint is intended for internal use and should be secured appropriately.",
+                "consumes": [
+                    "multipart/form-data"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "inventory-management"
+                ],
+                "summary": "Create a new inventory item",
+                "parameters": [
+                    {
+                        "type": "file",
+                        "description": "Image file for the product",
+                        "name": "image",
+                        "in": "formData",
+                        "required": true
+                    },
+                    {
+                        "type": "string",
+                        "description": "Display name of the product",
+                        "name": "product_name",
+                        "in": "formData",
+                        "required": true
+                    },
+                    {
+                        "type": "string",
+                        "description": "Description of the product",
+                        "name": "product_description",
+                        "in": "formData",
+                        "required": true
+                    },
+                    {
+                        "type": "string",
+                        "description": "Unique identifier for the brand",
+                        "name": "brand_id",
+                        "in": "formData",
+                        "required": true
+                    },
+                    {
+                        "type": "string",
+                        "description": "Unique identifier for the category",
+                        "name": "category_id",
+                        "in": "formData",
+                        "required": true
+                    },
+                    {
+                        "type": "boolean",
+                        "description": "Whether the product is flagged as a top/featured item",
+                        "name": "is_top_item",
+                        "in": "formData",
+                        "required": true
+                    },
+                    {
+                        "enum": [
+                            "active",
+                            "disabled"
+                        ],
+                        "type": "string",
+                        "description": "Status of the product",
+                        "name": "status",
+                        "in": "formData",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "allOf": [
+                                {
+                                    "$ref": "#/definitions/dto.Response"
+                                },
+                                {
+                                    "type": "object",
+                                    "properties": {
+                                        "data": {
+                                            "$ref": "#/definitions/dto.ProductItem"
+                                        }
+                                    }
+                                }
+                            ]
+                        }
+                    },
+                    "401": {
+                        "description": "Unauthorized",
+                        "schema": {
+                            "allOf": [
+                                {
+                                    "$ref": "#/definitions/dto.Response"
+                                },
+                                {
+                                    "type": "object",
+                                    "properties": {
+                                        "data": {
+                                            "type": "string"
+                                        }
+                                    }
+                                }
+                            ]
+                        }
+                    },
+                    "403": {
+                        "description": "Forbidden",
+                        "schema": {
+                            "allOf": [
+                                {
+                                    "$ref": "#/definitions/dto.Response"
+                                },
+                                {
+                                    "type": "object",
+                                    "properties": {
+                                        "data": {
+                                            "type": "string"
+                                        }
+                                    }
+                                }
+                            ]
+                        }
+                    }
+                }
+            },
+            "delete": {
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
+                "description": "Deletes an existing inventory item in the system. This endpoint is intended for internal use and should be secured appropriately.",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "inventory-management"
+                ],
+                "summary": "Delete an existing inventory item",
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "allOf": [
+                                {
+                                    "$ref": "#/definitions/dto.Response"
+                                },
+                                {
+                                    "type": "object",
+                                    "properties": {
+                                        "data": {
+                                            "type": "string"
+                                        }
+                                    }
+                                }
+                            ]
+                        }
+                    },
+                    "401": {
+                        "description": "Unauthorized",
+                        "schema": {
+                            "allOf": [
+                                {
+                                    "$ref": "#/definitions/dto.Response"
+                                },
+                                {
+                                    "type": "object",
+                                    "properties": {
+                                        "data": {
+                                            "type": "string"
+                                        }
+                                    }
+                                }
+                            ]
+                        }
+                    },
+                    "403": {
+                        "description": "Forbidden",
+                        "schema": {
+                            "allOf": [
+                                {
+                                    "$ref": "#/definitions/dto.Response"
+                                },
+                                {
+                                    "type": "object",
+                                    "properties": {
+                                        "data": {
+                                            "type": "string"
+                                        }
+                                    }
+                                }
+                            ]
+                        }
+                    }
+                }
+            },
+            "patch": {
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
+                "description": "Updates an existing inventory item in the system. This endpoint is intended for internal use and should be secured appropriately.",
+                "consumes": [
+                    "multipart/form-data"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "inventory-management"
+                ],
+                "summary": "Update an existing inventory item",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "Unique identifier for the product",
+                        "name": "product_id",
+                        "in": "formData",
+                        "required": true
+                    },
+                    {
+                        "type": "file",
+                        "description": "Image file for the product",
+                        "name": "image",
+                        "in": "formData"
+                    },
+                    {
+                        "type": "string",
+                        "description": "Display name of the product",
+                        "name": "product_name",
+                        "in": "formData"
+                    },
+                    {
+                        "type": "string",
+                        "description": "Description of the product",
+                        "name": "product_description",
+                        "in": "formData"
+                    },
+                    {
+                        "type": "string",
+                        "description": "Unique identifier for the brand",
+                        "name": "brand_id",
+                        "in": "formData"
+                    },
+                    {
+                        "type": "string",
+                        "description": "Unique identifier for the category",
+                        "name": "category_id",
+                        "in": "formData"
+                    },
+                    {
+                        "type": "boolean",
+                        "description": "Whether the product is flagged as a top/featured item",
+                        "name": "is_top_item",
+                        "in": "formData"
+                    },
+                    {
+                        "enum": [
+                            "active",
+                            "disabled"
+                        ],
+                        "type": "string",
+                        "description": "Status of the product",
+                        "name": "status",
+                        "in": "formData"
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "allOf": [
+                                {
+                                    "$ref": "#/definitions/dto.Response"
+                                },
+                                {
+                                    "type": "object",
+                                    "properties": {
+                                        "data": {
+                                            "$ref": "#/definitions/dto.ProductItem"
+                                        }
+                                    }
+                                }
+                            ]
+                        }
+                    },
+                    "401": {
+                        "description": "Unauthorized",
+                        "schema": {
+                            "allOf": [
+                                {
+                                    "$ref": "#/definitions/dto.Response"
+                                },
+                                {
+                                    "type": "object",
+                                    "properties": {
+                                        "data": {
+                                            "type": "string"
+                                        }
+                                    }
+                                }
+                            ]
+                        }
+                    },
+                    "403": {
+                        "description": "Forbidden",
+                        "schema": {
+                            "allOf": [
+                                {
+                                    "$ref": "#/definitions/dto.Response"
+                                },
+                                {
+                                    "type": "object",
+                                    "properties": {
+                                        "data": {
+                                            "type": "string"
+                                        }
+                                    }
+                                }
+                            ]
+                        }
+                    }
+                }
+            }
+        },
+        "/v1/inventory-management/stats": {
+            "get": {
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
+                "description": "Fetches the headline stats for the inventory management dashboard, including total categories, products, brands, and tracked delivery platforms.",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "inventory-management"
+                ],
+                "summary": "Get inventory management stats",
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "allOf": [
+                                {
+                                    "$ref": "#/definitions/dto.Response"
+                                },
+                                {
+                                    "type": "object",
+                                    "properties": {
+                                        "data": {
+                                            "$ref": "#/definitions/dto.InventoryManagementsStats"
+                                        }
+                                    }
+                                }
+                            ]
+                        }
+                    },
+                    "401": {
+                        "description": "Unauthorized",
+                        "schema": {
+                            "allOf": [
+                                {
+                                    "$ref": "#/definitions/dto.Response"
+                                },
+                                {
+                                    "type": "object",
+                                    "properties": {
+                                        "data": {
+                                            "type": "string"
+                                        }
+                                    }
+                                }
+                            ]
+                        }
+                    },
+                    "403": {
+                        "description": "Forbidden",
+                        "schema": {
+                            "allOf": [
+                                {
+                                    "$ref": "#/definitions/dto.Response"
+                                },
+                                {
+                                    "type": "object",
+                                    "properties": {
+                                        "data": {
+                                            "type": "string"
+                                        }
+                                    }
+                                }
+                            ]
+                        }
+                    }
+                }
+            }
+        },
+        "/v1/inventory-management/variants": {
+            "post": {
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
+                "description": "Creates a new variant for a specific product. This endpoint is intended for internal use and should be secured appropriately.",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "inventory-management"
+                ],
+                "summary": "Create a new variant for a product",
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "allOf": [
+                                {
+                                    "$ref": "#/definitions/dto.Response"
+                                },
+                                {
+                                    "type": "object",
+                                    "properties": {
+                                        "data": {
+                                            "$ref": "#/definitions/dto.ProductVariantItem"
+                                        }
+                                    }
+                                }
+                            ]
+                        }
+                    },
+                    "400": {
+                        "description": "Bad Request",
+                        "schema": {
+                            "allOf": [
+                                {
+                                    "$ref": "#/definitions/dto.Response"
+                                },
+                                {
+                                    "type": "object",
+                                    "properties": {
+                                        "data": {
+                                            "type": "string"
+                                        }
+                                    }
+                                }
+                            ]
+                        }
+                    },
+                    "401": {
+                        "description": "Unauthorized",
+                        "schema": {
+                            "allOf": [
+                                {
+                                    "$ref": "#/definitions/dto.Response"
+                                },
+                                {
+                                    "type": "object",
+                                    "properties": {
+                                        "data": {
+                                            "type": "string"
+                                        }
+                                    }
+                                }
+                            ]
+                        }
+                    },
+                    "403": {
+                        "description": "Forbidden",
+                        "schema": {
+                            "allOf": [
+                                {
+                                    "$ref": "#/definitions/dto.Response"
+                                },
+                                {
+                                    "type": "object",
+                                    "properties": {
+                                        "data": {
+                                            "type": "string"
+                                        }
+                                    }
+                                }
+                            ]
+                        }
+                    }
+                }
+            },
+            "delete": {
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
+                "description": "Deletes an existing variant for a specific product. This endpoint is intended for internal use and should be secured appropriately.",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "inventory-management"
+                ],
+                "summary": "Delete an existing variant for a product",
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "allOf": [
+                                {
+                                    "$ref": "#/definitions/dto.Response"
+                                },
+                                {
+                                    "type": "object",
+                                    "properties": {
+                                        "data": {
+                                            "type": "string"
+                                        }
+                                    }
+                                }
+                            ]
+                        }
+                    },
+                    "400": {
+                        "description": "Bad Request",
+                        "schema": {
+                            "allOf": [
+                                {
+                                    "$ref": "#/definitions/dto.Response"
+                                },
+                                {
+                                    "type": "object",
+                                    "properties": {
+                                        "data": {
+                                            "type": "string"
+                                        }
+                                    }
+                                }
+                            ]
+                        }
+                    },
+                    "401": {
+                        "description": "Unauthorized",
+                        "schema": {
+                            "allOf": [
+                                {
+                                    "$ref": "#/definitions/dto.Response"
+                                },
+                                {
+                                    "type": "object",
+                                    "properties": {
+                                        "data": {
+                                            "type": "string"
+                                        }
+                                    }
+                                }
+                            ]
+                        }
+                    },
+                    "403": {
+                        "description": "Forbidden",
+                        "schema": {
+                            "allOf": [
+                                {
+                                    "$ref": "#/definitions/dto.Response"
+                                },
+                                {
+                                    "type": "object",
+                                    "properties": {
+                                        "data": {
+                                            "type": "string"
+                                        }
+                                    }
+                                }
+                            ]
+                        }
+                    }
+                }
+            },
+            "patch": {
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
+                "description": "Updates an existing variant for a specific product. This endpoint is intended for internal use and should be secured appropriately.",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "inventory-management"
+                ],
+                "summary": "Update an existing variant for a product",
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "allOf": [
+                                {
+                                    "$ref": "#/definitions/dto.Response"
+                                },
+                                {
+                                    "type": "object",
+                                    "properties": {
+                                        "data": {
+                                            "$ref": "#/definitions/dto.ProductVariantItem"
+                                        }
+                                    }
+                                }
+                            ]
+                        }
+                    },
+                    "400": {
+                        "description": "Bad Request",
+                        "schema": {
+                            "allOf": [
+                                {
+                                    "$ref": "#/definitions/dto.Response"
+                                },
+                                {
+                                    "type": "object",
+                                    "properties": {
+                                        "data": {
+                                            "type": "string"
+                                        }
+                                    }
+                                }
+                            ]
+                        }
+                    },
+                    "401": {
+                        "description": "Unauthorized",
+                        "schema": {
+                            "allOf": [
+                                {
+                                    "$ref": "#/definitions/dto.Response"
+                                },
+                                {
+                                    "type": "object",
+                                    "properties": {
+                                        "data": {
+                                            "type": "string"
+                                        }
+                                    }
+                                }
+                            ]
+                        }
+                    },
+                    "403": {
+                        "description": "Forbidden",
+                        "schema": {
+                            "allOf": [
+                                {
+                                    "$ref": "#/definitions/dto.Response"
+                                },
+                                {
+                                    "type": "object",
+                                    "properties": {
+                                        "data": {
+                                            "type": "string"
+                                        }
+                                    }
+                                }
+                            ]
+                        }
+                    }
+                }
+            }
+        },
+        "/v1/inventory-management/{product_id}/variants": {
+            "get": {
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
+                "description": "Fetches a list of variants for a specific product. This endpoint is intended for internal use and should be secured appropriately.",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "inventory-management"
+                ],
+                "summary": "List variants of a product",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "Unique identifier for the product",
+                        "name": "product_id",
+                        "in": "path",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "allOf": [
+                                {
+                                    "$ref": "#/definitions/dto.Response"
+                                },
+                                {
+                                    "type": "object",
+                                    "properties": {
+                                        "data": {
+                                            "$ref": "#/definitions/dto.InventoryManagements"
+                                        }
+                                    }
+                                }
+                            ]
+                        }
+                    },
+                    "401": {
+                        "description": "Unauthorized",
+                        "schema": {
+                            "allOf": [
+                                {
+                                    "$ref": "#/definitions/dto.Response"
+                                },
+                                {
+                                    "type": "object",
+                                    "properties": {
+                                        "data": {
+                                            "type": "string"
+                                        }
+                                    }
+                                }
+                            ]
+                        }
+                    },
+                    "403": {
+                        "description": "Forbidden",
+                        "schema": {
+                            "allOf": [
+                                {
+                                    "$ref": "#/definitions/dto.Response"
+                                },
+                                {
+                                    "type": "object",
+                                    "properties": {
+                                        "data": {
+                                            "type": "string"
+                                        }
+                                    }
+                                }
+                            ]
+                        }
+                    }
+                }
+            }
+        },
         "/v1/users": {
             "get": {
                 "security": [
@@ -125,61 +3227,843 @@ const docTemplate = `{
                     }
                 }
             }
+        },
+        "/v1/users/ban": {
+            "post": {
+                "description": "Bans a user by their unique identifier. This action is irreversible and will prevent the user from accessing the system.",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Users"
+                ],
+                "summary": "Ban User",
+                "responses": {
+                    "200": {
+                        "description": "User banned successfully",
+                        "schema": {
+                            "$ref": "#/definitions/dto.Response"
+                        }
+                    },
+                    "400": {
+                        "description": "Bad request",
+                        "schema": {
+                            "$ref": "#/definitions/dto.Response"
+                        }
+                    },
+                    "401": {
+                        "description": "Unauthorized",
+                        "schema": {
+                            "$ref": "#/definitions/dto.Response"
+                        }
+                    },
+                    "403": {
+                        "description": "Forbidden",
+                        "schema": {
+                            "$ref": "#/definitions/dto.Response"
+                        }
+                    }
+                }
+            }
         }
     },
     "definitions": {
-        "dto.Response": {
+        "dto.BannerItem": {
+            "description": "A promotional banner shown on the storefront.",
             "type": "object",
             "properties": {
-                "code": {
+                "banner_id": {
+                    "description": "Unique identifier for the banner",
                     "type": "string"
                 },
-                "data": {},
-                "message": {
+                "created_at": {
+                    "description": "Creation timestamp, RFC3339",
+                    "type": "string"
+                },
+                "end_date": {
+                    "description": "Date the banner stops being visible, RFC3339",
+                    "type": "string"
+                },
+                "image_url": {
+                    "description": "URL of the banner image",
+                    "type": "string"
+                },
+                "is_active": {
+                    "description": "Whether the banner is currently enabled",
+                    "type": "boolean"
+                },
+                "start_date": {
+                    "description": "Date the banner becomes visible, RFC3339",
+                    "type": "string"
+                }
+            }
+        },
+        "dto.Banners": {
+            "description": "Paginated list of banners.",
+            "type": "object",
+            "properties": {
+                "banners": {
+                    "description": "Page of banners",
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/dto.BannerItem"
+                    }
+                },
+                "meta": {
+                    "description": "Pagination metadata",
+                    "allOf": [
+                        {
+                            "$ref": "#/definitions/query.Meta"
+                        }
+                    ]
+                }
+            }
+        },
+        "dto.Brand": {
+            "description": "Brand a product belongs to.",
+            "type": "object",
+            "properties": {
+                "product_brand_id": {
+                    "description": "Unique identifier for the brand",
+                    "type": "string"
+                },
+                "product_brand_name": {
+                    "description": "Display name of the brand",
+                    "type": "string"
+                }
+            }
+        },
+        "dto.BrandItem": {
+            "description": "A product brand as shown in brand listings.",
+            "type": "object",
+            "properties": {
+                "brand_id": {
+                    "description": "Unique identifier for the brand",
+                    "type": "string"
+                },
+                "brand_name": {
+                    "description": "Display name of the brand",
+                    "type": "string"
+                },
+                "created_at": {
+                    "description": "Creation timestamp, RFC3339",
+                    "type": "string"
+                },
+                "image_url": {
+                    "description": "URL of the brand's display image",
+                    "type": "string"
+                },
+                "is_top_brand": {
+                    "description": "Whether the brand is flagged as a top/featured brand",
+                    "type": "boolean"
+                },
+                "product_count": {
+                    "description": "Number of products under this brand",
+                    "type": "integer"
+                },
+                "status": {
+                    "description": "Status of the brand",
+                    "type": "string",
+                    "enum": [
+                        "active",
+                        "disabled"
+                    ]
+                }
+            }
+        },
+        "dto.BrandList": {
+            "description": "Paginated list of brands.",
+            "type": "object",
+            "properties": {
+                "brands": {
+                    "description": "Page of brands",
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/dto.BrandItem"
+                    }
+                },
+                "meta": {
+                    "description": "Pagination metadata",
+                    "allOf": [
+                        {
+                            "$ref": "#/definitions/query.Meta"
+                        }
+                    ]
+                }
+            }
+        },
+        "dto.Categories": {
+            "description": "Paginated list of categories.",
+            "type": "object",
+            "properties": {
+                "categories": {
+                    "description": "Page of categories",
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/dto.Category"
+                    }
+                },
+                "meta": {
+                    "description": "Pagination metadata",
+                    "allOf": [
+                        {
+                            "$ref": "#/definitions/query.Meta"
+                        }
+                    ]
+                }
+            }
+        },
+        "dto.Category": {
+            "description": "A top-level product category.",
+            "type": "object",
+            "properties": {
+                "category_id": {
+                    "description": "Unique identifier for the category",
+                    "type": "string"
+                },
+                "category_name": {
+                    "description": "Display name of the category",
+                    "type": "string"
+                },
+                "created_at": {
+                    "description": "Creation timestamp, RFC3339",
+                    "type": "string"
+                },
+                "image_url": {
+                    "description": "URL of the category's display image",
+                    "type": "string"
+                },
+                "is_top_category": {
+                    "description": "Whether the category is flagged as a top/featured category",
+                    "type": "boolean"
+                },
+                "status": {
+                    "description": "Status of the category",
+                    "type": "string",
+                    "enum": [
+                        "active",
+                        "disabled"
+                    ]
+                },
+                "sub_category_count": {
+                    "description": "Number of subcategories nested under this category",
+                    "type": "integer"
+                }
+            }
+        },
+        "dto.DailyActiveUsers": {
+            "description": "Daily active user counts for the current week, keyed by day.",
+            "type": "object",
+            "properties": {
+                "friday": {
+                    "description": "Active users on Friday",
+                    "type": "integer"
+                },
+                "monday": {
+                    "description": "Active users on Monday",
+                    "type": "integer"
+                },
+                "saturday": {
+                    "description": "Active users on Saturday",
+                    "type": "integer"
+                },
+                "sunday": {
+                    "description": "Active users on Sunday",
+                    "type": "integer"
+                },
+                "thursday": {
+                    "description": "Active users on Thursday",
+                    "type": "integer"
+                },
+                "tuesday": {
+                    "description": "Active users on Tuesday",
+                    "type": "integer"
+                },
+                "wednesday": {
+                    "description": "Active users on Wednesday",
+                    "type": "integer"
+                }
+            }
+        },
+        "dto.DashboardResponse": {
+            "description": "Envelope for the admin dashboard endpoint.",
+            "type": "object",
+            "properties": {
+                "daily_active_users": {
+                    "description": "Active user counts for the current week",
+                    "allOf": [
+                        {
+                            "$ref": "#/definitions/dto.DailyActiveUsers"
+                        }
+                    ]
+                },
+                "monthly_active_users": {
+                    "description": "Active user counts for the current year",
+                    "allOf": [
+                        {
+                            "$ref": "#/definitions/dto.MonthlyActiveUsers"
+                        }
+                    ]
+                },
+                "stats": {
+                    "description": "Headline stat cards",
+                    "allOf": [
+                        {
+                            "$ref": "#/definitions/dto.DashboardStats"
+                        }
+                    ]
+                }
+            }
+        },
+        "dto.DashboardStats": {
+            "description": "Headline stat cards shown on the admin dashboard.",
+            "type": "object",
+            "properties": {
+                "average_basket_size": {
+                    "description": "Average number of items per basket",
+                    "allOf": [
+                        {
+                            "$ref": "#/definitions/dto.StatsItem"
+                        }
+                    ]
+                },
+                "total_searches": {
+                    "description": "Total product searches performed",
+                    "allOf": [
+                        {
+                            "$ref": "#/definitions/dto.StatsItem"
+                        }
+                    ]
+                },
+                "total_users": {
+                    "description": "Total registered users",
+                    "allOf": [
+                        {
+                            "$ref": "#/definitions/dto.StatsItem"
+                        }
+                    ]
+                }
+            }
+        },
+        "dto.InventoryManagements": {
+            "description": "Paginated inventory management product list.",
+            "type": "object",
+            "properties": {
+                "meta": {
+                    "description": "Pagination metadata",
+                    "allOf": [
+                        {
+                            "$ref": "#/definitions/query.Meta"
+                        }
+                    ]
+                },
+                "products": {
+                    "description": "Page of inventory items",
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/dto.InventoryManagementsItem"
+                    }
+                }
+            }
+        },
+        "dto.InventoryManagementsItem": {
+            "description": "A single product row in the inventory management list.",
+            "type": "object",
+            "properties": {
+                "image_url": {
+                    "description": "URL of the product's display image",
+                    "type": "string"
+                },
+                "product_category": {
+                    "description": "Name of the category the product belongs to",
+                    "type": "string"
+                },
+                "product_id": {
+                    "description": "Unique identifier for the product",
+                    "type": "string"
+                },
+                "product_name": {
+                    "description": "Display name of the product",
                     "type": "string"
                 },
                 "status": {
+                    "description": "Status of the product",
+                    "type": "string",
+                    "enum": [
+                        "active",
+                        "disabled"
+                    ]
+                },
+                "stock_count": {
+                    "description": "Units currently in stock across all variants",
+                    "type": "integer"
+                },
+                "top_item": {
+                    "description": "Whether the product is flagged as a top/featured item",
+                    "type": "boolean"
+                },
+                "total_variants": {
+                    "description": "Number of variants this product has",
+                    "type": "integer"
+                }
+            }
+        },
+        "dto.InventoryManagementsStats": {
+            "description": "Headline stat cards shown on the inventory management dashboard.",
+            "type": "object",
+            "properties": {
+                "platforms": {
+                    "description": "Total number of tracked delivery platforms",
+                    "allOf": [
+                        {
+                            "$ref": "#/definitions/dto.StatsItem"
+                        }
+                    ]
+                },
+                "total_brands": {
+                    "description": "Total number of brands",
+                    "allOf": [
+                        {
+                            "$ref": "#/definitions/dto.StatsItem"
+                        }
+                    ]
+                },
+                "total_categories": {
+                    "description": "Total number of categories",
+                    "allOf": [
+                        {
+                            "$ref": "#/definitions/dto.StatsItem"
+                        }
+                    ]
+                },
+                "total_products": {
+                    "description": "Total number of products",
+                    "allOf": [
+                        {
+                            "$ref": "#/definitions/dto.StatsItem"
+                        }
+                    ]
+                }
+            }
+        },
+        "dto.MonthlyActiveUsers": {
+            "description": "Monthly active user counts for the current year, keyed by month.",
+            "type": "object",
+            "properties": {
+                "april": {
+                    "description": "Active users in April",
+                    "type": "integer"
+                },
+                "august": {
+                    "description": "Active users in August",
+                    "type": "integer"
+                },
+                "december": {
+                    "description": "Active users in December",
+                    "type": "integer"
+                },
+                "february": {
+                    "description": "Active users in February",
+                    "type": "integer"
+                },
+                "january": {
+                    "description": "Active users in January",
+                    "type": "integer"
+                },
+                "july": {
+                    "description": "Active users in July",
+                    "type": "integer"
+                },
+                "june": {
+                    "description": "Active users in June",
+                    "type": "integer"
+                },
+                "march": {
+                    "description": "Active users in March",
+                    "type": "integer"
+                },
+                "may": {
+                    "description": "Active users in May",
+                    "type": "integer"
+                },
+                "november": {
+                    "description": "Active users in November",
+                    "type": "integer"
+                },
+                "october": {
+                    "description": "Active users in October",
+                    "type": "integer"
+                },
+                "september": {
+                    "description": "Active users in September",
+                    "type": "integer"
+                }
+            }
+        },
+        "dto.Pricing": {
+            "description": "Price and stock details for a product variant.",
+            "type": "object",
+            "properties": {
+                "discounted_price": {
+                    "description": "Price after discount, equal to Price when no discount applies",
+                    "type": "number"
+                },
+                "price": {
+                    "description": "List price",
+                    "type": "number"
+                },
+                "stock": {
+                    "description": "Units currently in stock",
+                    "type": "integer"
+                }
+            }
+        },
+        "dto.ProductCategory": {
+            "description": "Category a product belongs to.",
+            "type": "object",
+            "properties": {
+                "product_category_id": {
+                    "description": "Unique identifier for the category",
                     "type": "string"
+                },
+                "product_category_name": {
+                    "description": "Display name of the category",
+                    "type": "string"
+                }
+            }
+        },
+        "dto.ProductItem": {
+            "description": "A single product row as shown in product listings.",
+            "type": "object",
+            "properties": {
+                "created_at": {
+                    "description": "Creation timestamp, RFC3339",
+                    "type": "string"
+                },
+                "image_url": {
+                    "description": "URL of the product's display image",
+                    "type": "string"
+                },
+                "is_top_item": {
+                    "description": "Whether the product is flagged as a top/featured item",
+                    "type": "boolean"
+                },
+                "product_brand": {
+                    "description": "Brand the product belongs to",
+                    "allOf": [
+                        {
+                            "$ref": "#/definitions/dto.Brand"
+                        }
+                    ]
+                },
+                "product_category": {
+                    "description": "Category the product belongs to",
+                    "allOf": [
+                        {
+                            "$ref": "#/definitions/dto.ProductCategory"
+                        }
+                    ]
+                },
+                "product_description": {
+                    "description": "Description of the product",
+                    "type": "string"
+                },
+                "product_id": {
+                    "description": "Unique identifier for the product",
+                    "type": "string"
+                },
+                "product_name": {
+                    "description": "Display name of the product",
+                    "type": "string"
+                },
+                "status": {
+                    "description": "Status of the product",
+                    "type": "string",
+                    "enum": [
+                        "active",
+                        "disabled"
+                    ]
+                }
+            }
+        },
+        "dto.ProductVariantItem": {
+            "description": "A single sellable variant of a product (e.g. a specific pack size).",
+            "type": "object",
+            "properties": {
+                "pricing": {
+                    "description": "Price and stock for this variant",
+                    "allOf": [
+                        {
+                            "$ref": "#/definitions/dto.Pricing"
+                        }
+                    ]
+                },
+                "product_id": {
+                    "description": "Parent product's identifier",
+                    "type": "string"
+                },
+                "product_variant_id": {
+                    "description": "Unique identifier for this variant",
+                    "type": "string"
+                },
+                "product_volume": {
+                    "description": "Volume or weight of this variant",
+                    "allOf": [
+                        {
+                            "$ref": "#/definitions/dto.ProductVariantUnit"
+                        }
+                    ]
+                },
+                "variant_custom_id": {
+                    "description": "Human-readable/SKU-style identifier for this variant",
+                    "type": "string"
+                }
+            }
+        },
+        "dto.ProductVariantUnit": {
+            "description": "Volume/weight of a product variant, e.g. \"500 gm\".",
+            "type": "object",
+            "properties": {
+                "unit": {
+                    "description": "Unit of measurement",
+                    "type": "string",
+                    "enum": [
+                        "kg",
+                        "gm",
+                        "ltr",
+                        "ml",
+                        "pcs"
+                    ]
+                },
+                "value": {
+                    "description": "Numeric quantity of the unit",
+                    "type": "integer"
+                }
+            }
+        },
+        "dto.Response": {
+            "description": "Generic response envelope wrapping every API response.",
+            "type": "object",
+            "properties": {
+                "code": {
+                    "description": "Machine-readable error/status code, present on failures",
+                    "type": "string"
+                },
+                "data": {
+                    "description": "Response payload, shape depends on the endpoint"
+                },
+                "message": {
+                    "description": "Human-readable message describing the result",
+                    "type": "string"
+                },
+                "status": {
+                    "description": "Outcome of the request, e.g. \"success\" or \"failed\"",
+                    "type": "string"
+                }
+            }
+        },
+        "dto.StatsItem": {
+            "description": "A single dashboard metric with its month-over-month change.",
+            "type": "object",
+            "properties": {
+                "diff_last_month": {
+                    "description": "Difference versus the previous month's value",
+                    "type": "integer"
+                },
+                "value": {
+                    "description": "Current value of the metric",
+                    "type": "integer"
+                }
+            }
+        },
+        "dto.SubCategories": {
+            "description": "Paginated list of subcategories.",
+            "type": "object",
+            "properties": {
+                "meta": {
+                    "description": "Pagination metadata",
+                    "allOf": [
+                        {
+                            "$ref": "#/definitions/query.Meta"
+                        }
+                    ]
+                },
+                "sub_categories": {
+                    "description": "Page of subcategories",
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/dto.SubCategory"
+                    }
+                }
+            }
+        },
+        "dto.SubCategory": {
+            "description": "A subcategory nested under a product category.",
+            "type": "object",
+            "properties": {
+                "category_id": {
+                    "description": "Identifier of the parent category",
+                    "type": "string"
+                },
+                "created_at": {
+                    "description": "Creation timestamp, RFC3339",
+                    "type": "string"
+                },
+                "image_url": {
+                    "description": "URL of the subcategory's display image",
+                    "type": "string"
+                },
+                "is_top_sub_category": {
+                    "description": "Whether the subcategory is flagged as a top/featured subcategory",
+                    "type": "boolean"
+                },
+                "status": {
+                    "description": "Status of the subcategory",
+                    "type": "string",
+                    "enum": [
+                        "active",
+                        "disabled"
+                    ]
+                },
+                "sub_category_id": {
+                    "description": "Unique identifier for the subcategory",
+                    "type": "string"
+                },
+                "sub_category_name": {
+                    "description": "Display name of the subcategory",
+                    "type": "string"
+                }
+            }
+        },
+        "dto.TokenResponse": {
+            "description": "Response structure for authentication tokens.",
+            "type": "object",
+            "properties": {
+                "access_token": {
+                    "description": "JWT access token used to authenticate subsequent requests",
+                    "type": "string"
+                },
+                "refresh_token": {
+                    "description": "Token used to obtain a new access token once the current one expires",
+                    "type": "string"
+                }
+            }
+        },
+        "dto.UserDTO": {
+            "description": "Data Transfer Object for a User entity.",
+            "type": "object",
+            "properties": {
+                "account_status": {
+                    "description": "Account-level status, distinct from the user's active/disabled status",
+                    "type": "string",
+                    "enum": [
+                        "active",
+                        "suspended"
+                    ]
+                },
+                "created_at": {
+                    "description": "Creation timestamp, RFC3339",
+                    "type": "string"
+                },
+                "email": {
+                    "description": "Email address of the user",
+                    "type": "string"
+                },
+                "id": {
+                    "description": "Unique identifier for the user",
+                    "type": "string"
+                },
+                "last_active_at": {
+                    "description": "Timestamp of the user's last activity, RFC3339",
+                    "type": "string"
+                },
+                "location": {
+                    "description": "Free-text location of the user",
+                    "type": "string"
+                },
+                "name": {
+                    "description": "Name of the user",
+                    "type": "string"
+                },
+                "role": {
+                    "description": "Role of the user",
+                    "type": "string",
+                    "enum": [
+                        "admin",
+                        "client_manager",
+                        "client"
+                    ]
+                },
+                "status": {
+                    "description": "Status of the user",
+                    "type": "string",
+                    "enum": [
+                        "active",
+                        "disabled"
+                    ]
                 }
             }
         },
         "dto.UserListItemDTO": {
+            "description": "Per-row shape returned by GET /v1/users.",
             "type": "object",
             "properties": {
-                "company_id": {
-                    "type": "string"
-                },
                 "created_at": {
+                    "description": "Creation timestamp, RFC3339",
                     "type": "string"
                 },
                 "email": {
+                    "description": "Email address of the user",
                     "type": "string"
                 },
                 "id": {
+                    "description": "Unique identifier for the user",
                     "type": "string"
                 },
                 "name": {
+                    "description": "Name of the user",
                     "type": "string"
                 },
                 "role": {
-                    "type": "string"
+                    "description": "Role of the user",
+                    "type": "string",
+                    "enum": [
+                        "admin",
+                        "client_manager",
+                        "client"
+                    ]
                 },
                 "status": {
-                    "type": "string"
+                    "description": "Status of the user",
+                    "type": "string",
+                    "enum": [
+                        "active",
+                        "disabled"
+                    ]
                 }
             }
         },
         "dto.UserListResponseDTO": {
+            "description": "Paginated envelope for GET /v1/users.",
             "type": "object",
             "properties": {
                 "items": {
+                    "description": "Page of users matching the current filters",
                     "type": "array",
                     "items": {
                         "$ref": "#/definitions/dto.UserListItemDTO"
                     }
                 },
                 "meta": {
-                    "$ref": "#/definitions/query.Meta"
+                    "description": "Pagination metadata",
+                    "allOf": [
+                        {
+                            "$ref": "#/definitions/query.Meta"
+                        }
+                    ]
                 }
             }
         },
@@ -197,6 +4081,91 @@ const docTemplate = `{
                 },
                 "total": {
                     "type": "integer"
+                }
+            }
+        },
+        "v1.ForgotPasswordRequest": {
+            "type": "object",
+            "required": [
+                "email"
+            ],
+            "properties": {
+                "email": {
+                    "type": "string",
+                    "maxLength": 255
+                }
+            }
+        },
+        "v1.LoginRequest": {
+            "type": "object",
+            "required": [
+                "email",
+                "password"
+            ],
+            "properties": {
+                "email": {
+                    "type": "string"
+                },
+                "password": {
+                    "type": "string"
+                }
+            }
+        },
+        "v1.LogoutRequest": {
+            "type": "object",
+            "required": [
+                "refresh_token"
+            ],
+            "properties": {
+                "refresh_token": {
+                    "type": "string"
+                }
+            }
+        },
+        "v1.RefreshTokenRequest": {
+            "type": "object",
+            "required": [
+                "refresh_token"
+            ],
+            "properties": {
+                "refresh_token": {
+                    "type": "string"
+                }
+            }
+        },
+        "v1.RegisterRequest": {
+            "type": "object",
+            "required": [
+                "email",
+                "name",
+                "password"
+            ],
+            "properties": {
+                "email": {
+                    "type": "string"
+                },
+                "name": {
+                    "type": "string"
+                },
+                "password": {
+                    "type": "string"
+                }
+            }
+        },
+        "v1.ResetPasswordRequest": {
+            "type": "object",
+            "required": [
+                "new_password",
+                "token"
+            ],
+            "properties": {
+                "new_password": {
+                    "type": "string",
+                    "maxLength": 72,
+                    "minLength": 6
+                },
+                "token": {
+                    "type": "string"
                 }
             }
         }

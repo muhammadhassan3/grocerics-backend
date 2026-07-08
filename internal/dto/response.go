@@ -4,15 +4,20 @@ package dto
 import "encoding/json"
 
 // @Swagger:model Response
-// @Description: Generic response structure for API responses
-// @Property status: The status of the response (e.g., "success", "failed")
-// @Property message: A message providing additional information about the response
-// @Property data: The actual data being returned in the response (optional)
+// @Property status: Outcome of the request, e.g. "success" or "failed"
+// @Property code: Machine-readable error/status code, present on failures
+// @Property data: Response payload, shape depends on the endpoint
+// @Property message: Human-readable message describing the result
+// @Description Generic response envelope wrapping every API response.
 type Response struct {
-	Status  string      `json:"status"`
-	Code    string      `json:"code,omitempty"`
-	Data    interface{} `json:"data,omitempty"`
-	Message string      `json:"message"`
+	// Outcome of the request, e.g. "success" or "failed"
+	Status string `json:"status"`
+	// Machine-readable error/status code, present on failures
+	Code string `json:"code,omitempty"`
+	// Response payload, shape depends on the endpoint
+	Data interface{} `json:"data,omitempty"`
+	// Human-readable message describing the result
+	Message string `json:"message"`
 }
 
 func (data Response) ToMap() map[string]interface{} {

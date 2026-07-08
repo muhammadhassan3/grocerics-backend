@@ -1,39 +1,548 @@
 definitions:
-  dto.Response:
+  dto.BannerItem:
+    description: A promotional banner shown on the storefront.
     properties:
-      code:
+      banner_id:
+        description: Unique identifier for the banner
         type: string
-      data: {}
-      message:
+      created_at:
+        description: Creation timestamp, RFC3339
+        type: string
+      end_date:
+        description: Date the banner stops being visible, RFC3339
+        type: string
+      image_url:
+        description: URL of the banner image
+        type: string
+      is_active:
+        description: Whether the banner is currently enabled
+        type: boolean
+      start_date:
+        description: Date the banner becomes visible, RFC3339
+        type: string
+    type: object
+  dto.Banners:
+    description: Paginated list of banners.
+    properties:
+      banners:
+        description: Page of banners
+        items:
+          $ref: '#/definitions/dto.BannerItem'
+        type: array
+      meta:
+        allOf:
+        - $ref: '#/definitions/query.Meta'
+        description: Pagination metadata
+    type: object
+  dto.Brand:
+    description: Brand a product belongs to.
+    properties:
+      product_brand_id:
+        description: Unique identifier for the brand
+        type: string
+      product_brand_name:
+        description: Display name of the brand
+        type: string
+    type: object
+  dto.BrandItem:
+    description: A product brand as shown in brand listings.
+    properties:
+      brand_id:
+        description: Unique identifier for the brand
+        type: string
+      brand_name:
+        description: Display name of the brand
+        type: string
+      created_at:
+        description: Creation timestamp, RFC3339
+        type: string
+      image_url:
+        description: URL of the brand's display image
+        type: string
+      is_top_brand:
+        description: Whether the brand is flagged as a top/featured brand
+        type: boolean
+      product_count:
+        description: Number of products under this brand
+        type: integer
+      status:
+        description: Status of the brand
+        enum:
+        - active
+        - disabled
+        type: string
+    type: object
+  dto.BrandList:
+    description: Paginated list of brands.
+    properties:
+      brands:
+        description: Page of brands
+        items:
+          $ref: '#/definitions/dto.BrandItem'
+        type: array
+      meta:
+        allOf:
+        - $ref: '#/definitions/query.Meta'
+        description: Pagination metadata
+    type: object
+  dto.Categories:
+    description: Paginated list of categories.
+    properties:
+      categories:
+        description: Page of categories
+        items:
+          $ref: '#/definitions/dto.Category'
+        type: array
+      meta:
+        allOf:
+        - $ref: '#/definitions/query.Meta'
+        description: Pagination metadata
+    type: object
+  dto.Category:
+    description: A top-level product category.
+    properties:
+      category_id:
+        description: Unique identifier for the category
+        type: string
+      category_name:
+        description: Display name of the category
+        type: string
+      created_at:
+        description: Creation timestamp, RFC3339
+        type: string
+      image_url:
+        description: URL of the category's display image
+        type: string
+      is_top_category:
+        description: Whether the category is flagged as a top/featured category
+        type: boolean
+      status:
+        description: Status of the category
+        enum:
+        - active
+        - disabled
+        type: string
+      sub_category_count:
+        description: Number of subcategories nested under this category
+        type: integer
+    type: object
+  dto.DailyActiveUsers:
+    description: Daily active user counts for the current week, keyed by day.
+    properties:
+      friday:
+        description: Active users on Friday
+        type: integer
+      monday:
+        description: Active users on Monday
+        type: integer
+      saturday:
+        description: Active users on Saturday
+        type: integer
+      sunday:
+        description: Active users on Sunday
+        type: integer
+      thursday:
+        description: Active users on Thursday
+        type: integer
+      tuesday:
+        description: Active users on Tuesday
+        type: integer
+      wednesday:
+        description: Active users on Wednesday
+        type: integer
+    type: object
+  dto.DashboardResponse:
+    description: Envelope for the admin dashboard endpoint.
+    properties:
+      daily_active_users:
+        allOf:
+        - $ref: '#/definitions/dto.DailyActiveUsers'
+        description: Active user counts for the current week
+      monthly_active_users:
+        allOf:
+        - $ref: '#/definitions/dto.MonthlyActiveUsers'
+        description: Active user counts for the current year
+      stats:
+        allOf:
+        - $ref: '#/definitions/dto.DashboardStats'
+        description: Headline stat cards
+    type: object
+  dto.DashboardStats:
+    description: Headline stat cards shown on the admin dashboard.
+    properties:
+      average_basket_size:
+        allOf:
+        - $ref: '#/definitions/dto.StatsItem'
+        description: Average number of items per basket
+      total_searches:
+        allOf:
+        - $ref: '#/definitions/dto.StatsItem'
+        description: Total product searches performed
+      total_users:
+        allOf:
+        - $ref: '#/definitions/dto.StatsItem'
+        description: Total registered users
+    type: object
+  dto.InventoryManagements:
+    description: Paginated inventory management product list.
+    properties:
+      meta:
+        allOf:
+        - $ref: '#/definitions/query.Meta'
+        description: Pagination metadata
+      products:
+        description: Page of inventory items
+        items:
+          $ref: '#/definitions/dto.InventoryManagementsItem'
+        type: array
+    type: object
+  dto.InventoryManagementsItem:
+    description: A single product row in the inventory management list.
+    properties:
+      image_url:
+        description: URL of the product's display image
+        type: string
+      product_category:
+        description: Name of the category the product belongs to
+        type: string
+      product_id:
+        description: Unique identifier for the product
+        type: string
+      product_name:
+        description: Display name of the product
         type: string
       status:
+        description: Status of the product
+        enum:
+        - active
+        - disabled
+        type: string
+      stock_count:
+        description: Units currently in stock across all variants
+        type: integer
+      top_item:
+        description: Whether the product is flagged as a top/featured item
+        type: boolean
+      total_variants:
+        description: Number of variants this product has
+        type: integer
+    type: object
+  dto.InventoryManagementsStats:
+    description: Headline stat cards shown on the inventory management dashboard.
+    properties:
+      platforms:
+        allOf:
+        - $ref: '#/definitions/dto.StatsItem'
+        description: Total number of tracked delivery platforms
+      total_brands:
+        allOf:
+        - $ref: '#/definitions/dto.StatsItem'
+        description: Total number of brands
+      total_categories:
+        allOf:
+        - $ref: '#/definitions/dto.StatsItem'
+        description: Total number of categories
+      total_products:
+        allOf:
+        - $ref: '#/definitions/dto.StatsItem'
+        description: Total number of products
+    type: object
+  dto.MonthlyActiveUsers:
+    description: Monthly active user counts for the current year, keyed by month.
+    properties:
+      april:
+        description: Active users in April
+        type: integer
+      august:
+        description: Active users in August
+        type: integer
+      december:
+        description: Active users in December
+        type: integer
+      february:
+        description: Active users in February
+        type: integer
+      january:
+        description: Active users in January
+        type: integer
+      july:
+        description: Active users in July
+        type: integer
+      june:
+        description: Active users in June
+        type: integer
+      march:
+        description: Active users in March
+        type: integer
+      may:
+        description: Active users in May
+        type: integer
+      november:
+        description: Active users in November
+        type: integer
+      october:
+        description: Active users in October
+        type: integer
+      september:
+        description: Active users in September
+        type: integer
+    type: object
+  dto.Pricing:
+    description: Price and stock details for a product variant.
+    properties:
+      discounted_price:
+        description: Price after discount, equal to Price when no discount applies
+        type: number
+      price:
+        description: List price
+        type: number
+      stock:
+        description: Units currently in stock
+        type: integer
+    type: object
+  dto.ProductCategory:
+    description: Category a product belongs to.
+    properties:
+      product_category_id:
+        description: Unique identifier for the category
+        type: string
+      product_category_name:
+        description: Display name of the category
+        type: string
+    type: object
+  dto.ProductItem:
+    description: A single product row as shown in product listings.
+    properties:
+      created_at:
+        description: Creation timestamp, RFC3339
+        type: string
+      image_url:
+        description: URL of the product's display image
+        type: string
+      is_top_item:
+        description: Whether the product is flagged as a top/featured item
+        type: boolean
+      product_brand:
+        allOf:
+        - $ref: '#/definitions/dto.Brand'
+        description: Brand the product belongs to
+      product_category:
+        allOf:
+        - $ref: '#/definitions/dto.ProductCategory'
+        description: Category the product belongs to
+      product_description:
+        description: Description of the product
+        type: string
+      product_id:
+        description: Unique identifier for the product
+        type: string
+      product_name:
+        description: Display name of the product
+        type: string
+      status:
+        description: Status of the product
+        enum:
+        - active
+        - disabled
+        type: string
+    type: object
+  dto.ProductVariantItem:
+    description: A single sellable variant of a product (e.g. a specific pack size).
+    properties:
+      pricing:
+        allOf:
+        - $ref: '#/definitions/dto.Pricing'
+        description: Price and stock for this variant
+      product_id:
+        description: Parent product's identifier
+        type: string
+      product_variant_id:
+        description: Unique identifier for this variant
+        type: string
+      product_volume:
+        allOf:
+        - $ref: '#/definitions/dto.ProductVariantUnit'
+        description: Volume or weight of this variant
+      variant_custom_id:
+        description: Human-readable/SKU-style identifier for this variant
+        type: string
+    type: object
+  dto.ProductVariantUnit:
+    description: Volume/weight of a product variant, e.g. "500 gm".
+    properties:
+      unit:
+        description: Unit of measurement
+        enum:
+        - kg
+        - gm
+        - ltr
+        - ml
+        - pcs
+        type: string
+      value:
+        description: Numeric quantity of the unit
+        type: integer
+    type: object
+  dto.Response:
+    description: Generic response envelope wrapping every API response.
+    properties:
+      code:
+        description: Machine-readable error/status code, present on failures
+        type: string
+      data:
+        description: Response payload, shape depends on the endpoint
+      message:
+        description: Human-readable message describing the result
+        type: string
+      status:
+        description: Outcome of the request, e.g. "success" or "failed"
+        type: string
+    type: object
+  dto.StatsItem:
+    description: A single dashboard metric with its month-over-month change.
+    properties:
+      diff_last_month:
+        description: Difference versus the previous month's value
+        type: integer
+      value:
+        description: Current value of the metric
+        type: integer
+    type: object
+  dto.SubCategories:
+    description: Paginated list of subcategories.
+    properties:
+      meta:
+        allOf:
+        - $ref: '#/definitions/query.Meta'
+        description: Pagination metadata
+      sub_categories:
+        description: Page of subcategories
+        items:
+          $ref: '#/definitions/dto.SubCategory'
+        type: array
+    type: object
+  dto.SubCategory:
+    description: A subcategory nested under a product category.
+    properties:
+      category_id:
+        description: Identifier of the parent category
+        type: string
+      created_at:
+        description: Creation timestamp, RFC3339
+        type: string
+      image_url:
+        description: URL of the subcategory's display image
+        type: string
+      is_top_sub_category:
+        description: Whether the subcategory is flagged as a top/featured subcategory
+        type: boolean
+      status:
+        description: Status of the subcategory
+        enum:
+        - active
+        - disabled
+        type: string
+      sub_category_id:
+        description: Unique identifier for the subcategory
+        type: string
+      sub_category_name:
+        description: Display name of the subcategory
+        type: string
+    type: object
+  dto.TokenResponse:
+    description: Response structure for authentication tokens.
+    properties:
+      access_token:
+        description: JWT access token used to authenticate subsequent requests
+        type: string
+      refresh_token:
+        description: Token used to obtain a new access token once the current one
+          expires
+        type: string
+    type: object
+  dto.UserDTO:
+    description: Data Transfer Object for a User entity.
+    properties:
+      account_status:
+        description: Account-level status, distinct from the user's active/disabled
+          status
+        enum:
+        - active
+        - suspended
+        type: string
+      created_at:
+        description: Creation timestamp, RFC3339
+        type: string
+      email:
+        description: Email address of the user
+        type: string
+      id:
+        description: Unique identifier for the user
+        type: string
+      last_active_at:
+        description: Timestamp of the user's last activity, RFC3339
+        type: string
+      location:
+        description: Free-text location of the user
+        type: string
+      name:
+        description: Name of the user
+        type: string
+      role:
+        description: Role of the user
+        enum:
+        - admin
+        - client_manager
+        - client
+        type: string
+      status:
+        description: Status of the user
+        enum:
+        - active
+        - disabled
         type: string
     type: object
   dto.UserListItemDTO:
+    description: Per-row shape returned by GET /v1/users.
     properties:
-      company_id:
-        type: string
       created_at:
+        description: Creation timestamp, RFC3339
         type: string
       email:
+        description: Email address of the user
         type: string
       id:
+        description: Unique identifier for the user
         type: string
       name:
+        description: Name of the user
         type: string
       role:
+        description: Role of the user
+        enum:
+        - admin
+        - client_manager
+        - client
         type: string
       status:
+        description: Status of the user
+        enum:
+        - active
+        - disabled
         type: string
     type: object
   dto.UserListResponseDTO:
+    description: Paginated envelope for GET /v1/users.
     properties:
       items:
+        description: Page of users matching the current filters
         items:
           $ref: '#/definitions/dto.UserListItemDTO'
         type: array
       meta:
-        $ref: '#/definitions/query.Meta'
+        allOf:
+        - $ref: '#/definitions/query.Meta'
+        description: Pagination metadata
     type: object
   query.Meta:
     properties:
@@ -46,9 +555,1831 @@ definitions:
       total:
         type: integer
     type: object
+  v1.ForgotPasswordRequest:
+    properties:
+      email:
+        maxLength: 255
+        type: string
+    required:
+    - email
+    type: object
+  v1.LoginRequest:
+    properties:
+      email:
+        type: string
+      password:
+        type: string
+    required:
+    - email
+    - password
+    type: object
+  v1.LogoutRequest:
+    properties:
+      refresh_token:
+        type: string
+    required:
+    - refresh_token
+    type: object
+  v1.RefreshTokenRequest:
+    properties:
+      refresh_token:
+        type: string
+    required:
+    - refresh_token
+    type: object
+  v1.RegisterRequest:
+    properties:
+      email:
+        type: string
+      name:
+        type: string
+      password:
+        type: string
+    required:
+    - email
+    - name
+    - password
+    type: object
+  v1.ResetPasswordRequest:
+    properties:
+      new_password:
+        maxLength: 72
+        minLength: 6
+        type: string
+      token:
+        type: string
+    required:
+    - new_password
+    - token
+    type: object
 info:
   contact: {}
 paths:
+  /auth/forgot-password:
+    post:
+      consumes:
+      - application/json
+      description: Issue a single-use password-reset token. Always returns 200 to
+        avoid email enumeration.
+      parameters:
+      - description: Forgot password request payload
+        in: body
+        name: forgotPasswordRequest
+        required: true
+        schema:
+          $ref: '#/definitions/v1.ForgotPasswordRequest'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: If the email exists, a reset link has been sent
+          schema:
+            $ref: '#/definitions/dto.Response'
+        "400":
+          description: Bad request
+          schema:
+            $ref: '#/definitions/dto.Response'
+      summary: Forgot Password
+      tags:
+      - Auth
+  /auth/login:
+    post:
+      consumes:
+      - application/json
+      description: User login
+      parameters:
+      - description: Login request payload
+        in: body
+        name: loginRequest
+        required: true
+        schema:
+          $ref: '#/definitions/v1.LoginRequest'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: Successful login
+          schema:
+            allOf:
+            - $ref: '#/definitions/dto.Response'
+            - properties:
+                data:
+                  $ref: '#/definitions/dto.TokenResponse'
+              type: object
+        "400":
+          description: Bad request
+          schema:
+            $ref: '#/definitions/dto.Response'
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/dto.Response'
+      summary: Login
+      tags:
+      - Auth
+  /auth/logout:
+    post:
+      consumes:
+      - application/json
+      description: Revoke the presented refresh token. Single-device.
+      parameters:
+      - description: Logout request payload
+        in: body
+        name: logoutRequest
+        required: true
+        schema:
+          $ref: '#/definitions/v1.LogoutRequest'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: Logged out
+          schema:
+            $ref: '#/definitions/dto.Response'
+        "400":
+          description: Bad request
+          schema:
+            $ref: '#/definitions/dto.Response'
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/dto.Response'
+      security:
+      - BearerAuth: []
+      summary: Logout
+      tags:
+      - Auth
+  /auth/refresh:
+    post:
+      consumes:
+      - application/json
+      description: Refresh access token using refresh token
+      parameters:
+      - description: Refresh token request payload
+        in: body
+        name: refreshTokenRequest
+        required: true
+        schema:
+          $ref: '#/definitions/v1.RefreshTokenRequest'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: Successful token refresh
+          schema:
+            allOf:
+            - $ref: '#/definitions/dto.Response'
+            - properties:
+                data:
+                  $ref: '#/definitions/dto.TokenResponse'
+              type: object
+        "400":
+          description: Bad request
+          schema:
+            $ref: '#/definitions/dto.Response'
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/dto.Response'
+      summary: Refresh Token
+      tags:
+      - Auth
+  /auth/register:
+    post:
+      consumes:
+      - application/json
+      description: User registration
+      parameters:
+      - description: Register request payload
+        in: body
+        name: registerRequest
+        required: true
+        schema:
+          $ref: '#/definitions/v1.RegisterRequest'
+      produces:
+      - application/json
+      responses:
+        "201":
+          description: Successful registration
+          schema:
+            allOf:
+            - $ref: '#/definitions/dto.Response'
+            - properties:
+                data:
+                  $ref: '#/definitions/dto.UserDTO'
+              type: object
+        "400":
+          description: Bad request
+          schema:
+            $ref: '#/definitions/dto.Response'
+      summary: Register
+      tags:
+      - Auth
+  /auth/reset-password:
+    post:
+      consumes:
+      - application/json
+      description: Consume a reset token and set a new password.
+      parameters:
+      - description: Reset password request payload
+        in: body
+        name: resetPasswordRequest
+        required: true
+        schema:
+          $ref: '#/definitions/v1.ResetPasswordRequest'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: Password reset
+          schema:
+            $ref: '#/definitions/dto.Response'
+        "400":
+          description: Bad request
+          schema:
+            $ref: '#/definitions/dto.Response'
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/dto.Response'
+      summary: Reset Password
+      tags:
+      - Auth
+  /v1/banners:
+    delete:
+      consumes:
+      - application/json
+      description: Deletes an existing banner. This endpoint is intended for internal
+        use and should be secured appropriately.
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            allOf:
+            - $ref: '#/definitions/dto.Response'
+            - properties:
+                data:
+                  type: string
+              type: object
+        "400":
+          description: Bad Request
+          schema:
+            allOf:
+            - $ref: '#/definitions/dto.Response'
+            - properties:
+                data:
+                  type: string
+              type: object
+        "401":
+          description: Unauthorized
+          schema:
+            allOf:
+            - $ref: '#/definitions/dto.Response'
+            - properties:
+                data:
+                  type: string
+              type: object
+        "403":
+          description: Forbidden
+          schema:
+            allOf:
+            - $ref: '#/definitions/dto.Response'
+            - properties:
+                data:
+                  type: string
+              type: object
+      security:
+      - BearerAuth: []
+      summary: Delete an existing banner
+      tags:
+      - banners
+    get:
+      consumes:
+      - application/json
+      description: Fetches a paginated list of banners.
+      parameters:
+      - description: Page number
+        in: query
+        name: page
+        required: true
+        type: integer
+      - description: Number of items per page
+        in: query
+        name: limit
+        required: true
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            allOf:
+            - $ref: '#/definitions/dto.Response'
+            - properties:
+                data:
+                  $ref: '#/definitions/dto.Banners'
+              type: object
+        "401":
+          description: Unauthorized
+          schema:
+            allOf:
+            - $ref: '#/definitions/dto.Response'
+            - properties:
+                data:
+                  type: string
+              type: object
+        "403":
+          description: Forbidden
+          schema:
+            allOf:
+            - $ref: '#/definitions/dto.Response'
+            - properties:
+                data:
+                  type: string
+              type: object
+      security:
+      - BearerAuth: []
+      summary: Get banners
+      tags:
+      - banners
+    patch:
+      consumes:
+      - multipart/form-data
+      description: Updates an existing banner. This endpoint is intended for internal
+        use and should be secured appropriately.
+      parameters:
+      - description: Unique identifier for the banner
+        in: formData
+        name: banner_id
+        required: true
+        type: string
+      - description: Image file for the banner
+        in: formData
+        name: image
+        type: file
+      - description: Start date of the banner in YYYY-MM-DD format
+        in: formData
+        name: start_date
+        type: string
+      - description: End date of the banner in YYYY-MM-DD format
+        in: formData
+        name: end_date
+        type: string
+      - description: Whether the banner is currently enabled
+        in: formData
+        name: is_active
+        type: boolean
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            allOf:
+            - $ref: '#/definitions/dto.Response'
+            - properties:
+                data:
+                  $ref: '#/definitions/dto.BannerItem'
+              type: object
+        "400":
+          description: Bad Request
+          schema:
+            allOf:
+            - $ref: '#/definitions/dto.Response'
+            - properties:
+                data:
+                  type: string
+              type: object
+        "401":
+          description: Unauthorized
+          schema:
+            allOf:
+            - $ref: '#/definitions/dto.Response'
+            - properties:
+                data:
+                  type: string
+              type: object
+        "403":
+          description: Forbidden
+          schema:
+            allOf:
+            - $ref: '#/definitions/dto.Response'
+            - properties:
+                data:
+                  type: string
+              type: object
+      security:
+      - BearerAuth: []
+      summary: Update an existing banner (id supplied via form data)
+      tags:
+      - banners
+    post:
+      consumes:
+      - multipart/form-data
+      description: Creates a new banner. This endpoint is intended for internal use
+        and should be secured appropriately.
+      parameters:
+      - description: Image file for the banner
+        in: formData
+        name: image
+        required: true
+        type: file
+      - description: Start date of the banner in YYYY-MM-DD format
+        in: formData
+        name: start_date
+        required: true
+        type: string
+      - description: End date of the banner in YYYY-MM-DD format
+        in: formData
+        name: end_date
+        required: true
+        type: string
+      - description: Whether the banner is currently enabled
+        in: formData
+        name: is_active
+        required: true
+        type: boolean
+      produces:
+      - application/json
+      responses:
+        "201":
+          description: Created
+          schema:
+            allOf:
+            - $ref: '#/definitions/dto.Response'
+            - properties:
+                data:
+                  $ref: '#/definitions/dto.BannerItem'
+              type: object
+        "400":
+          description: Bad Request
+          schema:
+            allOf:
+            - $ref: '#/definitions/dto.Response'
+            - properties:
+                data:
+                  type: string
+              type: object
+        "401":
+          description: Unauthorized
+          schema:
+            allOf:
+            - $ref: '#/definitions/dto.Response'
+            - properties:
+                data:
+                  type: string
+              type: object
+        "403":
+          description: Forbidden
+          schema:
+            allOf:
+            - $ref: '#/definitions/dto.Response'
+            - properties:
+                data:
+                  type: string
+              type: object
+      security:
+      - BearerAuth: []
+      summary: Create a new banner
+      tags:
+      - banners
+  /v1/brands:
+    delete:
+      consumes:
+      - application/json
+      description: Deletes a brand. This endpoint is intended for internal use and
+        should be secured appropriately.
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            allOf:
+            - $ref: '#/definitions/dto.Response'
+            - properties:
+                data:
+                  type: string
+              type: object
+        "400":
+          description: Bad Request
+          schema:
+            allOf:
+            - $ref: '#/definitions/dto.Response'
+            - properties:
+                data:
+                  type: string
+              type: object
+        "401":
+          description: Unauthorized
+          schema:
+            allOf:
+            - $ref: '#/definitions/dto.Response'
+            - properties:
+                data:
+                  type: string
+              type: object
+        "403":
+          description: Forbidden
+          schema:
+            allOf:
+            - $ref: '#/definitions/dto.Response'
+            - properties:
+                data:
+                  type: string
+              type: object
+      security:
+      - BearerAuth: []
+      summary: Delete a brand
+      tags:
+      - brands
+    get:
+      consumes:
+      - application/json
+      description: Fetches a paginated list of brands.
+      parameters:
+      - description: Page number
+        in: query
+        name: page
+        required: true
+        type: integer
+      - description: Number of items per page
+        in: query
+        name: limit
+        required: true
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            allOf:
+            - $ref: '#/definitions/dto.Response'
+            - properties:
+                data:
+                  $ref: '#/definitions/dto.BrandList'
+              type: object
+        "401":
+          description: Unauthorized
+          schema:
+            allOf:
+            - $ref: '#/definitions/dto.Response'
+            - properties:
+                data:
+                  type: string
+              type: object
+        "403":
+          description: Forbidden
+          schema:
+            allOf:
+            - $ref: '#/definitions/dto.Response'
+            - properties:
+                data:
+                  type: string
+              type: object
+      security:
+      - BearerAuth: []
+      summary: Get brands
+      tags:
+      - brands
+    patch:
+      consumes:
+      - multipart/form-data
+      description: Updates an existing brand. This endpoint is intended for internal
+        use and should be secured appropriately.
+      parameters:
+      - description: Unique identifier for the brand
+        in: formData
+        name: brand_id
+        required: true
+        type: string
+      - description: Display name of the brand
+        in: formData
+        name: brand_name
+        required: true
+        type: string
+      - description: Image file for the brand
+        in: formData
+        name: image
+        type: file
+      - description: Status of the brand
+        enum:
+        - active
+        - disabled
+        in: formData
+        name: status
+        required: true
+        type: string
+      - description: Whether the brand is flagged as a top/featured brand
+        in: formData
+        name: is_top_brand
+        required: true
+        type: boolean
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            allOf:
+            - $ref: '#/definitions/dto.Response'
+            - properties:
+                data:
+                  $ref: '#/definitions/dto.BrandItem'
+              type: object
+        "400":
+          description: Bad Request
+          schema:
+            allOf:
+            - $ref: '#/definitions/dto.Response'
+            - properties:
+                data:
+                  type: string
+              type: object
+        "401":
+          description: Unauthorized
+          schema:
+            allOf:
+            - $ref: '#/definitions/dto.Response'
+            - properties:
+                data:
+                  type: string
+              type: object
+        "403":
+          description: Forbidden
+          schema:
+            allOf:
+            - $ref: '#/definitions/dto.Response'
+            - properties:
+                data:
+                  type: string
+              type: object
+      security:
+      - BearerAuth: []
+      summary: Update an existing brand
+      tags:
+      - brands
+    post:
+      consumes:
+      - multipart/form-data
+      description: Creates a new brand. This endpoint is intended for internal use
+        and should be secured appropriately.
+      parameters:
+      - description: Display name of the brand
+        in: formData
+        name: brand_name
+        required: true
+        type: string
+      - description: Image file for the brand
+        in: formData
+        name: image
+        required: true
+        type: file
+      - description: Status of the brand
+        enum:
+        - active
+        - disabled
+        in: formData
+        name: status
+        required: true
+        type: string
+      - description: Whether the brand is flagged as a top/featured brand
+        in: formData
+        name: is_top_brand
+        required: true
+        type: boolean
+      produces:
+      - application/json
+      responses:
+        "201":
+          description: Created
+          schema:
+            allOf:
+            - $ref: '#/definitions/dto.Response'
+            - properties:
+                data:
+                  $ref: '#/definitions/dto.BrandItem'
+              type: object
+        "400":
+          description: Bad Request
+          schema:
+            allOf:
+            - $ref: '#/definitions/dto.Response'
+            - properties:
+                data:
+                  type: string
+              type: object
+        "401":
+          description: Unauthorized
+          schema:
+            allOf:
+            - $ref: '#/definitions/dto.Response'
+            - properties:
+                data:
+                  type: string
+              type: object
+        "403":
+          description: Forbidden
+          schema:
+            allOf:
+            - $ref: '#/definitions/dto.Response'
+            - properties:
+                data:
+                  type: string
+              type: object
+      security:
+      - BearerAuth: []
+      summary: Create a new brand
+      tags:
+      - brands
+  /v1/categories:
+    delete:
+      consumes:
+      - application/json
+      description: Deletes an existing category. This endpoint is intended for internal
+        use and should be secured appropriately.
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            allOf:
+            - $ref: '#/definitions/dto.Response'
+            - properties:
+                data:
+                  type: string
+              type: object
+        "400":
+          description: Bad Request
+          schema:
+            allOf:
+            - $ref: '#/definitions/dto.Response'
+            - properties:
+                data:
+                  type: string
+              type: object
+        "401":
+          description: Unauthorized
+          schema:
+            allOf:
+            - $ref: '#/definitions/dto.Response'
+            - properties:
+                data:
+                  type: string
+              type: object
+        "403":
+          description: Forbidden
+          schema:
+            allOf:
+            - $ref: '#/definitions/dto.Response'
+            - properties:
+                data:
+                  type: string
+              type: object
+      security:
+      - BearerAuth: []
+      summary: Delete an existing category
+      tags:
+      - categories
+    get:
+      consumes:
+      - application/json
+      description: Fetches a paginated list of categories.
+      parameters:
+      - description: Page number
+        in: query
+        name: page
+        required: true
+        type: integer
+      - description: Number of items per page
+        in: query
+        name: limit
+        required: true
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            allOf:
+            - $ref: '#/definitions/dto.Response'
+            - properties:
+                data:
+                  $ref: '#/definitions/dto.Categories'
+              type: object
+        "401":
+          description: Unauthorized
+          schema:
+            allOf:
+            - $ref: '#/definitions/dto.Response'
+            - properties:
+                data:
+                  type: string
+              type: object
+        "403":
+          description: Forbidden
+          schema:
+            allOf:
+            - $ref: '#/definitions/dto.Response'
+            - properties:
+                data:
+                  type: string
+              type: object
+      security:
+      - BearerAuth: []
+      summary: Get categories
+      tags:
+      - categories
+    patch:
+      consumes:
+      - multipart/form-data
+      description: Updates an existing category. This endpoint is intended for internal
+        use and should be secured appropriately.
+      parameters:
+      - description: Unique identifier for the category
+        in: formData
+        name: category_id
+        required: true
+        type: string
+      - description: Display name of the category
+        in: formData
+        name: category_name
+        required: true
+        type: string
+      - description: Image file for the category
+        in: formData
+        name: image
+        required: true
+        type: file
+      - description: Status of the category
+        enum:
+        - active
+        - disabled
+        in: formData
+        name: status
+        required: true
+        type: string
+      - description: Whether the category is flagged as a top/featured category
+        in: formData
+        name: is_top_category
+        required: true
+        type: boolean
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            allOf:
+            - $ref: '#/definitions/dto.Response'
+            - properties:
+                data:
+                  $ref: '#/definitions/dto.Category'
+              type: object
+        "400":
+          description: Bad Request
+          schema:
+            allOf:
+            - $ref: '#/definitions/dto.Response'
+            - properties:
+                data:
+                  type: string
+              type: object
+        "401":
+          description: Unauthorized
+          schema:
+            allOf:
+            - $ref: '#/definitions/dto.Response'
+            - properties:
+                data:
+                  type: string
+              type: object
+        "403":
+          description: Forbidden
+          schema:
+            allOf:
+            - $ref: '#/definitions/dto.Response'
+            - properties:
+                data:
+                  type: string
+              type: object
+      security:
+      - BearerAuth: []
+      summary: Update an existing category
+      tags:
+      - categories
+    post:
+      consumes:
+      - multipart/form-data
+      description: Creates a new category. This endpoint is intended for internal
+        use and should be secured appropriately.
+      parameters:
+      - description: Display name of the category
+        in: formData
+        name: category_name
+        required: true
+        type: string
+      - description: Image file for the category
+        in: formData
+        name: image
+        required: true
+        type: file
+      - description: Status of the category
+        enum:
+        - active
+        - disabled
+        in: formData
+        name: status
+        required: true
+        type: string
+      - description: Whether the category is flagged as a top/featured category
+        in: formData
+        name: is_top_category
+        required: true
+        type: boolean
+      produces:
+      - application/json
+      responses:
+        "201":
+          description: Created
+          schema:
+            allOf:
+            - $ref: '#/definitions/dto.Response'
+            - properties:
+                data:
+                  $ref: '#/definitions/dto.Category'
+              type: object
+        "400":
+          description: Bad Request
+          schema:
+            allOf:
+            - $ref: '#/definitions/dto.Response'
+            - properties:
+                data:
+                  type: string
+              type: object
+        "401":
+          description: Unauthorized
+          schema:
+            allOf:
+            - $ref: '#/definitions/dto.Response'
+            - properties:
+                data:
+                  type: string
+              type: object
+        "403":
+          description: Forbidden
+          schema:
+            allOf:
+            - $ref: '#/definitions/dto.Response'
+            - properties:
+                data:
+                  type: string
+              type: object
+      security:
+      - BearerAuth: []
+      summary: Create a new category
+      tags:
+      - categories
+  /v1/categories/{category_id}/subcategories:
+    get:
+      consumes:
+      - application/json
+      description: Fetches a paginated list of subcategories.
+      parameters:
+      - description: Unique identifier for the category
+        in: path
+        name: category_id
+        required: true
+        type: string
+      - description: Page number
+        in: query
+        name: page
+        required: true
+        type: integer
+      - description: Number of items per page
+        in: query
+        name: limit
+        required: true
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            allOf:
+            - $ref: '#/definitions/dto.Response'
+            - properties:
+                data:
+                  $ref: '#/definitions/dto.SubCategories'
+              type: object
+        "401":
+          description: Unauthorized
+          schema:
+            allOf:
+            - $ref: '#/definitions/dto.Response'
+            - properties:
+                data:
+                  type: string
+              type: object
+        "403":
+          description: Forbidden
+          schema:
+            allOf:
+            - $ref: '#/definitions/dto.Response'
+            - properties:
+                data:
+                  type: string
+              type: object
+      security:
+      - BearerAuth: []
+      summary: Get subcategories
+      tags:
+      - subcategories
+  /v1/categories/subcategories:
+    delete:
+      consumes:
+      - application/json
+      description: Deletes a subcategory. This endpoint is intended for internal use
+        and should be secured appropriately.
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            allOf:
+            - $ref: '#/definitions/dto.Response'
+            - properties:
+                data:
+                  type: string
+              type: object
+        "400":
+          description: Bad Request
+          schema:
+            allOf:
+            - $ref: '#/definitions/dto.Response'
+            - properties:
+                data:
+                  type: string
+              type: object
+        "401":
+          description: Unauthorized
+          schema:
+            allOf:
+            - $ref: '#/definitions/dto.Response'
+            - properties:
+                data:
+                  type: string
+              type: object
+        "403":
+          description: Forbidden
+          schema:
+            allOf:
+            - $ref: '#/definitions/dto.Response'
+            - properties:
+                data:
+                  type: string
+              type: object
+      security:
+      - BearerAuth: []
+      summary: Delete a subcategory
+      tags:
+      - subcategories
+    patch:
+      consumes:
+      - multipart/form-data
+      description: Updates an existing subcategory. This endpoint is intended for
+        internal use and should be secured appropriately.
+      parameters:
+      - description: Unique identifier for the subcategory
+        in: formData
+        name: sub_category_id
+        required: true
+        type: string
+      - description: Display name of the subcategory
+        in: formData
+        name: sub_category_name
+        required: true
+        type: string
+      - description: Identifier of the parent category
+        in: formData
+        name: category_id
+        required: true
+        type: string
+      - description: Image file for the subcategory
+        in: formData
+        name: image
+        required: true
+        type: file
+      - description: Status of the subcategory
+        enum:
+        - active
+        - disabled
+        in: formData
+        name: status
+        required: true
+        type: string
+      - description: Whether the subcategory is flagged as a top/featured subcategory
+        in: formData
+        name: is_top_sub_category
+        required: true
+        type: boolean
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            allOf:
+            - $ref: '#/definitions/dto.Response'
+            - properties:
+                data:
+                  $ref: '#/definitions/dto.SubCategory'
+              type: object
+        "400":
+          description: Bad Request
+          schema:
+            allOf:
+            - $ref: '#/definitions/dto.Response'
+            - properties:
+                data:
+                  type: string
+              type: object
+        "401":
+          description: Unauthorized
+          schema:
+            allOf:
+            - $ref: '#/definitions/dto.Response'
+            - properties:
+                data:
+                  type: string
+              type: object
+        "403":
+          description: Forbidden
+          schema:
+            allOf:
+            - $ref: '#/definitions/dto.Response'
+            - properties:
+                data:
+                  type: string
+              type: object
+      security:
+      - BearerAuth: []
+      summary: Update an existing subcategory (id supplied via form data)
+      tags:
+      - subcategories
+    post:
+      consumes:
+      - multipart/form-data
+      description: Creates a new subcategory. This endpoint is intended for internal
+        use and should be secured appropriately.
+      parameters:
+      - description: Display name of the subcategory
+        in: formData
+        name: sub_category_name
+        required: true
+        type: string
+      - description: Identifier of the parent category
+        in: formData
+        name: category_id
+        required: true
+        type: string
+      - description: Image file for the subcategory
+        in: formData
+        name: image
+        required: true
+        type: file
+      - description: Status of the subcategory
+        enum:
+        - active
+        - disabled
+        in: formData
+        name: status
+        required: true
+        type: string
+      - description: Whether the subcategory is flagged as a top/featured subcategory
+        in: formData
+        name: is_top_sub_category
+        required: true
+        type: boolean
+      produces:
+      - application/json
+      responses:
+        "201":
+          description: Created
+          schema:
+            allOf:
+            - $ref: '#/definitions/dto.Response'
+            - properties:
+                data:
+                  $ref: '#/definitions/dto.SubCategory'
+              type: object
+        "400":
+          description: Bad Request
+          schema:
+            allOf:
+            - $ref: '#/definitions/dto.Response'
+            - properties:
+                data:
+                  type: string
+              type: object
+        "401":
+          description: Unauthorized
+          schema:
+            allOf:
+            - $ref: '#/definitions/dto.Response'
+            - properties:
+                data:
+                  type: string
+              type: object
+        "403":
+          description: Forbidden
+          schema:
+            allOf:
+            - $ref: '#/definitions/dto.Response'
+            - properties:
+                data:
+                  type: string
+              type: object
+      security:
+      - BearerAuth: []
+      summary: Create a new subcategory
+      tags:
+      - subcategories
+  /v1/dashboard:
+    get:
+      consumes:
+      - application/json
+      description: Fetches the data needed to populate the admin dashboard, including
+        headline stats, daily active users, and monthly active users.
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            allOf:
+            - $ref: '#/definitions/dto.Response'
+            - properties:
+                data:
+                  $ref: '#/definitions/dto.DashboardResponse'
+              type: object
+        "401":
+          description: Unauthorized
+          schema:
+            allOf:
+            - $ref: '#/definitions/dto.Response'
+            - properties:
+                data:
+                  type: string
+              type: object
+        "403":
+          description: Forbidden
+          schema:
+            allOf:
+            - $ref: '#/definitions/dto.Response'
+            - properties:
+                data:
+                  type: string
+              type: object
+      security:
+      - BearerAuth: []
+      summary: Get dashboard data
+      tags:
+      - dashboard
+  /v1/dashboard/stats:
+    get:
+      consumes:
+      - application/json
+      description: 'Fetches the headline stat cards for the admin dashboard: total
+        users, average basket size, and total searches.'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            allOf:
+            - $ref: '#/definitions/dto.Response'
+            - properties:
+                data:
+                  $ref: '#/definitions/dto.DashboardStats'
+              type: object
+        "401":
+          description: Unauthorized
+          schema:
+            allOf:
+            - $ref: '#/definitions/dto.Response'
+            - properties:
+                data:
+                  type: string
+              type: object
+        "403":
+          description: Forbidden
+          schema:
+            allOf:
+            - $ref: '#/definitions/dto.Response'
+            - properties:
+                data:
+                  type: string
+              type: object
+      security:
+      - BearerAuth: []
+      summary: Get dashboard stats
+      tags:
+      - dashboard
+  /v1/inventory-management:
+    delete:
+      consumes:
+      - application/json
+      description: Deletes an existing inventory item in the system. This endpoint
+        is intended for internal use and should be secured appropriately.
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            allOf:
+            - $ref: '#/definitions/dto.Response'
+            - properties:
+                data:
+                  type: string
+              type: object
+        "401":
+          description: Unauthorized
+          schema:
+            allOf:
+            - $ref: '#/definitions/dto.Response'
+            - properties:
+                data:
+                  type: string
+              type: object
+        "403":
+          description: Forbidden
+          schema:
+            allOf:
+            - $ref: '#/definitions/dto.Response'
+            - properties:
+                data:
+                  type: string
+              type: object
+      security:
+      - BearerAuth: []
+      summary: Delete an existing inventory item
+      tags:
+      - inventory-management
+    get:
+      consumes:
+      - application/json
+      description: Fetches the data needed to populate the inventory management dashboard,
+        including headline stats and a paginated list of products.
+      parameters:
+      - description: Page number
+        in: query
+        name: page
+        required: true
+        type: integer
+      - description: Number of items per page
+        in: query
+        name: limit
+        required: true
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            allOf:
+            - $ref: '#/definitions/dto.Response'
+            - properties:
+                data:
+                  $ref: '#/definitions/dto.InventoryManagements'
+              type: object
+        "401":
+          description: Unauthorized
+          schema:
+            allOf:
+            - $ref: '#/definitions/dto.Response'
+            - properties:
+                data:
+                  type: string
+              type: object
+        "403":
+          description: Forbidden
+          schema:
+            allOf:
+            - $ref: '#/definitions/dto.Response'
+            - properties:
+                data:
+                  type: string
+              type: object
+      security:
+      - BearerAuth: []
+      summary: Get inventory management data
+      tags:
+      - inventory-management
+    patch:
+      consumes:
+      - multipart/form-data
+      description: Updates an existing inventory item in the system. This endpoint
+        is intended for internal use and should be secured appropriately.
+      parameters:
+      - description: Unique identifier for the product
+        in: formData
+        name: product_id
+        required: true
+        type: string
+      - description: Image file for the product
+        in: formData
+        name: image
+        type: file
+      - description: Display name of the product
+        in: formData
+        name: product_name
+        type: string
+      - description: Description of the product
+        in: formData
+        name: product_description
+        type: string
+      - description: Unique identifier for the brand
+        in: formData
+        name: brand_id
+        type: string
+      - description: Unique identifier for the category
+        in: formData
+        name: category_id
+        type: string
+      - description: Whether the product is flagged as a top/featured item
+        in: formData
+        name: is_top_item
+        type: boolean
+      - description: Status of the product
+        enum:
+        - active
+        - disabled
+        in: formData
+        name: status
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            allOf:
+            - $ref: '#/definitions/dto.Response'
+            - properties:
+                data:
+                  $ref: '#/definitions/dto.ProductItem'
+              type: object
+        "401":
+          description: Unauthorized
+          schema:
+            allOf:
+            - $ref: '#/definitions/dto.Response'
+            - properties:
+                data:
+                  type: string
+              type: object
+        "403":
+          description: Forbidden
+          schema:
+            allOf:
+            - $ref: '#/definitions/dto.Response'
+            - properties:
+                data:
+                  type: string
+              type: object
+      security:
+      - BearerAuth: []
+      summary: Update an existing inventory item
+      tags:
+      - inventory-management
+    post:
+      consumes:
+      - multipart/form-data
+      description: Creates a new inventory item in the system. This endpoint is intended
+        for internal use and should be secured appropriately.
+      parameters:
+      - description: Image file for the product
+        in: formData
+        name: image
+        required: true
+        type: file
+      - description: Display name of the product
+        in: formData
+        name: product_name
+        required: true
+        type: string
+      - description: Description of the product
+        in: formData
+        name: product_description
+        required: true
+        type: string
+      - description: Unique identifier for the brand
+        in: formData
+        name: brand_id
+        required: true
+        type: string
+      - description: Unique identifier for the category
+        in: formData
+        name: category_id
+        required: true
+        type: string
+      - description: Whether the product is flagged as a top/featured item
+        in: formData
+        name: is_top_item
+        required: true
+        type: boolean
+      - description: Status of the product
+        enum:
+        - active
+        - disabled
+        in: formData
+        name: status
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            allOf:
+            - $ref: '#/definitions/dto.Response'
+            - properties:
+                data:
+                  $ref: '#/definitions/dto.ProductItem'
+              type: object
+        "401":
+          description: Unauthorized
+          schema:
+            allOf:
+            - $ref: '#/definitions/dto.Response'
+            - properties:
+                data:
+                  type: string
+              type: object
+        "403":
+          description: Forbidden
+          schema:
+            allOf:
+            - $ref: '#/definitions/dto.Response'
+            - properties:
+                data:
+                  type: string
+              type: object
+      security:
+      - BearerAuth: []
+      summary: Create a new inventory item
+      tags:
+      - inventory-management
+  /v1/inventory-management/{product_id}/variants:
+    get:
+      consumes:
+      - application/json
+      description: Fetches a list of variants for a specific product. This endpoint
+        is intended for internal use and should be secured appropriately.
+      parameters:
+      - description: Unique identifier for the product
+        in: path
+        name: product_id
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            allOf:
+            - $ref: '#/definitions/dto.Response'
+            - properties:
+                data:
+                  $ref: '#/definitions/dto.InventoryManagements'
+              type: object
+        "401":
+          description: Unauthorized
+          schema:
+            allOf:
+            - $ref: '#/definitions/dto.Response'
+            - properties:
+                data:
+                  type: string
+              type: object
+        "403":
+          description: Forbidden
+          schema:
+            allOf:
+            - $ref: '#/definitions/dto.Response'
+            - properties:
+                data:
+                  type: string
+              type: object
+      security:
+      - BearerAuth: []
+      summary: List variants of a product
+      tags:
+      - inventory-management
+  /v1/inventory-management/stats:
+    get:
+      consumes:
+      - application/json
+      description: Fetches the headline stats for the inventory management dashboard,
+        including total categories, products, brands, and tracked delivery platforms.
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            allOf:
+            - $ref: '#/definitions/dto.Response'
+            - properties:
+                data:
+                  $ref: '#/definitions/dto.InventoryManagementsStats'
+              type: object
+        "401":
+          description: Unauthorized
+          schema:
+            allOf:
+            - $ref: '#/definitions/dto.Response'
+            - properties:
+                data:
+                  type: string
+              type: object
+        "403":
+          description: Forbidden
+          schema:
+            allOf:
+            - $ref: '#/definitions/dto.Response'
+            - properties:
+                data:
+                  type: string
+              type: object
+      security:
+      - BearerAuth: []
+      summary: Get inventory management stats
+      tags:
+      - inventory-management
+  /v1/inventory-management/variants:
+    delete:
+      consumes:
+      - application/json
+      description: Deletes an existing variant for a specific product. This endpoint
+        is intended for internal use and should be secured appropriately.
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            allOf:
+            - $ref: '#/definitions/dto.Response'
+            - properties:
+                data:
+                  type: string
+              type: object
+        "400":
+          description: Bad Request
+          schema:
+            allOf:
+            - $ref: '#/definitions/dto.Response'
+            - properties:
+                data:
+                  type: string
+              type: object
+        "401":
+          description: Unauthorized
+          schema:
+            allOf:
+            - $ref: '#/definitions/dto.Response'
+            - properties:
+                data:
+                  type: string
+              type: object
+        "403":
+          description: Forbidden
+          schema:
+            allOf:
+            - $ref: '#/definitions/dto.Response'
+            - properties:
+                data:
+                  type: string
+              type: object
+      security:
+      - BearerAuth: []
+      summary: Delete an existing variant for a product
+      tags:
+      - inventory-management
+    patch:
+      consumes:
+      - application/json
+      description: Updates an existing variant for a specific product. This endpoint
+        is intended for internal use and should be secured appropriately.
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            allOf:
+            - $ref: '#/definitions/dto.Response'
+            - properties:
+                data:
+                  $ref: '#/definitions/dto.ProductVariantItem'
+              type: object
+        "400":
+          description: Bad Request
+          schema:
+            allOf:
+            - $ref: '#/definitions/dto.Response'
+            - properties:
+                data:
+                  type: string
+              type: object
+        "401":
+          description: Unauthorized
+          schema:
+            allOf:
+            - $ref: '#/definitions/dto.Response'
+            - properties:
+                data:
+                  type: string
+              type: object
+        "403":
+          description: Forbidden
+          schema:
+            allOf:
+            - $ref: '#/definitions/dto.Response'
+            - properties:
+                data:
+                  type: string
+              type: object
+      security:
+      - BearerAuth: []
+      summary: Update an existing variant for a product
+      tags:
+      - inventory-management
+    post:
+      consumes:
+      - application/json
+      description: Creates a new variant for a specific product. This endpoint is
+        intended for internal use and should be secured appropriately.
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            allOf:
+            - $ref: '#/definitions/dto.Response'
+            - properties:
+                data:
+                  $ref: '#/definitions/dto.ProductVariantItem'
+              type: object
+        "400":
+          description: Bad Request
+          schema:
+            allOf:
+            - $ref: '#/definitions/dto.Response'
+            - properties:
+                data:
+                  type: string
+              type: object
+        "401":
+          description: Unauthorized
+          schema:
+            allOf:
+            - $ref: '#/definitions/dto.Response'
+            - properties:
+                data:
+                  type: string
+              type: object
+        "403":
+          description: Forbidden
+          schema:
+            allOf:
+            - $ref: '#/definitions/dto.Response'
+            - properties:
+                data:
+                  type: string
+              type: object
+      security:
+      - BearerAuth: []
+      summary: Create a new variant for a product
+      tags:
+      - inventory-management
   /v1/users:
     get:
       description: Paginated list of users. Admins see every tenant (optionally filter
@@ -119,6 +2450,34 @@ paths:
       security:
       - BearerAuth: []
       summary: List Users
+      tags:
+      - Users
+  /v1/users/ban:
+    post:
+      consumes:
+      - application/json
+      description: Bans a user by their unique identifier. This action is irreversible
+        and will prevent the user from accessing the system.
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: User banned successfully
+          schema:
+            $ref: '#/definitions/dto.Response'
+        "400":
+          description: Bad request
+          schema:
+            $ref: '#/definitions/dto.Response'
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/dto.Response'
+        "403":
+          description: Forbidden
+          schema:
+            $ref: '#/definitions/dto.Response'
+      summary: Ban User
       tags:
       - Users
 swagger: "2.0"
