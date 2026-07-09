@@ -129,7 +129,7 @@ func UpdateItem() gin.HandlerFunc {
 }
 
 type DeleteItemRequest struct {
-	ProductID string `json:"product_id"`
+	ProductID string `json:"product_id" binding:"required"`
 }
 
 // @Swagger:route DELETE /v1/inventory-management inventory-management deleteItem
@@ -138,7 +138,7 @@ type DeleteItemRequest struct {
 // @Tags inventory-management
 // @Accept json
 // @Produce json
-// @Body DeleteItemRequest
+// @Param DeleteItemRequest body DeleteItemRequest true "Delete Item Request"
 // @Success 200 {object} dto.Response{data=string}
 // @Failure 401 {object} dto.Response{data=string}
 // @Failure 403 {object} dto.Response{data=string}
@@ -161,7 +161,7 @@ func DeleteItem() gin.HandlerFunc {
 // @Accept json
 // @Produce json
 // @Param product_id path string true "Unique identifier for the product"
-// @Success 200 {object} dto.Response{data=dto.InventoryManagements}
+// @Success 200 {object} dto.Response{data=dto.ProductVariantItems}
 // @Failure 401 {object} dto.Response{data=string}
 // @Failure 403 {object} dto.Response{data=string}
 // @Security BearerAuth
@@ -170,7 +170,7 @@ func ListVariants() gin.HandlerFunc {
 	return func(c *gin.Context) {
 		_ = c.Param("product_id")
 		c.JSON(200, dto.Response{
-			Data:    dto.InventoryManagements{},
+			Data:    dto.ProductVariantItems{},
 			Message: "Variants listed successfully",
 			Status:  "success",
 		})
@@ -178,10 +178,10 @@ func ListVariants() gin.HandlerFunc {
 }
 
 type CreateVariantRequest struct {
-	ProductID              string                 `json:"product_id"`
-	Volume                 dto.ProductVariantUnit `json:"volume"`
-	Price                  dto.Pricing            `json:"price"`
-	CustomProductVariantID string                 `json:"custom_product_variant_id"`
+	ProductID              string                 `json:"product_id" binding:"required"`
+	Volume                 dto.ProductVariantUnit `json:"volume" binding:"required"`
+	Price                  dto.Pricing            `json:"price" binding:"required"`
+	CustomProductVariantID string                 `json:"custom_product_variant_id" binding:"required"`
 }
 
 // @Swagger:route POST /v1/inventory-management/variants inventory-management createVariant
@@ -190,7 +190,7 @@ type CreateVariantRequest struct {
 // @Tags inventory-management
 // @Accept json
 // @Produce json
-// @Body CreateVariantRequest
+// @Param CreateVariantRequest body CreateVariantRequest true "Create Variant Request"
 // @Success 200 {object} dto.Response{data=dto.ProductVariantItem}
 // @Failure 400 {object} dto.Response{data=string}
 // @Failure 401 {object} dto.Response{data=string}
@@ -218,7 +218,7 @@ func CreateVariant() gin.HandlerFunc {
 }
 
 type UpdateVariantRequest struct {
-	ProductVariantID       string                 `json:"product_variant_id"`
+	ProductVariantID       string                 `json:"product_variant_id" binding:"required"`
 	ProductID              string                 `json:"product_id"`
 	Volume                 dto.ProductVariantUnit `json:"volume"`
 	Price                  dto.Pricing            `json:"price"`
@@ -231,7 +231,7 @@ type UpdateVariantRequest struct {
 // @Tags inventory-management
 // @Accept json
 // @Produce json
-// @Body UpdateVariantRequest
+// @Param UpdateVariantRequest body UpdateVariantRequest true "Update Variant Request"
 // @Success 200 {object} dto.Response{data=dto.ProductVariantItem}
 // @Failure 400 {object} dto.Response{data=string}
 // @Failure 401 {object} dto.Response{data=string}
@@ -259,7 +259,7 @@ func UpdateVariant() gin.HandlerFunc {
 }
 
 type DeleteVariantRequest struct {
-	ProductVariantID string `json:"product_variant_id"`
+	ProductVariantID string `json:"product_variant_id" binding:"required"`
 }
 
 // @Swagger:route DELETE /v1/inventory-management/variants inventory-management deleteVariant
@@ -268,7 +268,7 @@ type DeleteVariantRequest struct {
 // @Tags inventory-management
 // @Accept json
 // @Produce json
-// @Body DeleteVariantRequest
+// @Param DeleteVariantRequest body DeleteVariantRequest true "Delete Variant Request"
 // @Success 200 {object} dto.Response{data=string}
 // @Failure 400 {object} dto.Response{data=string}
 // @Failure 401 {object} dto.Response{data=string}

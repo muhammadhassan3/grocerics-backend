@@ -9,7 +9,9 @@ const docTemplate = `{
     "info": {
         "description": "{{escape .Description}}",
         "title": "{{.Title}}",
-        "contact": {},
+        "contact": {
+            "name": "API Support"
+        },
         "version": "{{.Version}}"
     },
     "host": "{{.Host}}",
@@ -452,10 +454,10 @@ const docTemplate = `{
                     },
                     {
                         "type": "boolean",
+                        "default": true,
                         "description": "Whether the banner is currently enabled",
                         "name": "is_active",
-                        "in": "formData",
-                        "required": true
+                        "in": "formData"
                     }
                 ],
                 "responses": {
@@ -550,6 +552,17 @@ const docTemplate = `{
                     "banners"
                 ],
                 "summary": "Delete an existing banner",
+                "parameters": [
+                    {
+                        "description": "Delete Banner Request",
+                        "name": "DeleteBannerRequest",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/v1.DeleteBannerRequest"
+                        }
+                    }
+                ],
                 "responses": {
                     "200": {
                         "description": "OK",
@@ -985,6 +998,17 @@ const docTemplate = `{
                     "brands"
                 ],
                 "summary": "Delete a brand",
+                "parameters": [
+                    {
+                        "description": "Unique identifier for the brand",
+                        "name": "DeleteBrandRequest",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/v1.DeleteBrandRequest"
+                        }
+                    }
+                ],
                 "responses": {
                     "200": {
                         "description": "OK",
@@ -1089,8 +1113,7 @@ const docTemplate = `{
                         "type": "string",
                         "description": "Display name of the brand",
                         "name": "brand_name",
-                        "in": "formData",
-                        "required": true
+                        "in": "formData"
                     },
                     {
                         "type": "file",
@@ -1106,15 +1129,13 @@ const docTemplate = `{
                         "type": "string",
                         "description": "Status of the brand",
                         "name": "status",
-                        "in": "formData",
-                        "required": true
+                        "in": "formData"
                     },
                     {
                         "type": "boolean",
                         "description": "Whether the brand is flagged as a top/featured brand",
                         "name": "is_top_brand",
-                        "in": "formData",
-                        "required": true
+                        "in": "formData"
                     }
                 ],
                 "responses": {
@@ -1427,6 +1448,17 @@ const docTemplate = `{
                     "categories"
                 ],
                 "summary": "Delete an existing category",
+                "parameters": [
+                    {
+                        "description": "Unique identifier for the category",
+                        "name": "DeleteCategoryRequest",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/v1.DeleteCategoryRequest"
+                        }
+                    }
+                ],
                 "responses": {
                     "200": {
                         "description": "OK",
@@ -1787,6 +1819,17 @@ const docTemplate = `{
                     "subcategories"
                 ],
                 "summary": "Delete a subcategory",
+                "parameters": [
+                    {
+                        "description": "Delete Subcategory Request",
+                        "name": "DeleteSubcategoryRequest",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/v1.DeleteSubcategoryRequest"
+                        }
+                    }
+                ],
                 "responses": {
                     "200": {
                         "description": "OK",
@@ -1891,22 +1934,19 @@ const docTemplate = `{
                         "type": "string",
                         "description": "Display name of the subcategory",
                         "name": "sub_category_name",
-                        "in": "formData",
-                        "required": true
+                        "in": "formData"
                     },
                     {
                         "type": "string",
                         "description": "Identifier of the parent category",
                         "name": "category_id",
-                        "in": "formData",
-                        "required": true
+                        "in": "formData"
                     },
                     {
                         "type": "file",
                         "description": "Image file for the subcategory",
                         "name": "image",
-                        "in": "formData",
-                        "required": true
+                        "in": "formData"
                     },
                     {
                         "enum": [
@@ -1916,15 +1956,13 @@ const docTemplate = `{
                         "type": "string",
                         "description": "Status of the subcategory",
                         "name": "status",
-                        "in": "formData",
-                        "required": true
+                        "in": "formData"
                     },
                     {
                         "type": "boolean",
                         "description": "Whether the subcategory is flagged as a top/featured subcategory",
                         "name": "is_top_sub_category",
-                        "in": "formData",
-                        "required": true
+                        "in": "formData"
                     }
                 ],
                 "responses": {
@@ -2178,6 +2216,98 @@ const docTemplate = `{
                 }
             }
         },
+        "/v1/dashboard/live-price-comparison": {
+            "get": {
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
+                "description": "Fetches the live price comparison data for products across different delivery platforms.",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "dashboard"
+                ],
+                "summary": "Get live price comparison",
+                "parameters": [
+                    {
+                        "type": "integer",
+                        "description": "Page number",
+                        "name": "page",
+                        "in": "query",
+                        "required": true
+                    },
+                    {
+                        "type": "integer",
+                        "description": "Number of items per page",
+                        "name": "limit",
+                        "in": "query",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "allOf": [
+                                {
+                                    "$ref": "#/definitions/dto.Response"
+                                },
+                                {
+                                    "type": "object",
+                                    "properties": {
+                                        "data": {
+                                            "$ref": "#/definitions/dto.LivePrice"
+                                        }
+                                    }
+                                }
+                            ]
+                        }
+                    },
+                    "401": {
+                        "description": "Unauthorized",
+                        "schema": {
+                            "allOf": [
+                                {
+                                    "$ref": "#/definitions/dto.Response"
+                                },
+                                {
+                                    "type": "object",
+                                    "properties": {
+                                        "data": {
+                                            "type": "string"
+                                        }
+                                    }
+                                }
+                            ]
+                        }
+                    },
+                    "403": {
+                        "description": "Forbidden",
+                        "schema": {
+                            "allOf": [
+                                {
+                                    "$ref": "#/definitions/dto.Response"
+                                },
+                                {
+                                    "type": "object",
+                                    "properties": {
+                                        "data": {
+                                            "type": "string"
+                                        }
+                                    }
+                                }
+                            ]
+                        }
+                    }
+                }
+            }
+        },
         "/v1/dashboard/stats": {
             "get": {
                 "security": [
@@ -2196,6 +2326,21 @@ const docTemplate = `{
                     "dashboard"
                 ],
                 "summary": "Get dashboard stats",
+                "parameters": [
+                    {
+                        "enum": [
+                            "daily",
+                            "weekly",
+                            "monthly"
+                        ],
+                        "type": "string",
+                        "default": "daily",
+                        "description": "Interval for stats aggregation (e.g., daily, weekly, monthly)",
+                        "name": "interval",
+                        "in": "query",
+                        "required": true
+                    }
+                ],
                 "responses": {
                     "200": {
                         "description": "OK",
@@ -2209,6 +2354,98 @@ const docTemplate = `{
                                     "properties": {
                                         "data": {
                                             "$ref": "#/definitions/dto.DashboardStats"
+                                        }
+                                    }
+                                }
+                            ]
+                        }
+                    },
+                    "401": {
+                        "description": "Unauthorized",
+                        "schema": {
+                            "allOf": [
+                                {
+                                    "$ref": "#/definitions/dto.Response"
+                                },
+                                {
+                                    "type": "object",
+                                    "properties": {
+                                        "data": {
+                                            "type": "string"
+                                        }
+                                    }
+                                }
+                            ]
+                        }
+                    },
+                    "403": {
+                        "description": "Forbidden",
+                        "schema": {
+                            "allOf": [
+                                {
+                                    "$ref": "#/definitions/dto.Response"
+                                },
+                                {
+                                    "type": "object",
+                                    "properties": {
+                                        "data": {
+                                            "type": "string"
+                                        }
+                                    }
+                                }
+                            ]
+                        }
+                    }
+                }
+            }
+        },
+        "/v1/dashboard/top-searched-products": {
+            "get": {
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
+                "description": "Fetches the top searched products data for the admin dashboard.",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "dashboard"
+                ],
+                "summary": "Get top searched products",
+                "parameters": [
+                    {
+                        "type": "integer",
+                        "description": "Page number",
+                        "name": "page",
+                        "in": "query",
+                        "required": true
+                    },
+                    {
+                        "type": "integer",
+                        "description": "Number of items per page",
+                        "name": "limit",
+                        "in": "query",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "allOf": [
+                                {
+                                    "$ref": "#/definitions/dto.Response"
+                                },
+                                {
+                                    "type": "object",
+                                    "properties": {
+                                        "data": {
+                                            "$ref": "#/definitions/dto.TopSearchProduct"
                                         }
                                     }
                                 }
@@ -2491,6 +2728,17 @@ const docTemplate = `{
                     "inventory-management"
                 ],
                 "summary": "Delete an existing inventory item",
+                "parameters": [
+                    {
+                        "description": "Delete Item Request",
+                        "name": "DeleteItemRequest",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/v1.DeleteItemRequest"
+                        }
+                    }
+                ],
                 "responses": {
                     "200": {
                         "description": "OK",
@@ -2772,6 +3020,17 @@ const docTemplate = `{
                     "inventory-management"
                 ],
                 "summary": "Create a new variant for a product",
+                "parameters": [
+                    {
+                        "description": "Create Variant Request",
+                        "name": "CreateVariantRequest",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/v1.CreateVariantRequest"
+                        }
+                    }
+                ],
                 "responses": {
                     "200": {
                         "description": "OK",
@@ -2864,6 +3123,17 @@ const docTemplate = `{
                     "inventory-management"
                 ],
                 "summary": "Delete an existing variant for a product",
+                "parameters": [
+                    {
+                        "description": "Delete Variant Request",
+                        "name": "DeleteVariantRequest",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/v1.DeleteVariantRequest"
+                        }
+                    }
+                ],
                 "responses": {
                     "200": {
                         "description": "OK",
@@ -2956,6 +3226,17 @@ const docTemplate = `{
                     "inventory-management"
                 ],
                 "summary": "Update an existing variant for a product",
+                "parameters": [
+                    {
+                        "description": "Update Variant Request",
+                        "name": "UpdateVariantRequest",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/v1.UpdateVariantRequest"
+                        }
+                    }
+                ],
                 "responses": {
                     "200": {
                         "description": "OK",
@@ -3071,7 +3352,7 @@ const docTemplate = `{
                                     "type": "object",
                                     "properties": {
                                         "data": {
-                                            "$ref": "#/definitions/dto.InventoryManagements"
+                                            "$ref": "#/definitions/dto.ProductVariantItems"
                                         }
                                     }
                                 }
@@ -3159,32 +3440,14 @@ const docTemplate = `{
                     },
                     {
                         "type": "string",
-                        "description": "filter by company UUID (admin-only override; non-admin mismatching value → 403)",
-                        "name": "company_id",
-                        "in": "query"
-                    },
-                    {
-                        "type": "string",
-                        "description": "filter by role: admin | client_manager | client",
-                        "name": "role",
-                        "in": "query"
-                    },
-                    {
-                        "type": "string",
                         "description": "filter by status: active | disabled",
                         "name": "status",
                         "in": "query"
                     },
                     {
                         "type": "string",
-                        "description": "ILIKE on name + email, max 128 chars",
+                        "description": "search by name or email (max 128 chars)",
                         "name": "search",
-                        "in": "query"
-                    },
-                    {
-                        "type": "boolean",
-                        "description": "admin-only: list users with company_id IS NULL",
-                        "name": "unassigned",
                         "in": "query"
                     }
                 ],
@@ -3241,6 +3504,17 @@ const docTemplate = `{
                     "Users"
                 ],
                 "summary": "Ban User",
+                "parameters": [
+                    {
+                        "description": "Ban User Request",
+                        "name": "BanUserRequest",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/v1.BanUserRequest"
+                        }
+                    }
+                ],
                 "responses": {
                     "200": {
                         "description": "User banned successfully",
@@ -3649,6 +3923,27 @@ const docTemplate = `{
                 }
             }
         },
+        "dto.LivePrice": {
+            "description": "Paginated list of live product prices.",
+            "type": "object",
+            "properties": {
+                "meta": {
+                    "description": "Pagination metadata",
+                    "allOf": [
+                        {
+                            "$ref": "#/definitions/query.Meta"
+                        }
+                    ]
+                },
+                "products": {
+                    "description": "Page of product prices",
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/dto.ProductPrice"
+                    }
+                }
+            }
+        },
         "dto.MonthlyActiveUsers": {
             "description": "Monthly active user counts for the current year, keyed by month.",
             "type": "object",
@@ -3700,6 +3995,24 @@ const docTemplate = `{
                 "september": {
                     "description": "Active users in September",
                     "type": "integer"
+                }
+            }
+        },
+        "dto.PlatformPrice": {
+            "description": "Live price of a product across tracked delivery platforms.",
+            "type": "object",
+            "properties": {
+                "blinkit_price": {
+                    "description": "Current price on Blinkit",
+                    "type": "number"
+                },
+                "instamart_price": {
+                    "description": "Current price on Instamart",
+                    "type": "number"
+                },
+                "zepto_price": {
+                    "description": "Current price on Zepto",
+                    "type": "number"
                 }
             }
         },
@@ -3789,6 +4102,32 @@ const docTemplate = `{
                 }
             }
         },
+        "dto.ProductPrice": {
+            "description": "A product with its live price across platforms.",
+            "type": "object",
+            "properties": {
+                "platform_price": {
+                    "description": "Per-platform live prices",
+                    "allOf": [
+                        {
+                            "$ref": "#/definitions/dto.PlatformPrice"
+                        }
+                    ]
+                },
+                "product_category": {
+                    "description": "Name of the category the product belongs to",
+                    "type": "string"
+                },
+                "product_id": {
+                    "description": "Unique identifier for the product",
+                    "type": "string"
+                },
+                "product_name": {
+                    "description": "Display name of the product",
+                    "type": "string"
+                }
+            }
+        },
         "dto.ProductVariantItem": {
             "description": "A single sellable variant of a product (e.g. a specific pack size).",
             "type": "object",
@@ -3820,6 +4159,18 @@ const docTemplate = `{
                 "variant_custom_id": {
                     "description": "Human-readable/SKU-style identifier for this variant",
                     "type": "string"
+                }
+            }
+        },
+        "dto.ProductVariantItems": {
+            "type": "object",
+            "properties": {
+                "variants": {
+                    "description": "Page of product variants",
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/dto.ProductVariantItem"
+                    }
                 }
             }
         },
@@ -3952,6 +4303,49 @@ const docTemplate = `{
                 }
             }
         },
+        "dto.TopSearchProduct": {
+            "description": "Paginated list of top-searched products.",
+            "type": "object",
+            "properties": {
+                "meta": {
+                    "description": "Pagination metadata",
+                    "allOf": [
+                        {
+                            "$ref": "#/definitions/query.Meta"
+                        }
+                    ]
+                },
+                "products": {
+                    "description": "Page of ranked products",
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/dto.TopSearchProductItem"
+                    }
+                }
+            }
+        },
+        "dto.TopSearchProductItem": {
+            "description": "A product ranked by search volume.",
+            "type": "object",
+            "properties": {
+                "product_category": {
+                    "description": "Name of the category the product belongs to",
+                    "type": "string"
+                },
+                "product_id": {
+                    "description": "Unique identifier for the product",
+                    "type": "string"
+                },
+                "product_name": {
+                    "description": "Display name of the product",
+                    "type": "string"
+                },
+                "search_count": {
+                    "description": "Number of times the product was searched for",
+                    "type": "integer"
+                }
+            }
+        },
         "dto.UserDTO": {
             "description": "Data Transfer Object for a User entity.",
             "type": "object",
@@ -4023,8 +4417,20 @@ const docTemplate = `{
                     "description": "Unique identifier for the user",
                     "type": "string"
                 },
+                "last_active_at": {
+                    "description": "Timestamp of the user's last activity, RFC3339",
+                    "type": "string"
+                },
+                "location": {
+                    "description": "Free-text location of the user",
+                    "type": "string"
+                },
                 "name": {
                     "description": "Name of the user",
+                    "type": "string"
+                },
+                "profile_picture_url": {
+                    "description": "URL of the user's profile picture",
                     "type": "string"
                 },
                 "role": {
@@ -4081,6 +4487,107 @@ const docTemplate = `{
                 },
                 "total": {
                     "type": "integer"
+                }
+            }
+        },
+        "v1.BanUserRequest": {
+            "type": "object",
+            "required": [
+                "user_id"
+            ],
+            "properties": {
+                "user_id": {
+                    "type": "string"
+                }
+            }
+        },
+        "v1.CreateVariantRequest": {
+            "type": "object",
+            "required": [
+                "custom_product_variant_id",
+                "price",
+                "product_id",
+                "volume"
+            ],
+            "properties": {
+                "custom_product_variant_id": {
+                    "type": "string"
+                },
+                "price": {
+                    "$ref": "#/definitions/dto.Pricing"
+                },
+                "product_id": {
+                    "type": "string"
+                },
+                "volume": {
+                    "$ref": "#/definitions/dto.ProductVariantUnit"
+                }
+            }
+        },
+        "v1.DeleteBannerRequest": {
+            "type": "object",
+            "required": [
+                "banner_id"
+            ],
+            "properties": {
+                "banner_id": {
+                    "type": "string"
+                }
+            }
+        },
+        "v1.DeleteBrandRequest": {
+            "type": "object",
+            "required": [
+                "brand_id"
+            ],
+            "properties": {
+                "brand_id": {
+                    "description": "Unique identifier for the brand",
+                    "type": "string"
+                }
+            }
+        },
+        "v1.DeleteCategoryRequest": {
+            "type": "object",
+            "required": [
+                "category_id"
+            ],
+            "properties": {
+                "category_id": {
+                    "type": "string"
+                }
+            }
+        },
+        "v1.DeleteItemRequest": {
+            "type": "object",
+            "required": [
+                "product_id"
+            ],
+            "properties": {
+                "product_id": {
+                    "type": "string"
+                }
+            }
+        },
+        "v1.DeleteSubcategoryRequest": {
+            "type": "object",
+            "required": [
+                "sub_category_id"
+            ],
+            "properties": {
+                "sub_category_id": {
+                    "type": "string"
+                }
+            }
+        },
+        "v1.DeleteVariantRequest": {
+            "type": "object",
+            "required": [
+                "product_variant_id"
+            ],
+            "properties": {
+                "product_variant_id": {
+                    "type": "string"
                 }
             }
         },
@@ -4168,18 +4675,48 @@ const docTemplate = `{
                     "type": "string"
                 }
             }
+        },
+        "v1.UpdateVariantRequest": {
+            "type": "object",
+            "required": [
+                "product_variant_id"
+            ],
+            "properties": {
+                "custom_product_variant_id": {
+                    "type": "string"
+                },
+                "price": {
+                    "$ref": "#/definitions/dto.Pricing"
+                },
+                "product_id": {
+                    "type": "string"
+                },
+                "product_variant_id": {
+                    "type": "string"
+                },
+                "volume": {
+                    "$ref": "#/definitions/dto.ProductVariantUnit"
+                }
+            }
+        }
+    },
+    "securityDefinitions": {
+        "BearerAuth": {
+            "type": "apiKey",
+            "name": "Authorization",
+            "in": "header"
         }
     }
 }`
 
 // SwaggerInfo holds exported Swagger Info so clients can modify it
 var SwaggerInfo = &swag.Spec{
-	Version:          "",
+	Version:          "1.1",
 	Host:             "",
 	BasePath:         "",
 	Schemes:          []string{},
-	Title:            "",
-	Description:      "",
+	Title:            "Grocerics API",
+	Description:      "This is the API documentation for the Grocerics backend service.",
 	InfoInstanceName: "swagger",
 	SwaggerTemplate:  docTemplate,
 	LeftDelim:        "{{",

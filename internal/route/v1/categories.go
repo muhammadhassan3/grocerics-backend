@@ -109,7 +109,7 @@ type DeleteCategoryRequest struct {
 // @Tags categories
 // @Accept json
 // @Produce json
-// @Body DeleteCategoryRequest true "Unique identifier for the category"
+// @Param DeleteCategoryRequest body DeleteCategoryRequest true "Unique identifier for the category"
 // @Success 200 {object} dto.Response{data=string}
 // @Failure 400 {object} dto.Response{data=string}
 // @Failure 401 {object} dto.Response{data=string}

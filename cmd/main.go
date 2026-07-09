@@ -9,6 +9,13 @@ import (
 	"go.uber.org/zap"
 )
 
+// @title Grocerics API
+// @version 1.1
+// @description This is the API documentation for the Grocerics backend service.
+// @contact.name API Support
+// @securityDefinitions.apikey BearerAuth
+// @in header
+// @name Authorization
 func main() {
 	cfg, err := config.Load()
 	if err != nil {

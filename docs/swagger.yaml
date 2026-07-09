@@ -247,6 +247,19 @@ definitions:
         - $ref: '#/definitions/dto.StatsItem'
         description: Total number of products
     type: object
+  dto.LivePrice:
+    description: Paginated list of live product prices.
+    properties:
+      meta:
+        allOf:
+        - $ref: '#/definitions/query.Meta'
+        description: Pagination metadata
+      products:
+        description: Page of product prices
+        items:
+          $ref: '#/definitions/dto.ProductPrice'
+        type: array
+    type: object
   dto.MonthlyActiveUsers:
     description: Monthly active user counts for the current year, keyed by month.
     properties:
@@ -286,6 +299,19 @@ definitions:
       september:
         description: Active users in September
         type: integer
+    type: object
+  dto.PlatformPrice:
+    description: Live price of a product across tracked delivery platforms.
+    properties:
+      blinkit_price:
+        description: Current price on Blinkit
+        type: number
+      instamart_price:
+        description: Current price on Instamart
+        type: number
+      zepto_price:
+        description: Current price on Zepto
+        type: number
     type: object
   dto.Pricing:
     description: Price and stock details for a product variant.
@@ -346,6 +372,23 @@ definitions:
         - disabled
         type: string
     type: object
+  dto.ProductPrice:
+    description: A product with its live price across platforms.
+    properties:
+      platform_price:
+        allOf:
+        - $ref: '#/definitions/dto.PlatformPrice'
+        description: Per-platform live prices
+      product_category:
+        description: Name of the category the product belongs to
+        type: string
+      product_id:
+        description: Unique identifier for the product
+        type: string
+      product_name:
+        description: Display name of the product
+        type: string
+    type: object
   dto.ProductVariantItem:
     description: A single sellable variant of a product (e.g. a specific pack size).
     properties:
@@ -366,6 +409,14 @@ definitions:
       variant_custom_id:
         description: Human-readable/SKU-style identifier for this variant
         type: string
+    type: object
+  dto.ProductVariantItems:
+    properties:
+      variants:
+        description: Page of product variants
+        items:
+          $ref: '#/definitions/dto.ProductVariantItem'
+        type: array
     type: object
   dto.ProductVariantUnit:
     description: Volume/weight of a product variant, e.g. "500 gm".
@@ -460,6 +511,35 @@ definitions:
           expires
         type: string
     type: object
+  dto.TopSearchProduct:
+    description: Paginated list of top-searched products.
+    properties:
+      meta:
+        allOf:
+        - $ref: '#/definitions/query.Meta'
+        description: Pagination metadata
+      products:
+        description: Page of ranked products
+        items:
+          $ref: '#/definitions/dto.TopSearchProductItem'
+        type: array
+    type: object
+  dto.TopSearchProductItem:
+    description: A product ranked by search volume.
+    properties:
+      product_category:
+        description: Name of the category the product belongs to
+        type: string
+      product_id:
+        description: Unique identifier for the product
+        type: string
+      product_name:
+        description: Display name of the product
+        type: string
+      search_count:
+        description: Number of times the product was searched for
+        type: integer
+    type: object
   dto.UserDTO:
     description: Data Transfer Object for a User entity.
     properties:
@@ -514,8 +594,17 @@ definitions:
       id:
         description: Unique identifier for the user
         type: string
+      last_active_at:
+        description: Timestamp of the user's last activity, RFC3339
+        type: string
+      location:
+        description: Free-text location of the user
+        type: string
       name:
         description: Name of the user
+        type: string
+      profile_picture_url:
+        description: URL of the user's profile picture
         type: string
       role:
         description: Role of the user
@@ -554,6 +643,72 @@ definitions:
         type: integer
       total:
         type: integer
+    type: object
+  v1.BanUserRequest:
+    properties:
+      user_id:
+        type: string
+    required:
+    - user_id
+    type: object
+  v1.CreateVariantRequest:
+    properties:
+      custom_product_variant_id:
+        type: string
+      price:
+        $ref: '#/definitions/dto.Pricing'
+      product_id:
+        type: string
+      volume:
+        $ref: '#/definitions/dto.ProductVariantUnit'
+    required:
+    - custom_product_variant_id
+    - price
+    - product_id
+    - volume
+    type: object
+  v1.DeleteBannerRequest:
+    properties:
+      banner_id:
+        type: string
+    required:
+    - banner_id
+    type: object
+  v1.DeleteBrandRequest:
+    properties:
+      brand_id:
+        description: Unique identifier for the brand
+        type: string
+    required:
+    - brand_id
+    type: object
+  v1.DeleteCategoryRequest:
+    properties:
+      category_id:
+        type: string
+    required:
+    - category_id
+    type: object
+  v1.DeleteItemRequest:
+    properties:
+      product_id:
+        type: string
+    required:
+    - product_id
+    type: object
+  v1.DeleteSubcategoryRequest:
+    properties:
+      sub_category_id:
+        type: string
+    required:
+    - sub_category_id
+    type: object
+  v1.DeleteVariantRequest:
+    properties:
+      product_variant_id:
+        type: string
+    required:
+    - product_variant_id
     type: object
   v1.ForgotPasswordRequest:
     properties:
@@ -612,8 +767,27 @@ definitions:
     - new_password
     - token
     type: object
+  v1.UpdateVariantRequest:
+    properties:
+      custom_product_variant_id:
+        type: string
+      price:
+        $ref: '#/definitions/dto.Pricing'
+      product_id:
+        type: string
+      product_variant_id:
+        type: string
+      volume:
+        $ref: '#/definitions/dto.ProductVariantUnit'
+    required:
+    - product_variant_id
+    type: object
 info:
-  contact: {}
+  contact:
+    name: API Support
+  description: This is the API documentation for the Grocerics backend service.
+  title: Grocerics API
+  version: "1.1"
 paths:
   /auth/forgot-password:
     post:
@@ -811,6 +985,13 @@ paths:
       - application/json
       description: Deletes an existing banner. This endpoint is intended for internal
         use and should be secured appropriately.
+      parameters:
+      - description: Delete Banner Request
+        in: body
+        name: DeleteBannerRequest
+        required: true
+        schema:
+          $ref: '#/definitions/v1.DeleteBannerRequest'
       produces:
       - application/json
       responses:
@@ -997,10 +1178,10 @@ paths:
         name: end_date
         required: true
         type: string
-      - description: Whether the banner is currently enabled
+      - default: true
+        description: Whether the banner is currently enabled
         in: formData
         name: is_active
-        required: true
         type: boolean
       produces:
       - application/json
@@ -1052,6 +1233,13 @@ paths:
       - application/json
       description: Deletes a brand. This endpoint is intended for internal use and
         should be secured appropriately.
+      parameters:
+      - description: Unique identifier for the brand
+        in: body
+        name: DeleteBrandRequest
+        required: true
+        schema:
+          $ref: '#/definitions/v1.DeleteBrandRequest'
       produces:
       - application/json
       responses:
@@ -1160,7 +1348,6 @@ paths:
       - description: Display name of the brand
         in: formData
         name: brand_name
-        required: true
         type: string
       - description: Image file for the brand
         in: formData
@@ -1172,12 +1359,10 @@ paths:
         - disabled
         in: formData
         name: status
-        required: true
         type: string
       - description: Whether the brand is flagged as a top/featured brand
         in: formData
         name: is_top_brand
-        required: true
         type: boolean
       produces:
       - application/json
@@ -1302,6 +1487,13 @@ paths:
       - application/json
       description: Deletes an existing category. This endpoint is intended for internal
         use and should be secured appropriately.
+      parameters:
+      - description: Unique identifier for the category
+        in: body
+        name: DeleteCategoryRequest
+        required: true
+        schema:
+          $ref: '#/definitions/v1.DeleteCategoryRequest'
       produces:
       - application/json
       responses:
@@ -1609,6 +1801,13 @@ paths:
       - application/json
       description: Deletes a subcategory. This endpoint is intended for internal use
         and should be secured appropriately.
+      parameters:
+      - description: Delete Subcategory Request
+        in: body
+        name: DeleteSubcategoryRequest
+        required: true
+        schema:
+          $ref: '#/definitions/v1.DeleteSubcategoryRequest'
       produces:
       - application/json
       responses:
@@ -1667,17 +1866,14 @@ paths:
       - description: Display name of the subcategory
         in: formData
         name: sub_category_name
-        required: true
         type: string
       - description: Identifier of the parent category
         in: formData
         name: category_id
-        required: true
         type: string
       - description: Image file for the subcategory
         in: formData
         name: image
-        required: true
         type: file
       - description: Status of the subcategory
         enum:
@@ -1685,12 +1881,10 @@ paths:
         - disabled
         in: formData
         name: status
-        required: true
         type: string
       - description: Whether the subcategory is flagged as a top/featured subcategory
         in: formData
         name: is_top_sub_category
-        required: true
         type: boolean
       produces:
       - application/json
@@ -1855,12 +2049,75 @@ paths:
       summary: Get dashboard data
       tags:
       - dashboard
+  /v1/dashboard/live-price-comparison:
+    get:
+      consumes:
+      - application/json
+      description: Fetches the live price comparison data for products across different
+        delivery platforms.
+      parameters:
+      - description: Page number
+        in: query
+        name: page
+        required: true
+        type: integer
+      - description: Number of items per page
+        in: query
+        name: limit
+        required: true
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            allOf:
+            - $ref: '#/definitions/dto.Response'
+            - properties:
+                data:
+                  $ref: '#/definitions/dto.LivePrice'
+              type: object
+        "401":
+          description: Unauthorized
+          schema:
+            allOf:
+            - $ref: '#/definitions/dto.Response'
+            - properties:
+                data:
+                  type: string
+              type: object
+        "403":
+          description: Forbidden
+          schema:
+            allOf:
+            - $ref: '#/definitions/dto.Response'
+            - properties:
+                data:
+                  type: string
+              type: object
+      security:
+      - BearerAuth: []
+      summary: Get live price comparison
+      tags:
+      - dashboard
   /v1/dashboard/stats:
     get:
       consumes:
       - application/json
       description: 'Fetches the headline stat cards for the admin dashboard: total
         users, average basket size, and total searches.'
+      parameters:
+      - default: daily
+        description: Interval for stats aggregation (e.g., daily, weekly, monthly)
+        enum:
+        - daily
+        - weekly
+        - monthly
+        in: query
+        name: interval
+        required: true
+        type: string
       produces:
       - application/json
       responses:
@@ -1896,12 +2153,70 @@ paths:
       summary: Get dashboard stats
       tags:
       - dashboard
+  /v1/dashboard/top-searched-products:
+    get:
+      consumes:
+      - application/json
+      description: Fetches the top searched products data for the admin dashboard.
+      parameters:
+      - description: Page number
+        in: query
+        name: page
+        required: true
+        type: integer
+      - description: Number of items per page
+        in: query
+        name: limit
+        required: true
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            allOf:
+            - $ref: '#/definitions/dto.Response'
+            - properties:
+                data:
+                  $ref: '#/definitions/dto.TopSearchProduct'
+              type: object
+        "401":
+          description: Unauthorized
+          schema:
+            allOf:
+            - $ref: '#/definitions/dto.Response'
+            - properties:
+                data:
+                  type: string
+              type: object
+        "403":
+          description: Forbidden
+          schema:
+            allOf:
+            - $ref: '#/definitions/dto.Response'
+            - properties:
+                data:
+                  type: string
+              type: object
+      security:
+      - BearerAuth: []
+      summary: Get top searched products
+      tags:
+      - dashboard
   /v1/inventory-management:
     delete:
       consumes:
       - application/json
       description: Deletes an existing inventory item in the system. This endpoint
         is intended for internal use and should be secured appropriately.
+      parameters:
+      - description: Delete Item Request
+        in: body
+        name: DeleteItemRequest
+        required: true
+        schema:
+          $ref: '#/definitions/v1.DeleteItemRequest'
       produces:
       - application/json
       responses:
@@ -2166,7 +2481,7 @@ paths:
             - $ref: '#/definitions/dto.Response'
             - properties:
                 data:
-                  $ref: '#/definitions/dto.InventoryManagements'
+                  $ref: '#/definitions/dto.ProductVariantItems'
               type: object
         "401":
           description: Unauthorized
@@ -2238,6 +2553,13 @@ paths:
       - application/json
       description: Deletes an existing variant for a specific product. This endpoint
         is intended for internal use and should be secured appropriately.
+      parameters:
+      - description: Delete Variant Request
+        in: body
+        name: DeleteVariantRequest
+        required: true
+        schema:
+          $ref: '#/definitions/v1.DeleteVariantRequest'
       produces:
       - application/json
       responses:
@@ -2287,6 +2609,13 @@ paths:
       - application/json
       description: Updates an existing variant for a specific product. This endpoint
         is intended for internal use and should be secured appropriately.
+      parameters:
+      - description: Update Variant Request
+        in: body
+        name: UpdateVariantRequest
+        required: true
+        schema:
+          $ref: '#/definitions/v1.UpdateVariantRequest'
       produces:
       - application/json
       responses:
@@ -2336,6 +2665,13 @@ paths:
       - application/json
       description: Creates a new variant for a specific product. This endpoint is
         intended for internal use and should be secured appropriately.
+      parameters:
+      - description: Create Variant Request
+        in: body
+        name: CreateVariantRequest
+        required: true
+        schema:
+          $ref: '#/definitions/v1.CreateVariantRequest'
       produces:
       - application/json
       responses:
@@ -2402,27 +2738,14 @@ paths:
         in: query
         name: order
         type: string
-      - description: filter by company UUID (admin-only override; non-admin mismatching
-          value → 403)
-        in: query
-        name: company_id
-        type: string
-      - description: 'filter by role: admin | client_manager | client'
-        in: query
-        name: role
-        type: string
       - description: 'filter by status: active | disabled'
         in: query
         name: status
         type: string
-      - description: ILIKE on name + email, max 128 chars
+      - description: search by name or email (max 128 chars)
         in: query
         name: search
         type: string
-      - description: 'admin-only: list users with company_id IS NULL'
-        in: query
-        name: unassigned
-        type: boolean
       produces:
       - application/json
       responses:
@@ -2458,6 +2781,13 @@ paths:
       - application/json
       description: Bans a user by their unique identifier. This action is irreversible
         and will prevent the user from accessing the system.
+      parameters:
+      - description: Ban User Request
+        in: body
+        name: BanUserRequest
+        required: true
+        schema:
+          $ref: '#/definitions/v1.BanUserRequest'
       produces:
       - application/json
       responses:
@@ -2480,4 +2810,9 @@ paths:
       summary: Ban User
       tags:
       - Users
+securityDefinitions:
+  BearerAuth:
+    in: header
+    name: Authorization
+    type: apiKey
 swagger: "2.0"

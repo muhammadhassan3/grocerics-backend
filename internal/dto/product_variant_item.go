@@ -44,3 +44,8 @@ type ProductVariantItem struct {
 	// Price and stock for this variant
 	Pricing Pricing `json:"pricing"`
 }
+
+type ProductVariantItems struct {
+	// Page of product variants
+	Variants []ProductVariantItem `json:"variants"`
+}

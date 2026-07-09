@@ -81,11 +81,11 @@ func CreateSubcategory() gin.HandlerFunc {
 // @Accept multipart/form-data
 // @Produce json
 // @Param sub_category_id formData string true "Unique identifier for the subcategory"
-// @Param sub_category_name formData string true "Display name of the subcategory"
-// @Param category_id formData string true "Identifier of the parent category"
-// @Param image formData file true "Image file for the subcategory"
-// @Param status formData string true "Status of the subcategory" enums(active,disabled)
-// @Param is_top_sub_category formData bool true "Whether the subcategory is flagged as a top/featured subcategory"
+// @Param sub_category_name formData string false "Display name of the subcategory"
+// @Param category_id formData string false "Identifier of the parent category"
+// @Param image formData file false "Image file for the subcategory"
+// @Param status formData string false "Status of the subcategory" enums(active,disabled)
+// @Param is_top_sub_category formData bool false "Whether the subcategory is flagged as a top/featured subcategory"
 // @Success 200 {object} dto.Response{data=dto.SubCategory}
 // @Failure 400 {object} dto.Response{data=string}
 // @Failure 401 {object} dto.Response{data=string}
@@ -112,7 +112,7 @@ type DeleteSubcategoryRequest struct {
 // @Tags subcategories
 // @Accept json
 // @Produce json
-// @Body DeleteSubcategoryRequest
+// @Param DeleteSubcategoryRequest body DeleteSubcategoryRequest true "Delete Subcategory Request"
 // @Success 200 {object} dto.Response{data=string}
 // @Failure 400 {object} dto.Response{data=string}
 // @Failure 401 {object} dto.Response{data=string}

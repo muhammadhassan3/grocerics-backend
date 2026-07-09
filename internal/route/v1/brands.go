@@ -79,10 +79,10 @@ func CreateNewBrand() gin.HandlerFunc {
 // @Accept multipart/form-data
 // @Produce json
 // @Param brand_id formData string true "Unique identifier for the brand"
-// @Param brand_name formData string true "Display name of the brand"
+// @Param brand_name formData string false "Display name of the brand"
 // @Param image formData file false "Image file for the brand"
-// @Param status formData string true "Status of the brand" enums(active,disabled)
-// @Param is_top_brand formData bool true "Whether the brand is flagged as a top/featured brand"
+// @Param status formData string false "Status of the brand" enums(active,disabled)
+// @Param is_top_brand formData bool false "Whether the brand is flagged as a top/featured brand"
 // @Success 200 {object} dto.Response{data=dto.BrandItem}
 // @Failure 400 {object} dto.Response{data=string}
 // @Failure 401 {object} dto.Response{data=string}
@@ -110,7 +110,7 @@ type DeleteBrandRequest struct {
 // @Tags brands
 // @Accept json
 // @Produce json
-// @Body DeleteBrandRequest true "Unique identifier for the brand"
+// @Param DeleteBrandRequest body DeleteBrandRequest true "Unique identifier for the brand"
 // @Success 200 {object} dto.Response{data=string}
 // @Failure 400 {object} dto.Response{data=string}
 // @Failure 401 {object} dto.Response{data=string}

@@ -40,11 +40,8 @@ func RegisterUserRoutes(r *gin.Engine, jwt *auth.JWTService, users *repository.U
 // @Param page_size query int false "page size, max 100 (default 20)"
 // @Param sort query string false "sort column: created_at | name | email | role (default created_at)"
 // @Param order query string false "asc | desc (default desc)"
-// @Param company_id query string false "filter by company UUID (admin-only override; non-admin mismatching value → 403)"
-// @Param role query string false "filter by role: admin | client_manager | client"
 // @Param status query string false "filter by status: active | disabled"
-// @Param search query string false "ILIKE on name + email, max 128 chars"
-// @Param unassigned query bool false "admin-only: list users with company_id IS NULL"
+// @Param search query string false "search by name or email (max 128 chars)"
 // @Success 200 {object} dto.Response{data=dto.UserListResponseDTO} "Users list"
 // @Failure 400 {object} dto.Response "Bad request"
 // @Failure 401 {object} dto.Response "Unauthorized"
@@ -86,7 +83,7 @@ type BanUserRequest struct {
 // @Tags Users
 // @Accept json
 // @Produce json
-// @Body {object} BanUserRequest
+// @Param BanUserRequest body BanUserRequest true "Ban User Request"
 // @Success 200 {object} dto.Response "User banned successfully"
 // @Failure 400 {object} dto.Response "Bad request"
 // @Failure 401 {object} dto.Response "Unauthorized"

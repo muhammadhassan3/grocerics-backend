@@ -52,7 +52,7 @@ func listBanners() gin.HandlerFunc {
 // @Param image formData file true "Image file for the banner"
 // @Param start_date formData string true "Start date of the banner in YYYY-MM-DD format"
 // @Param end_date formData string true "End date of the banner in YYYY-MM-DD format"
-// @Param is_active formData bool true "Whether the banner is currently enabled"
+// @Param is_active formData bool false "Whether the banner is currently enabled" default(true)
 // @Success 201 {object} dto.Response{data=dto.BannerItem}
 // @Failure 400 {object} dto.Response{data=string}
 // @Failure 401 {object} dto.Response{data=string}
@@ -106,7 +106,7 @@ type DeleteBannerRequest struct {
 // @Tags banners
 // @Accept json
 // @Produce json
-// @Body DeleteBannerRequest
+// @Param DeleteBannerRequest body DeleteBannerRequest true "Delete Banner Request"
 // @Success 200 {object} dto.Response{data=string}
 // @Failure 400 {object} dto.Response{data=string}
 // @Failure 401 {object} dto.Response{data=string}

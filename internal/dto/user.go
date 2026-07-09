@@ -49,6 +49,12 @@ type UserListItemDTO struct {
 	Name string `json:"name"`
 	// Email address of the user
 	Email string `json:"email"`
+	// URL of the user's profile picture
+	ProfilePictureURL string `json:"profile_picture_url"`
+	// Free-text location of the user
+	Location string `json:"location"`
+	// Timestamp of the user's last activity, RFC3339
+	LastActiveAt string `json:"last_active_at"`
 	// Role of the user
 	Role string `json:"role" enums:"admin,client_manager,client"`
 	// Status of the user
