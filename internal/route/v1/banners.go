@@ -13,6 +13,7 @@ func RegisterBannerRoutes(jwt *auth.JWTService, users *repository.UserRepository
 	group := r.Group("/v1/banners")
 	group.Use(middleware.AuthMiddleware(jwt, users))
 	group.GET("", listBanners())
+	group.GET("/:banner_id", getBannerByID())
 	adminGroup := group.Group("")
 	adminGroup.Use(middleware.RequireRole("admin"))
 	adminGroup.POST("", CreateBanner())
@@ -38,6 +39,29 @@ func listBanners() gin.HandlerFunc {
 		c.JSON(200, dto.Response{
 			Data:    dto.Banners{},
 			Message: "Banners fetched successfully",
+			Status:  "success",
+		})
+	}
+}
+
+// @Swagger:route GET /v1/banners/{banner_id} banners getBannerByID
+// @Summary Get banner by ID
+// @Description Fetches a banner by its unique identifier.
+// @Tags banners
+// @Accept json
+// @Produce json
+// @Param banner_id path string true "Unique identifier for the banner"
+// @Success 200 {object} dto.Response{data=dto.BannerItem}
+// @Failure 401 {object} dto.Response{data=string}
+// @Failure 403 {object} dto.Response{data=string}
+// @Failure 404 {object} dto.Response{data=string}
+// @Security BearerAuth
+// @Router /v1/banners/{banner_id} [get]
+func getBannerByID() gin.HandlerFunc {
+	return func(c *gin.Context) {
+		c.JSON(200, dto.Response{
+			Data:    dto.BannerItem{},
+			Message: "Banner fetched successfully",
 			Status:  "success",
 		})
 	}

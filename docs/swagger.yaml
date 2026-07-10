@@ -126,6 +126,14 @@ definitions:
         description: Number of subcategories nested under this category
         type: integer
     type: object
+  dto.CategoryData:
+    description: Data Transfer Object for a Category entity.
+    properties:
+      category_id:
+        type: string
+      category_name:
+        type: string
+    type: object
   dto.DailyActiveUsers:
     description: Daily active user counts for the current week, keyed by day.
     properties:
@@ -478,6 +486,8 @@ definitions:
   dto.SubCategories:
     description: Paginated list of subcategories.
     properties:
+      category:
+        $ref: '#/definitions/dto.CategoryData'
       meta:
         allOf:
         - $ref: '#/definitions/query.Meta'
@@ -621,17 +631,11 @@ definitions:
       email:
         description: Email address of the user
         type: string
-      id:
-        description: Unique identifier for the user
-        type: string
       last_active_at:
         description: Timestamp of the user's last activity, RFC3339
         type: string
       location:
         description: Free-text location of the user
-        type: string
-      name:
-        description: Name of the user
         type: string
       profile_picture_url:
         description: URL of the user's profile picture
@@ -647,7 +651,13 @@ definitions:
         description: Status of the user
         enum:
         - active
-        - disabled
+        - suspended
+        type: string
+      user_id:
+        description: Unique identifier for the user
+        type: string
+      user_name:
+        description: Name of the user
         type: string
     type: object
   dto.UserListResponseDTO:
@@ -1440,6 +1450,61 @@ paths:
       summary: Create a new banner
       tags:
       - banners
+  /v1/banners/{banner_id}:
+    get:
+      consumes:
+      - application/json
+      description: Fetches a banner by its unique identifier.
+      parameters:
+      - description: Unique identifier for the banner
+        in: path
+        name: banner_id
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            allOf:
+            - $ref: '#/definitions/dto.Response'
+            - properties:
+                data:
+                  $ref: '#/definitions/dto.BannerItem'
+              type: object
+        "401":
+          description: Unauthorized
+          schema:
+            allOf:
+            - $ref: '#/definitions/dto.Response'
+            - properties:
+                data:
+                  type: string
+              type: object
+        "403":
+          description: Forbidden
+          schema:
+            allOf:
+            - $ref: '#/definitions/dto.Response'
+            - properties:
+                data:
+                  type: string
+              type: object
+        "404":
+          description: Not Found
+          schema:
+            allOf:
+            - $ref: '#/definitions/dto.Response'
+            - properties:
+                data:
+                  type: string
+              type: object
+      security:
+      - BearerAuth: []
+      summary: Get banner by ID
+      tags:
+      - banners
   /v1/brands:
     delete:
       consumes:
@@ -1657,6 +1722,61 @@ paths:
       security:
       - BearerAuth: []
       summary: Create a new brand
+      tags:
+      - brands
+  /v1/brands/{brand_id}:
+    get:
+      consumes:
+      - application/json
+      description: Fetches a brand by its unique identifier.
+      parameters:
+      - description: Unique identifier for the brand
+        in: path
+        name: brand_id
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            allOf:
+            - $ref: '#/definitions/dto.Response'
+            - properties:
+                data:
+                  $ref: '#/definitions/dto.BrandItem'
+              type: object
+        "401":
+          description: Unauthorized
+          schema:
+            allOf:
+            - $ref: '#/definitions/dto.Response'
+            - properties:
+                data:
+                  type: string
+              type: object
+        "403":
+          description: Forbidden
+          schema:
+            allOf:
+            - $ref: '#/definitions/dto.Response'
+            - properties:
+                data:
+                  type: string
+              type: object
+        "404":
+          description: Not Found
+          schema:
+            allOf:
+            - $ref: '#/definitions/dto.Response'
+            - properties:
+                data:
+                  type: string
+              type: object
+      security:
+      - BearerAuth: []
+      summary: Get brand by ID
       tags:
       - brands
   /v1/categories:
@@ -1878,6 +1998,121 @@ paths:
       summary: Create a new category
       tags:
       - categories
+  /v1/categories/{category_id}:
+    get:
+      consumes:
+      - application/json
+      description: Fetches a category by its unique identifier.
+      parameters:
+      - description: Unique identifier for the category
+        in: path
+        name: category_id
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            allOf:
+            - $ref: '#/definitions/dto.Response'
+            - properties:
+                data:
+                  $ref: '#/definitions/dto.Category'
+              type: object
+        "401":
+          description: Unauthorized
+          schema:
+            allOf:
+            - $ref: '#/definitions/dto.Response'
+            - properties:
+                data:
+                  type: string
+              type: object
+        "403":
+          description: Forbidden
+          schema:
+            allOf:
+            - $ref: '#/definitions/dto.Response'
+            - properties:
+                data:
+                  type: string
+              type: object
+        "404":
+          description: Not Found
+          schema:
+            allOf:
+            - $ref: '#/definitions/dto.Response'
+            - properties:
+                data:
+                  type: string
+              type: object
+      security:
+      - BearerAuth: []
+      summary: Get category by ID
+      tags:
+      - categories
+  /v1/categories/{category_id}/subcategories/{subcategory_id}:
+    get:
+      consumes:
+      - application/json
+      description: Fetches a subcategory by its unique identifier.
+      parameters:
+      - description: Unique identifier for the category
+        in: path
+        name: category_id
+        required: true
+        type: string
+      - description: Unique identifier for the subcategory
+        in: path
+        name: subcategory_id
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            allOf:
+            - $ref: '#/definitions/dto.Response'
+            - properties:
+                data:
+                  $ref: '#/definitions/dto.SubCategory'
+              type: object
+        "401":
+          description: Unauthorized
+          schema:
+            allOf:
+            - $ref: '#/definitions/dto.Response'
+            - properties:
+                data:
+                  type: string
+              type: object
+        "403":
+          description: Forbidden
+          schema:
+            allOf:
+            - $ref: '#/definitions/dto.Response'
+            - properties:
+                data:
+                  type: string
+              type: object
+        "404":
+          description: Not Found
+          schema:
+            allOf:
+            - $ref: '#/definitions/dto.Response'
+            - properties:
+                data:
+                  type: string
+              type: object
+      security:
+      - BearerAuth: []
+      summary: Get subcategory by ID
+      tags:
+      - subcategories
   /v1/categories/subcategories:
     delete:
       consumes:
@@ -2495,6 +2730,61 @@ paths:
       summary: Create a new inventory item
       tags:
       - inventory-management
+  /v1/inventory-management/{product_id}:
+    get:
+      consumes:
+      - application/json
+      description: Fetches an inventory item by its unique identifier.
+      parameters:
+      - description: Unique identifier for the inventory item
+        in: path
+        name: product_id
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            allOf:
+            - $ref: '#/definitions/dto.Response'
+            - properties:
+                data:
+                  $ref: '#/definitions/dto.ProductItem'
+              type: object
+        "401":
+          description: Unauthorized
+          schema:
+            allOf:
+            - $ref: '#/definitions/dto.Response'
+            - properties:
+                data:
+                  type: string
+              type: object
+        "403":
+          description: Forbidden
+          schema:
+            allOf:
+            - $ref: '#/definitions/dto.Response'
+            - properties:
+                data:
+                  type: string
+              type: object
+        "404":
+          description: Not Found
+          schema:
+            allOf:
+            - $ref: '#/definitions/dto.Response'
+            - properties:
+                data:
+                  type: string
+              type: object
+      security:
+      - BearerAuth: []
+      summary: Get inventory item by ID
+      tags:
+      - inventory-management
   /v1/inventory-management/{product_id}/variants:
     get:
       consumes:
@@ -2540,6 +2830,66 @@ paths:
       security:
       - BearerAuth: []
       summary: List variants of a product
+      tags:
+      - inventory-management
+  /v1/inventory-management/{product_id}/variants/{variant_id}:
+    get:
+      consumes:
+      - application/json
+      description: Fetches the variants of an inventory item by its unique identifier.
+      parameters:
+      - description: Unique identifier for the inventory item
+        in: path
+        name: product_id
+        required: true
+        type: string
+      - description: Unique identifier for the variant
+        in: path
+        name: variant_id
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            allOf:
+            - $ref: '#/definitions/dto.Response'
+            - properties:
+                data:
+                  $ref: '#/definitions/dto.ProductVariantItems'
+              type: object
+        "401":
+          description: Unauthorized
+          schema:
+            allOf:
+            - $ref: '#/definitions/dto.Response'
+            - properties:
+                data:
+                  type: string
+              type: object
+        "403":
+          description: Forbidden
+          schema:
+            allOf:
+            - $ref: '#/definitions/dto.Response'
+            - properties:
+                data:
+                  type: string
+              type: object
+        "404":
+          description: Not Found
+          schema:
+            allOf:
+            - $ref: '#/definitions/dto.Response'
+            - properties:
+                data:
+                  type: string
+              type: object
+      security:
+      - BearerAuth: []
+      summary: Get inventory item variants by product ID
       tags:
       - inventory-management
   /v1/inventory-management/stats:

@@ -15,11 +15,13 @@ func RegisterInventoryManagementRoutes(jwt *auth.JWTService, users *repository.U
 	group.Use(middleware.AuthMiddleware(jwt, users))
 	group.Use(middleware.RequireRole(domain.RoleAdmin))
 	group.GET("/inventory-management", getInventoryManagements())
+	group.GET("/inventory-management/:product_id", getInventoryItemByID())
 	group.GET("/inventory-management/stats", getInventoryManagementStats())
 	group.POST("/inventory-management", CreateNewItem())
 	group.PATCH("/inventory-management", UpdateItem())
 	group.DELETE("/inventory-management", DeleteItem())
 	group.GET("/inventory-management/:product_id/variants", ListVariants())
+	group.GET("/inventory-management/:product_id/variants/:variant_id", getInventoryItemVariantsByID())
 	group.POST("/inventory-management/variants", CreateVariant())
 	group.PATCH("/inventory-management/variants", UpdateVariant())
 	group.DELETE("/inventory-management/variants", DeleteVariant())
@@ -66,6 +68,29 @@ func getInventoryManagementStats() gin.HandlerFunc {
 		c.JSON(200, dto.Response{
 			Data:    dto.InventoryManagementsStats{},
 			Message: "Inventory management stats fetched successfully",
+			Status:  "success",
+		})
+	}
+}
+
+// @Swagger:route GET /v1/inventory-management/:product_id inventory-management getInventoryItemByID
+// @Summary Get inventory item by ID
+// @Description Fetches an inventory item by its unique identifier.
+// @Tags inventory-management
+// @Accept json
+// @Produce json
+// @Param product_id path string true "Unique identifier for the inventory item"
+// @Success 200 {object} dto.Response{data=dto.ProductItem}
+// @Failure 401 {object} dto.Response{data=string}
+// @Failure 403 {object} dto.Response{data=string}
+// @Failure 404 {object} dto.Response{data=string}
+// @Security BearerAuth
+// @Router /v1/inventory-management/{product_id} [get]
+func getInventoryItemByID() gin.HandlerFunc {
+	return func(c *gin.Context) {
+		c.JSON(200, dto.Response{
+			Data:    dto.ProductItem{},
+			Message: "Inventory item fetched successfully",
 			Status:  "success",
 		})
 	}
@@ -180,6 +205,30 @@ func ListVariants() gin.HandlerFunc {
 		c.JSON(200, dto.Response{
 			Data:    dto.ProductVariantItems{},
 			Message: "Variants listed successfully",
+			Status:  "success",
+		})
+	}
+}
+
+// @Swagger:route GET /v1/inventory-management/:product_id/variants/:variant_id inventory-management getInventoryItemVariantsByID
+// @Summary Get inventory item variants by product ID
+// @Description Fetches the variants of an inventory item by its unique identifier.
+// @Tags inventory-management
+// @Accept json
+// @Produce json
+// @Param product_id path string true "Unique identifier for the inventory item"
+// @Param variant_id path string true "Unique identifier for the variant"
+// @Success 200 {object} dto.Response{data=dto.ProductVariantItems}
+// @Failure 401 {object} dto.Response{data=string}
+// @Failure 403 {object} dto.Response{data=string}
+// @Failure 404 {object} dto.Response{data=string}
+// @Security BearerAuth
+// @Router /v1/inventory-management/{product_id}/variants/{variant_id} [get]
+func getInventoryItemVariantsByID() gin.HandlerFunc {
+	return func(c *gin.Context) {
+		c.JSON(200, dto.Response{
+			Data:    dto.ProductVariantItems{},
+			Message: "Inventory item variants fetched successfully",
 			Status:  "success",
 		})
 	}

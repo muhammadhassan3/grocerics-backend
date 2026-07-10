@@ -14,6 +14,7 @@ func RegisterBrandsRoutes(jwt *auth.JWTService, users *repository.UserRepository
 	group := r.Group("/v1")
 	group.Use(middleware.AuthMiddleware(jwt, users))
 	group.GET("/brands", getBrands())
+	group.GET("/brands/:brand_id", getBrandByID())
 	adminGroup := group.Group("")
 	adminGroup.Use(middleware.RequireRole(domain.RoleAdmin))
 	adminGroup.POST("/brands", CreateNewBrand())
@@ -42,6 +43,29 @@ func getBrands() gin.HandlerFunc {
 			Message: "Brands fetched successfully",
 			Status:  "success",
 			Data:    dto.BrandList{},
+		})
+	}
+}
+
+// @Swagger:route GET /v1/brands/{brand_id} brands getBrandByID
+// @Summary Get brand by ID
+// @Description Fetches a brand by its unique identifier.
+// @Tags brands
+// @Accept json
+// @Produce json
+// @Param brand_id path string true "Unique identifier for the brand"
+// @Success 200 {object} dto.Response{data=dto.BrandItem}
+// @Failure 401 {object} dto.Response{data=string}
+// @Failure 403 {object} dto.Response{data=string}
+// @Failure 404 {object} dto.Response{data=string}
+// @Security BearerAuth
+// @Router /v1/brands/{brand_id} [get]
+func getBrandByID() gin.HandlerFunc {
+	return func(c *gin.Context) {
+		c.JSON(200, dto.Response{
+			Message: "Brand fetched successfully",
+			Status:  "success",
+			Data:    dto.BrandItem{},
 		})
 	}
 }

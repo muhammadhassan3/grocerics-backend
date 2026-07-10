@@ -14,6 +14,7 @@ func RegisterSubcategoryRoutes(jwt *auth.JWTService, user *repository.UserReposi
 	group := r.Group("/v1/categories")
 	group.Use(middleware.AuthMiddleware(jwt, user))
 	group.GET("/subcategories", getSubcategories())
+	group.GET("/:category_id/subcategories/:subcategory_id", getSubcategoryByID())
 	adminGroup := group.Group("")
 	adminGroup.Use(middleware.RequireRole(domain.RoleAdmin))
 	adminGroup.POST("/subcategories", CreateSubcategory())
@@ -43,6 +44,30 @@ func getSubcategories() gin.HandlerFunc {
 		c.JSON(200, dto.Response{
 			Data:    dto.SubCategories{},
 			Message: "Subcategories fetched successfully",
+			Status:  "success",
+		})
+	}
+}
+
+// @Swagger:route GET /v1/categories/{category_id}/subcategories/{subcategory_id} subcategories getSubcategoryByID
+// @Summary Get subcategory by ID
+// @Description Fetches a subcategory by its unique identifier.
+// @Tags subcategories
+// @Accept json
+// @Produce json
+// @Param category_id path string true "Unique identifier for the category"
+// @Param subcategory_id path string true "Unique identifier for the subcategory"
+// @Success 200 {object} dto.Response{data=dto.SubCategory}
+// @Failure 401 {object} dto.Response{data=string}
+// @Failure 403 {object} dto.Response{data=string}
+// @Failure 404 {object} dto.Response{data=string}
+// @Security BearerAuth
+// @Router /v1/categories/{category_id}/subcategories/{subcategory_id} [get]
+func getSubcategoryByID() gin.HandlerFunc {
+	return func(c *gin.Context) {
+		c.JSON(200, dto.Response{
+			Data:    dto.SubCategory{},
+			Message: "Subcategory fetched successfully",
 			Status:  "success",
 		})
 	}

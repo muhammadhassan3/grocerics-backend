@@ -13,6 +13,7 @@ func RegisterCategoryRoutes(jwt *auth.JWTService, user *repository.UserRepositor
 	group := r.Group("/v1")
 	group.Use(middleware.AuthMiddleware(jwt, user))
 	group.GET("/categories", getCategories())
+	group.GET("/categories/:category_id", getCategoryByID())
 
 	adminGroup := group.Group("")
 	adminGroup.Use(middleware.RequireRole("admin"))
@@ -41,6 +42,29 @@ func getCategories() gin.HandlerFunc {
 		c.JSON(200, dto.Response{
 			Data:    dto.Categories{},
 			Message: "Categories fetched successfully",
+			Status:  "success",
+		})
+	}
+}
+
+// @Swagger:route GET /v1/categories/{category_id} categories getCategoryByID
+// @Summary Get category by ID
+// @Description Fetches a category by its unique identifier.
+// @Tags categories
+// @Accept json
+// @Produce json
+// @Param category_id path string true "Unique identifier for the category"
+// @Success 200 {object} dto.Response{data=dto.Category}
+// @Failure 401 {object} dto.Response{data=string}
+// @Failure 403 {object} dto.Response{data=string}
+// @Failure 404 {object} dto.Response{data=string}
+// @Security BearerAuth
+// @Router /v1/categories/{category_id} [get]
+func getCategoryByID() gin.HandlerFunc {
+	return func(c *gin.Context) {
+		c.JSON(200, dto.Response{
+			Data:    dto.Category{},
+			Message: "Category fetched successfully",
 			Status:  "success",
 		})
 	}
