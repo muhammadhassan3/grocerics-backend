@@ -58,7 +58,7 @@ type UserListItemDTO struct {
 	// Role of the user
 	Role string `json:"role" enums:"admin,client_manager,client"`
 	// Status of the user
-	Status string `json:"status" enums:"active,disabled"`
+	Status string `json:"status" enums:"active,suspended"`
 	// Creation timestamp, RFC3339
 	CreatedAt string `json:"created_at"`
 }
