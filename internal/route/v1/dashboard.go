@@ -10,7 +10,7 @@ import (
 	"github.com/gin-gonic/gin"
 )
 
-func RegisterDashboardRoutes(jwt *auth.JWTService, users *repository.UserRepository, r *gin.RouterGroup) {
+func RegisterDashboardRoutes(jwt *auth.JWTService, users *repository.UserRepository, r *gin.Engine) {
 	group := r.Group("/v1")
 	group.Use(middleware.AuthMiddleware(jwt, users))
 	group.Use(middleware.RequireRole(domain.RoleAdmin))

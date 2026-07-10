@@ -35,8 +35,8 @@ type UserDTO struct {
 }
 
 // @Swagger:model UserListItemDTO
-// @Property id: Unique identifier for the user
-// @Property name: Name of the user
+// @Property user_id: Unique identifier for the user
+// @Property user_name: Name of the user
 // @Property email: Email address of the user
 // @Property role: Role of the user
 // @Property status: Status of the user
@@ -44,9 +44,9 @@ type UserDTO struct {
 // @Description Per-row shape returned by GET /v1/users.
 type UserListItemDTO struct {
 	// Unique identifier for the user
-	ID string `json:"id"`
+	ID string `json:"user_id"`
 	// Name of the user
-	Name string `json:"name"`
+	Name string `json:"user_name"`
 	// Email address of the user
 	Email string `json:"email"`
 	// URL of the user's profile picture
