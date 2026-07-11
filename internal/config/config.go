@@ -16,6 +16,7 @@ type Config struct {
 	DB   DBConfig
 	JWT  JWTConfig
 	Seed SeedConfig
+	QC   QCConfig
 }
 
 type DBConfig struct {
@@ -40,6 +41,13 @@ type SeedConfig struct {
 	AdminPassword string // Password for the initial admin user
 }
 
+// An empty APIKey selects the mock
+// client so the stack runs before a real key is provisioned.
+type QCConfig struct {
+	APIKey  string
+	BaseURL string
+}
+
 func Load() (*Config, error) {
 	_ = godotenv.Load()
 
@@ -62,6 +70,10 @@ func Load() (*Config, error) {
 			AdminPassword: envOr("SEED_ADMIN_PASSWORD", "adminpassword"),
 		},
 		FrontendURL: splitCSV(envOr("FRONTEND_ORIGINS", "http://localhost:5500,http://localhost:3000")),
+		QC: QCConfig{
+			APIKey:  envOr("QC_API_KEY", ""),
+			BaseURL: envOr("QC_BASE_URL", ""),
+		},
 	}
 
 	var missing []string

@@ -4,6 +4,7 @@ import (
 	"grocerics-backend/internal/auth"
 	"grocerics-backend/internal/config"
 	"grocerics-backend/internal/dto"
+	"grocerics-backend/internal/integration/quickcommerce"
 	"grocerics-backend/internal/logging"
 	"grocerics-backend/internal/middleware"
 	"grocerics-backend/internal/migrate"
@@ -27,6 +28,7 @@ type App struct {
 	JWTService *auth.JWTService
 	Router     *gin.Engine
 	UserRepo   *repository.UserRepository
+	QC         quickcommerce.Client
 
 	AuthService *service.AuthService
 }
@@ -45,6 +47,7 @@ func New(cfg *config.Config) (*App, error) {
 
 	jwt := auth.NewJWTService(cfg.JWT.SecretKey)
 	userRepo := repository.NewUserRepository(db)
+	qc := quickcommerce.New(quickcommerce.Config{APIKey: cfg.QC.APIKey, BaseURL: cfg.QC.BaseURL})
 
 	authService := service.NewAuthService(userRepo, nil, nil, jwt, "")
 
@@ -55,6 +58,7 @@ func New(cfg *config.Config) (*App, error) {
 		DB:          db,
 		JWTService:  jwt,
 		UserRepo:    userRepo,
+		QC:          qc,
 		AuthService: authService,
 	}
 	a.Router = a.buildRouter()

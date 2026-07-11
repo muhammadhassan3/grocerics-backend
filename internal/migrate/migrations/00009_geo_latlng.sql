@@ -1,0 +1,12 @@
+-- +goose Up
+-- ETA refreshes at the pincode (or the address's precise lat/lng).
+ALTER TABLE cities ADD COLUMN lat DOUBLE PRECISION;
+ALTER TABLE cities ADD COLUMN lng DOUBLE PRECISION;
+ALTER TABLE pincodes ADD COLUMN lat DOUBLE PRECISION;
+ALTER TABLE pincodes ADD COLUMN lng DOUBLE PRECISION;
+
+-- +goose Down
+ALTER TABLE pincodes DROP COLUMN IF EXISTS lng;
+ALTER TABLE pincodes DROP COLUMN IF EXISTS lat;
+ALTER TABLE cities DROP COLUMN IF EXISTS lng;
+ALTER TABLE cities DROP COLUMN IF EXISTS lat;
