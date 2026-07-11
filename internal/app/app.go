@@ -52,6 +52,7 @@ func New(cfg *config.Config) (*App, error) {
 	authService := service.NewAuthService(userRepo, nil, nil, jwt, "")
 
 	config.SeedAdmin(db, cfg.Seed, cfg.Env)
+	config.SeedDemo(db, cfg.Env)
 
 	a := &App{
 		Cfg:         cfg,
