@@ -21,4 +21,4 @@ vendor/
 .idea/
 
 #Service Account
-*.json
+grocerics-firebase-adminsdk.json
