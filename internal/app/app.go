@@ -2,6 +2,7 @@ package app
 
 import (
 	"context"
+
 	"grocerics-backend/internal/auth"
 	"grocerics-backend/internal/config"
 	"grocerics-backend/internal/dto"
@@ -32,7 +33,9 @@ type App struct {
 	JWTService  *auth.JWTService
 	Router      *gin.Engine
 	FirebaseApp *firebase.App
-	UserRepo    *repository.UserRepository
+	AWSClient   *config.AWSClient
+
+	UserRepo *repository.UserRepository
 
 	AuthService *service.AuthService
 }
@@ -65,6 +68,13 @@ func New(cfg *config.Config) (*App, error) {
 	}
 	a.Router = a.buildRouter()
 	a.initializeFirebase()
+
+	client, err := config.NewAWSClient(cfg.AWS)
+	if err != nil {
+		return nil, err
+	}
+	a.AWSClient = client
+
 	return a, nil
 }
 
