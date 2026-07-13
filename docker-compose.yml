@@ -33,6 +33,14 @@ services:
       FRONTEND_ORIGINS: http://localhost:3000
       SEED_ADMIN_EMAIL: admin@example.com
       SEED_ADMIN_PASSWORD: adminpassword
+      # QuickCommerce: blank -> mock client
+      QC_API_KEY: ""
+      QC_BASE_URL: ""
+      # AWS S3 (dummy values so config.Load passes locally; real creds for uploads)
+      AWS_ACCESS_KEY_ID: dummy
+      AWS_SECRET_ACCESS_KEY: dummy
+      AWS_REGION: us-east-1
+      AWS_BUCKET_NAME: grocerics-dev
     ports:
       - "8080:8080"
 
