@@ -1,5 +1,16 @@
 package dto
 
+// @Swagger:model UserData
+// @Property image_url: URL of the user's profile image
+// @Property full_name: Full name of the user
+// @Property role: Role of the user
+// @Description User data associated with the authenticated user.
+type UserData struct {
+	ImageURL string `json:"image_url"`
+	FullName string `json:"full_name"`
+	Role     string `json:"role"`
+}
+
 // @Swagger:model TokenResponse
 // @Property access_token: JWT access token used to authenticate subsequent requests
 // @Property refresh_token: Token used to obtain a new access token once the current one expires
@@ -9,4 +20,6 @@ type TokenResponse struct {
 	AccessToken string `json:"access_token"`
 	// Token used to obtain a new access token once the current one expires
 	RefreshToken string `json:"refresh_token"`
+	// User data associated with the authenticated user
+	UserData UserData `json:"user_data"`
 }

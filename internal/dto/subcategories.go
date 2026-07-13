@@ -28,13 +28,24 @@ type SubCategory struct {
 	CreatedAt string `json:"created_at"`
 }
 
+// @Swagger:model CategoryData
+// @Property category_id: Unique identifier for the category
+// @Property category_name: Display name of the category
+// @Description Data Transfer Object for a Category entity.
+type CategoryData struct {
+	CategoryID   string `json:"category_id"`
+	CategoryName string `json:"category_name"`
+}
+
 // @Swagger:model SubCategories
 // @Property meta: Pagination metadata
+// @Property category: Category data
 // @Property sub_categories: Page of subcategories
 // @Description Paginated list of subcategories.
 type SubCategories struct {
 	// Pagination metadata
-	Meta query.Meta `json:"meta"`
+	Meta     query.Meta   `json:"meta"`
+	Category CategoryData `json:"category"`
 	// Page of subcategories
 	SubCategories []SubCategory `json:"sub_categories"`
 }

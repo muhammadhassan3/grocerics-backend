@@ -126,6 +126,14 @@ definitions:
         description: Number of subcategories nested under this category
         type: integer
     type: object
+  dto.CategoryData:
+    description: Data Transfer Object for a Category entity.
+    properties:
+      category_id:
+        type: string
+      category_name:
+        type: string
+    type: object
   dto.DailyActiveUsers:
     description: Daily active user counts for the current week, keyed by day.
     properties:
@@ -313,6 +321,22 @@ definitions:
         description: Current price on Zepto
         type: number
     type: object
+  dto.PresignedURL:
+    description: Signed URL for uploading a file to the storage bucket.
+    properties:
+      expires_at:
+        description: Expiration timestamp of the signed URL, RFC3339
+        type: string
+      key:
+        description: Key of the file in the storage bucket
+        type: string
+      presigned_url:
+        description: Signed URL for uploading the file
+        type: string
+      public_url:
+        description: Public URL of the uploaded file
+        type: string
+    type: object
   dto.Pricing:
     description: Price and stock details for a product variant.
     properties:
@@ -462,6 +486,8 @@ definitions:
   dto.SubCategories:
     description: Paginated list of subcategories.
     properties:
+      category:
+        $ref: '#/definitions/dto.CategoryData'
       meta:
         allOf:
         - $ref: '#/definitions/query.Meta'
@@ -510,6 +536,10 @@ definitions:
         description: Token used to obtain a new access token once the current one
           expires
         type: string
+      user_data:
+        allOf:
+        - $ref: '#/definitions/dto.UserData'
+        description: User data associated with the authenticated user
     type: object
   dto.TopSearchProduct:
     description: Paginated list of top-searched products.
@@ -582,6 +612,16 @@ definitions:
         - disabled
         type: string
     type: object
+  dto.UserData:
+    description: User data associated with the authenticated user.
+    properties:
+      full_name:
+        type: string
+      image_url:
+        type: string
+      role:
+        type: string
+    type: object
   dto.UserListItemDTO:
     description: Per-row shape returned by GET /v1/users.
     properties:
@@ -591,17 +631,11 @@ definitions:
       email:
         description: Email address of the user
         type: string
-      id:
-        description: Unique identifier for the user
-        type: string
       last_active_at:
         description: Timestamp of the user's last activity, RFC3339
         type: string
       location:
         description: Free-text location of the user
-        type: string
-      name:
-        description: Name of the user
         type: string
       profile_picture_url:
         description: URL of the user's profile picture
@@ -617,7 +651,13 @@ definitions:
         description: Status of the user
         enum:
         - active
-        - disabled
+        - suspended
+        type: string
+      user_id:
+        description: Unique identifier for the user
+        type: string
+      user_name:
+        description: Name of the user
         type: string
     type: object
   dto.UserListResponseDTO:
@@ -650,6 +690,110 @@ definitions:
         type: string
     required:
     - user_id
+    type: object
+  v1.CreateBannerRequest:
+    properties:
+      end_date:
+        type: string
+      image_url:
+        type: string
+      is_active:
+        default: true
+        type: boolean
+      start_date:
+        type: string
+    required:
+    - end_date
+    - image_url
+    - start_date
+    type: object
+  v1.CreateBrandRequest:
+    properties:
+      brand_name:
+        type: string
+      image_url:
+        type: string
+      is_top_brand:
+        type: boolean
+      status:
+        enum:
+        - active
+        - disabled
+        type: string
+    required:
+    - brand_name
+    - image_url
+    - is_top_brand
+    - status
+    type: object
+  v1.CreateCategoryRequest:
+    properties:
+      category_name:
+        type: string
+      image_url:
+        type: string
+      is_top_category:
+        type: boolean
+      status:
+        enum:
+        - active
+        - disabled
+        type: string
+    required:
+    - category_name
+    - image_url
+    - is_top_category
+    - status
+    type: object
+  v1.CreateNewItemRequest:
+    properties:
+      brand_id:
+        type: string
+      category_id:
+        type: string
+      image_url:
+        type: string
+      is_top_item:
+        type: boolean
+      product_description:
+        type: string
+      product_name:
+        type: string
+      status:
+        enum:
+        - active
+        - disabled
+        type: string
+    required:
+    - brand_id
+    - category_id
+    - image_url
+    - is_top_item
+    - product_description
+    - product_name
+    - status
+    type: object
+  v1.CreateSubcategoryRequest:
+    properties:
+      category_id:
+        type: string
+      image_url:
+        type: string
+      is_top_sub_category:
+        type: boolean
+      status:
+        enum:
+        - active
+        - disabled
+        type: string
+      sub_category_name:
+        type: string
+    required:
+    - category_id
+    - image_url
+    - is_top_sub_category
+    - status
+    - sub_category_name
     type: object
   v1.CreateVariantRequest:
     properties:
@@ -735,6 +879,19 @@ definitions:
     required:
     - refresh_token
     type: object
+  v1.PresignRequest:
+    properties:
+      contentType:
+        type: string
+      fileName:
+        type: string
+      folder:
+        type: string
+    required:
+    - contentType
+    - fileName
+    - folder
+    type: object
   v1.RefreshTokenRequest:
     properties:
       refresh_token:
@@ -766,6 +923,101 @@ definitions:
     required:
     - new_password
     - token
+    type: object
+  v1.UpdateBannerRequest:
+    properties:
+      banner_id:
+        type: string
+      end_date:
+        type: string
+      image_url:
+        type: string
+      is_active:
+        type: boolean
+      start_date:
+        type: string
+    required:
+    - banner_id
+    type: object
+  v1.UpdateBrandRequest:
+    properties:
+      brand_id:
+        type: string
+      brand_name:
+        type: string
+      image_url:
+        type: string
+      is_top_brand:
+        type: boolean
+      status:
+        enum:
+        - active
+        - disabled
+        type: string
+    required:
+    - brand_id
+    type: object
+  v1.UpdateCategoryRequest:
+    properties:
+      category_id:
+        type: string
+      category_name:
+        type: string
+      image_url:
+        type: string
+      is_top_category:
+        type: boolean
+      status:
+        enum:
+        - active
+        - disabled
+        type: string
+    required:
+    - category_id
+    type: object
+  v1.UpdateItemRequest:
+    properties:
+      brand_id:
+        type: string
+      category_id:
+        type: string
+      image_url:
+        type: string
+      is_top_item:
+        type: boolean
+      product_description:
+        type: string
+      product_id:
+        type: string
+      product_name:
+        type: string
+      status:
+        enum:
+        - active
+        - disabled
+        type: string
+    required:
+    - product_id
+    type: object
+  v1.UpdateSubcategoryRequest:
+    properties:
+      category_id:
+        type: string
+      image_url:
+        type: string
+      is_top_sub_category:
+        type: boolean
+      status:
+        enum:
+        - active
+        - disabled
+        type: string
+      sub_category_id:
+        type: string
+      sub_category_name:
+        type: string
+    required:
+    - sub_category_id
     type: object
   v1.UpdateVariantRequest:
     properties:
@@ -1088,31 +1340,16 @@ paths:
       - banners
     patch:
       consumes:
-      - multipart/form-data
+      - application/json
       description: Updates an existing banner. This endpoint is intended for internal
         use and should be secured appropriately.
       parameters:
-      - description: Unique identifier for the banner
-        in: formData
-        name: banner_id
+      - description: Update Banner Request
+        in: body
+        name: banner
         required: true
-        type: string
-      - description: Image file for the banner
-        in: formData
-        name: image
-        type: file
-      - description: Start date of the banner in YYYY-MM-DD format
-        in: formData
-        name: start_date
-        type: string
-      - description: End date of the banner in YYYY-MM-DD format
-        in: formData
-        name: end_date
-        type: string
-      - description: Whether the banner is currently enabled
-        in: formData
-        name: is_active
-        type: boolean
+        schema:
+          $ref: '#/definitions/v1.UpdateBannerRequest'
       produces:
       - application/json
       responses:
@@ -1154,35 +1391,21 @@ paths:
               type: object
       security:
       - BearerAuth: []
-      summary: Update an existing banner (id supplied via form data)
+      summary: Update an existing banner
       tags:
       - banners
     post:
       consumes:
-      - multipart/form-data
+      - application/json
       description: Creates a new banner. This endpoint is intended for internal use
         and should be secured appropriately.
       parameters:
-      - description: Image file for the banner
-        in: formData
-        name: image
+      - description: Create Banner Request
+        in: body
+        name: banner
         required: true
-        type: file
-      - description: Start date of the banner in YYYY-MM-DD format
-        in: formData
-        name: start_date
-        required: true
-        type: string
-      - description: End date of the banner in YYYY-MM-DD format
-        in: formData
-        name: end_date
-        required: true
-        type: string
-      - default: true
-        description: Whether the banner is currently enabled
-        in: formData
-        name: is_active
-        type: boolean
+        schema:
+          $ref: '#/definitions/v1.CreateBannerRequest'
       produces:
       - application/json
       responses:
@@ -1225,6 +1448,61 @@ paths:
       security:
       - BearerAuth: []
       summary: Create a new banner
+      tags:
+      - banners
+  /v1/banners/{banner_id}:
+    get:
+      consumes:
+      - application/json
+      description: Fetches a banner by its unique identifier.
+      parameters:
+      - description: Unique identifier for the banner
+        in: path
+        name: banner_id
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            allOf:
+            - $ref: '#/definitions/dto.Response'
+            - properties:
+                data:
+                  $ref: '#/definitions/dto.BannerItem'
+              type: object
+        "401":
+          description: Unauthorized
+          schema:
+            allOf:
+            - $ref: '#/definitions/dto.Response'
+            - properties:
+                data:
+                  type: string
+              type: object
+        "403":
+          description: Forbidden
+          schema:
+            allOf:
+            - $ref: '#/definitions/dto.Response'
+            - properties:
+                data:
+                  type: string
+              type: object
+        "404":
+          description: Not Found
+          schema:
+            allOf:
+            - $ref: '#/definitions/dto.Response'
+            - properties:
+                data:
+                  type: string
+              type: object
+      security:
+      - BearerAuth: []
+      summary: Get banner by ID
       tags:
       - banners
   /v1/brands:
@@ -1336,34 +1614,16 @@ paths:
       - brands
     patch:
       consumes:
-      - multipart/form-data
+      - application/json
       description: Updates an existing brand. This endpoint is intended for internal
         use and should be secured appropriately.
       parameters:
-      - description: Unique identifier for the brand
-        in: formData
-        name: brand_id
+      - description: Update Brand Request
+        in: body
+        name: brand
         required: true
-        type: string
-      - description: Display name of the brand
-        in: formData
-        name: brand_name
-        type: string
-      - description: Image file for the brand
-        in: formData
-        name: image
-        type: file
-      - description: Status of the brand
-        enum:
-        - active
-        - disabled
-        in: formData
-        name: status
-        type: string
-      - description: Whether the brand is flagged as a top/featured brand
-        in: formData
-        name: is_top_brand
-        type: boolean
+        schema:
+          $ref: '#/definitions/v1.UpdateBrandRequest'
       produces:
       - application/json
       responses:
@@ -1410,33 +1670,16 @@ paths:
       - brands
     post:
       consumes:
-      - multipart/form-data
+      - application/json
       description: Creates a new brand. This endpoint is intended for internal use
         and should be secured appropriately.
       parameters:
-      - description: Display name of the brand
-        in: formData
-        name: brand_name
+      - description: Create Brand Request
+        in: body
+        name: brand
         required: true
-        type: string
-      - description: Image file for the brand
-        in: formData
-        name: image
-        required: true
-        type: file
-      - description: Status of the brand
-        enum:
-        - active
-        - disabled
-        in: formData
-        name: status
-        required: true
-        type: string
-      - description: Whether the brand is flagged as a top/featured brand
-        in: formData
-        name: is_top_brand
-        required: true
-        type: boolean
+        schema:
+          $ref: '#/definitions/v1.CreateBrandRequest'
       produces:
       - application/json
       responses:
@@ -1479,6 +1722,61 @@ paths:
       security:
       - BearerAuth: []
       summary: Create a new brand
+      tags:
+      - brands
+  /v1/brands/{brand_id}:
+    get:
+      consumes:
+      - application/json
+      description: Fetches a brand by its unique identifier.
+      parameters:
+      - description: Unique identifier for the brand
+        in: path
+        name: brand_id
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            allOf:
+            - $ref: '#/definitions/dto.Response'
+            - properties:
+                data:
+                  $ref: '#/definitions/dto.BrandItem'
+              type: object
+        "401":
+          description: Unauthorized
+          schema:
+            allOf:
+            - $ref: '#/definitions/dto.Response'
+            - properties:
+                data:
+                  type: string
+              type: object
+        "403":
+          description: Forbidden
+          schema:
+            allOf:
+            - $ref: '#/definitions/dto.Response'
+            - properties:
+                data:
+                  type: string
+              type: object
+        "404":
+          description: Not Found
+          schema:
+            allOf:
+            - $ref: '#/definitions/dto.Response'
+            - properties:
+                data:
+                  type: string
+              type: object
+      security:
+      - BearerAuth: []
+      summary: Get brand by ID
       tags:
       - brands
   /v1/categories:
@@ -1590,38 +1888,16 @@ paths:
       - categories
     patch:
       consumes:
-      - multipart/form-data
+      - application/json
       description: Updates an existing category. This endpoint is intended for internal
         use and should be secured appropriately.
       parameters:
-      - description: Unique identifier for the category
-        in: formData
-        name: category_id
+      - description: Update Category Request
+        in: body
+        name: category
         required: true
-        type: string
-      - description: Display name of the category
-        in: formData
-        name: category_name
-        required: true
-        type: string
-      - description: Image file for the category
-        in: formData
-        name: image
-        required: true
-        type: file
-      - description: Status of the category
-        enum:
-        - active
-        - disabled
-        in: formData
-        name: status
-        required: true
-        type: string
-      - description: Whether the category is flagged as a top/featured category
-        in: formData
-        name: is_top_category
-        required: true
-        type: boolean
+        schema:
+          $ref: '#/definitions/v1.UpdateCategoryRequest'
       produces:
       - application/json
       responses:
@@ -1668,33 +1944,16 @@ paths:
       - categories
     post:
       consumes:
-      - multipart/form-data
+      - application/json
       description: Creates a new category. This endpoint is intended for internal
         use and should be secured appropriately.
       parameters:
-      - description: Display name of the category
-        in: formData
-        name: category_name
+      - description: Create Category Request
+        in: body
+        name: category
         required: true
-        type: string
-      - description: Image file for the category
-        in: formData
-        name: image
-        required: true
-        type: file
-      - description: Status of the category
-        enum:
-        - active
-        - disabled
-        in: formData
-        name: status
-        required: true
-        type: string
-      - description: Whether the category is flagged as a top/featured category
-        in: formData
-        name: is_top_category
-        required: true
-        type: boolean
+        schema:
+          $ref: '#/definitions/v1.CreateCategoryRequest'
       produces:
       - application/json
       responses:
@@ -1739,27 +1998,17 @@ paths:
       summary: Create a new category
       tags:
       - categories
-  /v1/categories/{category_id}/subcategories:
+  /v1/categories/{category_id}:
     get:
       consumes:
       - application/json
-      description: Fetches a paginated list of subcategories.
+      description: Fetches a category by its unique identifier.
       parameters:
       - description: Unique identifier for the category
         in: path
         name: category_id
         required: true
         type: string
-      - description: Page number
-        in: query
-        name: page
-        required: true
-        type: integer
-      - description: Number of items per page
-        in: query
-        name: limit
-        required: true
-        type: integer
       produces:
       - application/json
       responses:
@@ -1770,7 +2019,7 @@ paths:
             - $ref: '#/definitions/dto.Response'
             - properties:
                 data:
-                  $ref: '#/definitions/dto.SubCategories'
+                  $ref: '#/definitions/dto.Category'
               type: object
         "401":
           description: Unauthorized
@@ -1790,9 +2039,78 @@ paths:
                 data:
                   type: string
               type: object
+        "404":
+          description: Not Found
+          schema:
+            allOf:
+            - $ref: '#/definitions/dto.Response'
+            - properties:
+                data:
+                  type: string
+              type: object
       security:
       - BearerAuth: []
-      summary: Get subcategories
+      summary: Get category by ID
+      tags:
+      - categories
+  /v1/categories/{category_id}/subcategories/{subcategory_id}:
+    get:
+      consumes:
+      - application/json
+      description: Fetches a subcategory by its unique identifier.
+      parameters:
+      - description: Unique identifier for the category
+        in: path
+        name: category_id
+        required: true
+        type: string
+      - description: Unique identifier for the subcategory
+        in: path
+        name: subcategory_id
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            allOf:
+            - $ref: '#/definitions/dto.Response'
+            - properties:
+                data:
+                  $ref: '#/definitions/dto.SubCategory'
+              type: object
+        "401":
+          description: Unauthorized
+          schema:
+            allOf:
+            - $ref: '#/definitions/dto.Response'
+            - properties:
+                data:
+                  type: string
+              type: object
+        "403":
+          description: Forbidden
+          schema:
+            allOf:
+            - $ref: '#/definitions/dto.Response'
+            - properties:
+                data:
+                  type: string
+              type: object
+        "404":
+          description: Not Found
+          schema:
+            allOf:
+            - $ref: '#/definitions/dto.Response'
+            - properties:
+                data:
+                  type: string
+              type: object
+      security:
+      - BearerAuth: []
+      summary: Get subcategory by ID
       tags:
       - subcategories
   /v1/categories/subcategories:
@@ -1852,40 +2170,77 @@ paths:
       summary: Delete a subcategory
       tags:
       - subcategories
+    get:
+      consumes:
+      - application/json
+      description: Fetches a paginated list of subcategories.
+      parameters:
+      - description: Search term to filter subcategories by name
+        in: query
+        name: search
+        type: string
+      - description: Unique identifier for the category whose subcategories are to
+          be fetched
+        in: query
+        name: category_id
+        type: string
+      - description: Page number
+        in: query
+        name: page
+        required: true
+        type: integer
+      - description: Number of items per page
+        in: query
+        name: limit
+        required: true
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            allOf:
+            - $ref: '#/definitions/dto.Response'
+            - properties:
+                data:
+                  $ref: '#/definitions/dto.SubCategories'
+              type: object
+        "401":
+          description: Unauthorized
+          schema:
+            allOf:
+            - $ref: '#/definitions/dto.Response'
+            - properties:
+                data:
+                  type: string
+              type: object
+        "403":
+          description: Forbidden
+          schema:
+            allOf:
+            - $ref: '#/definitions/dto.Response'
+            - properties:
+                data:
+                  type: string
+              type: object
+      security:
+      - BearerAuth: []
+      summary: Get subcategories
+      tags:
+      - subcategories
     patch:
       consumes:
-      - multipart/form-data
+      - application/json
       description: Updates an existing subcategory. This endpoint is intended for
         internal use and should be secured appropriately.
       parameters:
-      - description: Unique identifier for the subcategory
-        in: formData
-        name: sub_category_id
+      - description: Update Subcategory Request
+        in: body
+        name: subcategory
         required: true
-        type: string
-      - description: Display name of the subcategory
-        in: formData
-        name: sub_category_name
-        type: string
-      - description: Identifier of the parent category
-        in: formData
-        name: category_id
-        type: string
-      - description: Image file for the subcategory
-        in: formData
-        name: image
-        type: file
-      - description: Status of the subcategory
-        enum:
-        - active
-        - disabled
-        in: formData
-        name: status
-        type: string
-      - description: Whether the subcategory is flagged as a top/featured subcategory
-        in: formData
-        name: is_top_sub_category
-        type: boolean
+        schema:
+          $ref: '#/definitions/v1.UpdateSubcategoryRequest'
       produces:
       - application/json
       responses:
@@ -1932,38 +2287,16 @@ paths:
       - subcategories
     post:
       consumes:
-      - multipart/form-data
+      - application/json
       description: Creates a new subcategory. This endpoint is intended for internal
         use and should be secured appropriately.
       parameters:
-      - description: Display name of the subcategory
-        in: formData
-        name: sub_category_name
+      - description: Create Subcategory Request
+        in: body
+        name: subcategory
         required: true
-        type: string
-      - description: Identifier of the parent category
-        in: formData
-        name: category_id
-        required: true
-        type: string
-      - description: Image file for the subcategory
-        in: formData
-        name: image
-        required: true
-        type: file
-      - description: Status of the subcategory
-        enum:
-        - active
-        - disabled
-        in: formData
-        name: status
-        required: true
-        type: string
-      - description: Whether the subcategory is flagged as a top/featured subcategory
-        in: formData
-        name: is_top_sub_category
-        required: true
-        type: boolean
+        schema:
+          $ref: '#/definitions/v1.CreateSubcategoryRequest'
       produces:
       - application/json
       responses:
@@ -2305,46 +2638,16 @@ paths:
       - inventory-management
     patch:
       consumes:
-      - multipart/form-data
+      - application/json
       description: Updates an existing inventory item in the system. This endpoint
         is intended for internal use and should be secured appropriately.
       parameters:
-      - description: Unique identifier for the product
-        in: formData
-        name: product_id
+      - description: Update Item Request
+        in: body
+        name: item
         required: true
-        type: string
-      - description: Image file for the product
-        in: formData
-        name: image
-        type: file
-      - description: Display name of the product
-        in: formData
-        name: product_name
-        type: string
-      - description: Description of the product
-        in: formData
-        name: product_description
-        type: string
-      - description: Unique identifier for the brand
-        in: formData
-        name: brand_id
-        type: string
-      - description: Unique identifier for the category
-        in: formData
-        name: category_id
-        type: string
-      - description: Whether the product is flagged as a top/featured item
-        in: formData
-        name: is_top_item
-        type: boolean
-      - description: Status of the product
-        enum:
-        - active
-        - disabled
-        in: formData
-        name: status
-        type: string
+        schema:
+          $ref: '#/definitions/v1.UpdateItemRequest'
       produces:
       - application/json
       responses:
@@ -2382,48 +2685,16 @@ paths:
       - inventory-management
     post:
       consumes:
-      - multipart/form-data
+      - application/json
       description: Creates a new inventory item in the system. This endpoint is intended
         for internal use and should be secured appropriately.
       parameters:
-      - description: Image file for the product
-        in: formData
-        name: image
+      - description: Create New Item Request
+        in: body
+        name: item
         required: true
-        type: file
-      - description: Display name of the product
-        in: formData
-        name: product_name
-        required: true
-        type: string
-      - description: Description of the product
-        in: formData
-        name: product_description
-        required: true
-        type: string
-      - description: Unique identifier for the brand
-        in: formData
-        name: brand_id
-        required: true
-        type: string
-      - description: Unique identifier for the category
-        in: formData
-        name: category_id
-        required: true
-        type: string
-      - description: Whether the product is flagged as a top/featured item
-        in: formData
-        name: is_top_item
-        required: true
-        type: boolean
-      - description: Status of the product
-        enum:
-        - active
-        - disabled
-        in: formData
-        name: status
-        required: true
-        type: string
+        schema:
+          $ref: '#/definitions/v1.CreateNewItemRequest'
       produces:
       - application/json
       responses:
@@ -2457,6 +2728,61 @@ paths:
       security:
       - BearerAuth: []
       summary: Create a new inventory item
+      tags:
+      - inventory-management
+  /v1/inventory-management/{product_id}:
+    get:
+      consumes:
+      - application/json
+      description: Fetches an inventory item by its unique identifier.
+      parameters:
+      - description: Unique identifier for the inventory item
+        in: path
+        name: product_id
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            allOf:
+            - $ref: '#/definitions/dto.Response'
+            - properties:
+                data:
+                  $ref: '#/definitions/dto.ProductItem'
+              type: object
+        "401":
+          description: Unauthorized
+          schema:
+            allOf:
+            - $ref: '#/definitions/dto.Response'
+            - properties:
+                data:
+                  type: string
+              type: object
+        "403":
+          description: Forbidden
+          schema:
+            allOf:
+            - $ref: '#/definitions/dto.Response'
+            - properties:
+                data:
+                  type: string
+              type: object
+        "404":
+          description: Not Found
+          schema:
+            allOf:
+            - $ref: '#/definitions/dto.Response'
+            - properties:
+                data:
+                  type: string
+              type: object
+      security:
+      - BearerAuth: []
+      summary: Get inventory item by ID
       tags:
       - inventory-management
   /v1/inventory-management/{product_id}/variants:
@@ -2504,6 +2830,66 @@ paths:
       security:
       - BearerAuth: []
       summary: List variants of a product
+      tags:
+      - inventory-management
+  /v1/inventory-management/{product_id}/variants/{variant_id}:
+    get:
+      consumes:
+      - application/json
+      description: Fetches the variants of an inventory item by its unique identifier.
+      parameters:
+      - description: Unique identifier for the inventory item
+        in: path
+        name: product_id
+        required: true
+        type: string
+      - description: Unique identifier for the variant
+        in: path
+        name: variant_id
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            allOf:
+            - $ref: '#/definitions/dto.Response'
+            - properties:
+                data:
+                  $ref: '#/definitions/dto.ProductVariantItems'
+              type: object
+        "401":
+          description: Unauthorized
+          schema:
+            allOf:
+            - $ref: '#/definitions/dto.Response'
+            - properties:
+                data:
+                  type: string
+              type: object
+        "403":
+          description: Forbidden
+          schema:
+            allOf:
+            - $ref: '#/definitions/dto.Response'
+            - properties:
+                data:
+                  type: string
+              type: object
+        "404":
+          description: Not Found
+          schema:
+            allOf:
+            - $ref: '#/definitions/dto.Response'
+            - properties:
+                data:
+                  type: string
+              type: object
+      security:
+      - BearerAuth: []
+      summary: Get inventory item variants by product ID
       tags:
       - inventory-management
   /v1/inventory-management/stats:
@@ -2716,6 +3102,62 @@ paths:
       summary: Create a new variant for a product
       tags:
       - inventory-management
+  /v1/presigned-url:
+    post:
+      consumes:
+      - application/json
+      description: Generate a presigned PUT URL so client can upload directly to S3
+      parameters:
+      - description: Presign Request
+        in: body
+        name: request
+        required: true
+        schema:
+          $ref: '#/definitions/v1.PresignRequest'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            allOf:
+            - $ref: '#/definitions/dto.Response'
+            - properties:
+                data:
+                  $ref: '#/definitions/dto.PresignedURL'
+              type: object
+        "400":
+          description: Bad Request
+          schema:
+            allOf:
+            - $ref: '#/definitions/dto.Response'
+            - properties:
+                data:
+                  type: string
+              type: object
+        "401":
+          description: Unauthorized
+          schema:
+            allOf:
+            - $ref: '#/definitions/dto.Response'
+            - properties:
+                data:
+                  type: string
+              type: object
+        "403":
+          description: Forbidden
+          schema:
+            allOf:
+            - $ref: '#/definitions/dto.Response'
+            - properties:
+                data:
+                  type: string
+              type: object
+      security:
+      - BearerAuth: []
+      summary: Get presigned URL for S3 upload
+      tags:
+      - File Upload
   /v1/users:
     get:
       description: Paginated list of users. Admins see every tenant (optionally filter

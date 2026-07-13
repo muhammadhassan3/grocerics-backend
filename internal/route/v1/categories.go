@@ -9,10 +9,11 @@ import (
 	"github.com/gin-gonic/gin"
 )
 
-func RegisterCategoryRoutes(jwt *auth.JWTService, user *repository.UserRepository, r *gin.RouterGroup) {
+func RegisterCategoryRoutes(jwt *auth.JWTService, user *repository.UserRepository, r *gin.Engine) {
 	group := r.Group("/v1")
 	group.Use(middleware.AuthMiddleware(jwt, user))
 	group.GET("/categories", getCategories())
+	group.GET("/categories/:category_id", getCategoryByID())
 
 	adminGroup := group.Group("")
 	adminGroup.Use(middleware.RequireRole("admin"))
@@ -46,16 +47,43 @@ func getCategories() gin.HandlerFunc {
 	}
 }
 
+// @Swagger:route GET /v1/categories/{category_id} categories getCategoryByID
+// @Summary Get category by ID
+// @Description Fetches a category by its unique identifier.
+// @Tags categories
+// @Accept json
+// @Produce json
+// @Param category_id path string true "Unique identifier for the category"
+// @Success 200 {object} dto.Response{data=dto.Category}
+// @Failure 401 {object} dto.Response{data=string}
+// @Failure 403 {object} dto.Response{data=string}
+// @Failure 404 {object} dto.Response{data=string}
+// @Security BearerAuth
+// @Router /v1/categories/{category_id} [get]
+func getCategoryByID() gin.HandlerFunc {
+	return func(c *gin.Context) {
+		c.JSON(200, dto.Response{
+			Data:    dto.Category{},
+			Message: "Category fetched successfully",
+			Status:  "success",
+		})
+	}
+}
+
+type CreateCategoryRequest struct {
+	CategoryName  string `json:"category_name" binding:"required"`
+	ImageURL      string `json:"image_url" binding:"required"`
+	Status        string `json:"status" binding:"required,oneof=active disabled"`
+	IsTopCategory bool   `json:"is_top_category" binding:"required"`
+}
+
 // @Swagger:route POST /v1/categories categories createCategory
 // @Summary Create a new category
 // @Description Creates a new category. This endpoint is intended for internal use and should be secured appropriately.
 // @Tags categories
-// @Accept multipart/form-data
+// @Accept application/json
 // @Produce json
-// @Param category_name formData string true "Display name of the category"
-// @Param image formData file true "Image file for the category"
-// @Param status formData string true "Status of the category" enums(active,disabled)
-// @Param is_top_category formData bool true "Whether the category is flagged as a top/featured category"
+// @Param category body CreateCategoryRequest true "Create Category Request"
 // @Success 201 {object} dto.Response{data=dto.Category}
 // @Failure 400 {object} dto.Response{data=string}
 // @Failure 401 {object} dto.Response{data=string}
@@ -72,17 +100,21 @@ func CreateCategory() gin.HandlerFunc {
 	}
 }
 
+type UpdateCategoryRequest struct {
+	CategoryID    string `json:"category_id" binding:"required"`
+	CategoryName  string `json:"category_name"`
+	ImageURL      string `json:"image_url"`
+	Status        string `json:"status" binding:"omitempty,oneof=active disabled"`
+	IsTopCategory *bool  `json:"is_top_category"`
+}
+
 // @Swagger:route PATCH /v1/categories categories updateCategory
 // @Summary Update an existing category
 // @Description Updates an existing category. This endpoint is intended for internal use and should be secured appropriately.
 // @Tags categories
-// @Accept multipart/form-data
+// @Accept application/json
 // @Produce json
-// @Param category_id formData string true "Unique identifier for the category"
-// @Param category_name formData string true "Display name of the category"
-// @Param image formData file true "Image file for the category"
-// @Param status formData string true "Status of the category" enums(active,disabled)
-// @Param is_top_category formData bool true "Whether the category is flagged as a top/featured category"
+// @Param category body UpdateCategoryRequest true "Update Category Request"
 // @Success 200 {object} dto.Response{data=dto.Category}
 // @Failure 400 {object} dto.Response{data=string}
 // @Failure 401 {object} dto.Response{data=string}

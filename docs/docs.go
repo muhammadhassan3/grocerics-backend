@@ -421,7 +421,7 @@ const docTemplate = `{
                 ],
                 "description": "Creates a new banner. This endpoint is intended for internal use and should be secured appropriately.",
                 "consumes": [
-                    "multipart/form-data"
+                    "application/json"
                 ],
                 "produces": [
                     "application/json"
@@ -432,32 +432,13 @@ const docTemplate = `{
                 "summary": "Create a new banner",
                 "parameters": [
                     {
-                        "type": "file",
-                        "description": "Image file for the banner",
-                        "name": "image",
-                        "in": "formData",
-                        "required": true
-                    },
-                    {
-                        "type": "string",
-                        "description": "Start date of the banner in YYYY-MM-DD format",
-                        "name": "start_date",
-                        "in": "formData",
-                        "required": true
-                    },
-                    {
-                        "type": "string",
-                        "description": "End date of the banner in YYYY-MM-DD format",
-                        "name": "end_date",
-                        "in": "formData",
-                        "required": true
-                    },
-                    {
-                        "type": "boolean",
-                        "default": true,
-                        "description": "Whether the banner is currently enabled",
-                        "name": "is_active",
-                        "in": "formData"
+                        "description": "Create Banner Request",
+                        "name": "banner",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/v1.CreateBannerRequest"
+                        }
                     }
                 ],
                 "responses": {
@@ -646,7 +627,7 @@ const docTemplate = `{
                 ],
                 "description": "Updates an existing banner. This endpoint is intended for internal use and should be secured appropriately.",
                 "consumes": [
-                    "multipart/form-data"
+                    "application/json"
                 ],
                 "produces": [
                     "application/json"
@@ -654,38 +635,16 @@ const docTemplate = `{
                 "tags": [
                     "banners"
                 ],
-                "summary": "Update an existing banner (id supplied via form data)",
+                "summary": "Update an existing banner",
                 "parameters": [
                     {
-                        "type": "string",
-                        "description": "Unique identifier for the banner",
-                        "name": "banner_id",
-                        "in": "formData",
-                        "required": true
-                    },
-                    {
-                        "type": "file",
-                        "description": "Image file for the banner",
-                        "name": "image",
-                        "in": "formData"
-                    },
-                    {
-                        "type": "string",
-                        "description": "Start date of the banner in YYYY-MM-DD format",
-                        "name": "start_date",
-                        "in": "formData"
-                    },
-                    {
-                        "type": "string",
-                        "description": "End date of the banner in YYYY-MM-DD format",
-                        "name": "end_date",
-                        "in": "formData"
-                    },
-                    {
-                        "type": "boolean",
-                        "description": "Whether the banner is currently enabled",
-                        "name": "is_active",
-                        "in": "formData"
+                        "description": "Update Banner Request",
+                        "name": "banner",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/v1.UpdateBannerRequest"
+                        }
                     }
                 ],
                 "responses": {
@@ -745,6 +704,109 @@ const docTemplate = `{
                     },
                     "403": {
                         "description": "Forbidden",
+                        "schema": {
+                            "allOf": [
+                                {
+                                    "$ref": "#/definitions/dto.Response"
+                                },
+                                {
+                                    "type": "object",
+                                    "properties": {
+                                        "data": {
+                                            "type": "string"
+                                        }
+                                    }
+                                }
+                            ]
+                        }
+                    }
+                }
+            }
+        },
+        "/v1/banners/{banner_id}": {
+            "get": {
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
+                "description": "Fetches a banner by its unique identifier.",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "banners"
+                ],
+                "summary": "Get banner by ID",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "Unique identifier for the banner",
+                        "name": "banner_id",
+                        "in": "path",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "allOf": [
+                                {
+                                    "$ref": "#/definitions/dto.Response"
+                                },
+                                {
+                                    "type": "object",
+                                    "properties": {
+                                        "data": {
+                                            "$ref": "#/definitions/dto.BannerItem"
+                                        }
+                                    }
+                                }
+                            ]
+                        }
+                    },
+                    "401": {
+                        "description": "Unauthorized",
+                        "schema": {
+                            "allOf": [
+                                {
+                                    "$ref": "#/definitions/dto.Response"
+                                },
+                                {
+                                    "type": "object",
+                                    "properties": {
+                                        "data": {
+                                            "type": "string"
+                                        }
+                                    }
+                                }
+                            ]
+                        }
+                    },
+                    "403": {
+                        "description": "Forbidden",
+                        "schema": {
+                            "allOf": [
+                                {
+                                    "$ref": "#/definitions/dto.Response"
+                                },
+                                {
+                                    "type": "object",
+                                    "properties": {
+                                        "data": {
+                                            "type": "string"
+                                        }
+                                    }
+                                }
+                            ]
+                        }
+                    },
+                    "404": {
+                        "description": "Not Found",
                         "schema": {
                             "allOf": [
                                 {
@@ -863,7 +925,7 @@ const docTemplate = `{
                 ],
                 "description": "Creates a new brand. This endpoint is intended for internal use and should be secured appropriately.",
                 "consumes": [
-                    "multipart/form-data"
+                    "application/json"
                 ],
                 "produces": [
                     "application/json"
@@ -874,36 +936,13 @@ const docTemplate = `{
                 "summary": "Create a new brand",
                 "parameters": [
                     {
-                        "type": "string",
-                        "description": "Display name of the brand",
-                        "name": "brand_name",
-                        "in": "formData",
-                        "required": true
-                    },
-                    {
-                        "type": "file",
-                        "description": "Image file for the brand",
-                        "name": "image",
-                        "in": "formData",
-                        "required": true
-                    },
-                    {
-                        "enum": [
-                            "active",
-                            "disabled"
-                        ],
-                        "type": "string",
-                        "description": "Status of the brand",
-                        "name": "status",
-                        "in": "formData",
-                        "required": true
-                    },
-                    {
-                        "type": "boolean",
-                        "description": "Whether the brand is flagged as a top/featured brand",
-                        "name": "is_top_brand",
-                        "in": "formData",
-                        "required": true
+                        "description": "Create Brand Request",
+                        "name": "brand",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/v1.CreateBrandRequest"
+                        }
                     }
                 ],
                 "responses": {
@@ -1092,7 +1131,7 @@ const docTemplate = `{
                 ],
                 "description": "Updates an existing brand. This endpoint is intended for internal use and should be secured appropriately.",
                 "consumes": [
-                    "multipart/form-data"
+                    "application/json"
                 ],
                 "produces": [
                     "application/json"
@@ -1103,39 +1142,13 @@ const docTemplate = `{
                 "summary": "Update an existing brand",
                 "parameters": [
                     {
-                        "type": "string",
-                        "description": "Unique identifier for the brand",
-                        "name": "brand_id",
-                        "in": "formData",
-                        "required": true
-                    },
-                    {
-                        "type": "string",
-                        "description": "Display name of the brand",
-                        "name": "brand_name",
-                        "in": "formData"
-                    },
-                    {
-                        "type": "file",
-                        "description": "Image file for the brand",
-                        "name": "image",
-                        "in": "formData"
-                    },
-                    {
-                        "enum": [
-                            "active",
-                            "disabled"
-                        ],
-                        "type": "string",
-                        "description": "Status of the brand",
-                        "name": "status",
-                        "in": "formData"
-                    },
-                    {
-                        "type": "boolean",
-                        "description": "Whether the brand is flagged as a top/featured brand",
-                        "name": "is_top_brand",
-                        "in": "formData"
+                        "description": "Update Brand Request",
+                        "name": "brand",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/v1.UpdateBrandRequest"
+                        }
                     }
                 ],
                 "responses": {
@@ -1195,6 +1208,109 @@ const docTemplate = `{
                     },
                     "403": {
                         "description": "Forbidden",
+                        "schema": {
+                            "allOf": [
+                                {
+                                    "$ref": "#/definitions/dto.Response"
+                                },
+                                {
+                                    "type": "object",
+                                    "properties": {
+                                        "data": {
+                                            "type": "string"
+                                        }
+                                    }
+                                }
+                            ]
+                        }
+                    }
+                }
+            }
+        },
+        "/v1/brands/{brand_id}": {
+            "get": {
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
+                "description": "Fetches a brand by its unique identifier.",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "brands"
+                ],
+                "summary": "Get brand by ID",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "Unique identifier for the brand",
+                        "name": "brand_id",
+                        "in": "path",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "allOf": [
+                                {
+                                    "$ref": "#/definitions/dto.Response"
+                                },
+                                {
+                                    "type": "object",
+                                    "properties": {
+                                        "data": {
+                                            "$ref": "#/definitions/dto.BrandItem"
+                                        }
+                                    }
+                                }
+                            ]
+                        }
+                    },
+                    "401": {
+                        "description": "Unauthorized",
+                        "schema": {
+                            "allOf": [
+                                {
+                                    "$ref": "#/definitions/dto.Response"
+                                },
+                                {
+                                    "type": "object",
+                                    "properties": {
+                                        "data": {
+                                            "type": "string"
+                                        }
+                                    }
+                                }
+                            ]
+                        }
+                    },
+                    "403": {
+                        "description": "Forbidden",
+                        "schema": {
+                            "allOf": [
+                                {
+                                    "$ref": "#/definitions/dto.Response"
+                                },
+                                {
+                                    "type": "object",
+                                    "properties": {
+                                        "data": {
+                                            "type": "string"
+                                        }
+                                    }
+                                }
+                            ]
+                        }
+                    },
+                    "404": {
+                        "description": "Not Found",
                         "schema": {
                             "allOf": [
                                 {
@@ -1313,7 +1429,7 @@ const docTemplate = `{
                 ],
                 "description": "Creates a new category. This endpoint is intended for internal use and should be secured appropriately.",
                 "consumes": [
-                    "multipart/form-data"
+                    "application/json"
                 ],
                 "produces": [
                     "application/json"
@@ -1324,36 +1440,13 @@ const docTemplate = `{
                 "summary": "Create a new category",
                 "parameters": [
                     {
-                        "type": "string",
-                        "description": "Display name of the category",
-                        "name": "category_name",
-                        "in": "formData",
-                        "required": true
-                    },
-                    {
-                        "type": "file",
-                        "description": "Image file for the category",
-                        "name": "image",
-                        "in": "formData",
-                        "required": true
-                    },
-                    {
-                        "enum": [
-                            "active",
-                            "disabled"
-                        ],
-                        "type": "string",
-                        "description": "Status of the category",
-                        "name": "status",
-                        "in": "formData",
-                        "required": true
-                    },
-                    {
-                        "type": "boolean",
-                        "description": "Whether the category is flagged as a top/featured category",
-                        "name": "is_top_category",
-                        "in": "formData",
-                        "required": true
+                        "description": "Create Category Request",
+                        "name": "category",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/v1.CreateCategoryRequest"
+                        }
                     }
                 ],
                 "responses": {
@@ -1542,7 +1635,7 @@ const docTemplate = `{
                 ],
                 "description": "Updates an existing category. This endpoint is intended for internal use and should be secured appropriately.",
                 "consumes": [
-                    "multipart/form-data"
+                    "application/json"
                 ],
                 "produces": [
                     "application/json"
@@ -1553,43 +1646,13 @@ const docTemplate = `{
                 "summary": "Update an existing category",
                 "parameters": [
                     {
-                        "type": "string",
-                        "description": "Unique identifier for the category",
-                        "name": "category_id",
-                        "in": "formData",
-                        "required": true
-                    },
-                    {
-                        "type": "string",
-                        "description": "Display name of the category",
-                        "name": "category_name",
-                        "in": "formData",
-                        "required": true
-                    },
-                    {
-                        "type": "file",
-                        "description": "Image file for the category",
-                        "name": "image",
-                        "in": "formData",
-                        "required": true
-                    },
-                    {
-                        "enum": [
-                            "active",
-                            "disabled"
-                        ],
-                        "type": "string",
-                        "description": "Status of the category",
-                        "name": "status",
-                        "in": "formData",
-                        "required": true
-                    },
-                    {
-                        "type": "boolean",
-                        "description": "Whether the category is flagged as a top/featured category",
-                        "name": "is_top_category",
-                        "in": "formData",
-                        "required": true
+                        "description": "Update Category Request",
+                        "name": "category",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/v1.UpdateCategoryRequest"
+                        }
                     }
                 ],
                 "responses": {
@@ -1669,6 +1732,108 @@ const docTemplate = `{
             }
         },
         "/v1/categories/subcategories": {
+            "get": {
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
+                "description": "Fetches a paginated list of subcategories.",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "subcategories"
+                ],
+                "summary": "Get subcategories",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "Search term to filter subcategories by name",
+                        "name": "search",
+                        "in": "query"
+                    },
+                    {
+                        "type": "string",
+                        "description": "Unique identifier for the category whose subcategories are to be fetched",
+                        "name": "category_id",
+                        "in": "query"
+                    },
+                    {
+                        "type": "integer",
+                        "description": "Page number",
+                        "name": "page",
+                        "in": "query",
+                        "required": true
+                    },
+                    {
+                        "type": "integer",
+                        "description": "Number of items per page",
+                        "name": "limit",
+                        "in": "query",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "allOf": [
+                                {
+                                    "$ref": "#/definitions/dto.Response"
+                                },
+                                {
+                                    "type": "object",
+                                    "properties": {
+                                        "data": {
+                                            "$ref": "#/definitions/dto.SubCategories"
+                                        }
+                                    }
+                                }
+                            ]
+                        }
+                    },
+                    "401": {
+                        "description": "Unauthorized",
+                        "schema": {
+                            "allOf": [
+                                {
+                                    "$ref": "#/definitions/dto.Response"
+                                },
+                                {
+                                    "type": "object",
+                                    "properties": {
+                                        "data": {
+                                            "type": "string"
+                                        }
+                                    }
+                                }
+                            ]
+                        }
+                    },
+                    "403": {
+                        "description": "Forbidden",
+                        "schema": {
+                            "allOf": [
+                                {
+                                    "$ref": "#/definitions/dto.Response"
+                                },
+                                {
+                                    "type": "object",
+                                    "properties": {
+                                        "data": {
+                                            "type": "string"
+                                        }
+                                    }
+                                }
+                            ]
+                        }
+                    }
+                }
+            },
             "post": {
                 "security": [
                     {
@@ -1677,7 +1842,7 @@ const docTemplate = `{
                 ],
                 "description": "Creates a new subcategory. This endpoint is intended for internal use and should be secured appropriately.",
                 "consumes": [
-                    "multipart/form-data"
+                    "application/json"
                 ],
                 "produces": [
                     "application/json"
@@ -1688,43 +1853,13 @@ const docTemplate = `{
                 "summary": "Create a new subcategory",
                 "parameters": [
                     {
-                        "type": "string",
-                        "description": "Display name of the subcategory",
-                        "name": "sub_category_name",
-                        "in": "formData",
-                        "required": true
-                    },
-                    {
-                        "type": "string",
-                        "description": "Identifier of the parent category",
-                        "name": "category_id",
-                        "in": "formData",
-                        "required": true
-                    },
-                    {
-                        "type": "file",
-                        "description": "Image file for the subcategory",
-                        "name": "image",
-                        "in": "formData",
-                        "required": true
-                    },
-                    {
-                        "enum": [
-                            "active",
-                            "disabled"
-                        ],
-                        "type": "string",
-                        "description": "Status of the subcategory",
-                        "name": "status",
-                        "in": "formData",
-                        "required": true
-                    },
-                    {
-                        "type": "boolean",
-                        "description": "Whether the subcategory is flagged as a top/featured subcategory",
-                        "name": "is_top_sub_category",
-                        "in": "formData",
-                        "required": true
+                        "description": "Create Subcategory Request",
+                        "name": "subcategory",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/v1.CreateSubcategoryRequest"
+                        }
                     }
                 ],
                 "responses": {
@@ -1913,7 +2048,7 @@ const docTemplate = `{
                 ],
                 "description": "Updates an existing subcategory. This endpoint is intended for internal use and should be secured appropriately.",
                 "consumes": [
-                    "multipart/form-data"
+                    "application/json"
                 ],
                 "produces": [
                     "application/json"
@@ -1924,45 +2059,13 @@ const docTemplate = `{
                 "summary": "Update an existing subcategory (id supplied via form data)",
                 "parameters": [
                     {
-                        "type": "string",
-                        "description": "Unique identifier for the subcategory",
-                        "name": "sub_category_id",
-                        "in": "formData",
-                        "required": true
-                    },
-                    {
-                        "type": "string",
-                        "description": "Display name of the subcategory",
-                        "name": "sub_category_name",
-                        "in": "formData"
-                    },
-                    {
-                        "type": "string",
-                        "description": "Identifier of the parent category",
-                        "name": "category_id",
-                        "in": "formData"
-                    },
-                    {
-                        "type": "file",
-                        "description": "Image file for the subcategory",
-                        "name": "image",
-                        "in": "formData"
-                    },
-                    {
-                        "enum": [
-                            "active",
-                            "disabled"
-                        ],
-                        "type": "string",
-                        "description": "Status of the subcategory",
-                        "name": "status",
-                        "in": "formData"
-                    },
-                    {
-                        "type": "boolean",
-                        "description": "Whether the subcategory is flagged as a top/featured subcategory",
-                        "name": "is_top_sub_category",
-                        "in": "formData"
+                        "description": "Update Subcategory Request",
+                        "name": "subcategory",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/v1.UpdateSubcategoryRequest"
+                        }
                     }
                 ],
                 "responses": {
@@ -2041,14 +2144,14 @@ const docTemplate = `{
                 }
             }
         },
-        "/v1/categories/{category_id}/subcategories": {
+        "/v1/categories/{category_id}": {
             "get": {
                 "security": [
                     {
                         "BearerAuth": []
                     }
                 ],
-                "description": "Fetches a paginated list of subcategories.",
+                "description": "Fetches a category by its unique identifier.",
                 "consumes": [
                     "application/json"
                 ],
@@ -2056,29 +2159,15 @@ const docTemplate = `{
                     "application/json"
                 ],
                 "tags": [
-                    "subcategories"
+                    "categories"
                 ],
-                "summary": "Get subcategories",
+                "summary": "Get category by ID",
                 "parameters": [
                     {
                         "type": "string",
                         "description": "Unique identifier for the category",
                         "name": "category_id",
                         "in": "path",
-                        "required": true
-                    },
-                    {
-                        "type": "integer",
-                        "description": "Page number",
-                        "name": "page",
-                        "in": "query",
-                        "required": true
-                    },
-                    {
-                        "type": "integer",
-                        "description": "Number of items per page",
-                        "name": "limit",
-                        "in": "query",
                         "required": true
                     }
                 ],
@@ -2094,7 +2183,7 @@ const docTemplate = `{
                                     "type": "object",
                                     "properties": {
                                         "data": {
-                                            "$ref": "#/definitions/dto.SubCategories"
+                                            "$ref": "#/definitions/dto.Category"
                                         }
                                     }
                                 }
@@ -2121,6 +2210,134 @@ const docTemplate = `{
                     },
                     "403": {
                         "description": "Forbidden",
+                        "schema": {
+                            "allOf": [
+                                {
+                                    "$ref": "#/definitions/dto.Response"
+                                },
+                                {
+                                    "type": "object",
+                                    "properties": {
+                                        "data": {
+                                            "type": "string"
+                                        }
+                                    }
+                                }
+                            ]
+                        }
+                    },
+                    "404": {
+                        "description": "Not Found",
+                        "schema": {
+                            "allOf": [
+                                {
+                                    "$ref": "#/definitions/dto.Response"
+                                },
+                                {
+                                    "type": "object",
+                                    "properties": {
+                                        "data": {
+                                            "type": "string"
+                                        }
+                                    }
+                                }
+                            ]
+                        }
+                    }
+                }
+            }
+        },
+        "/v1/categories/{category_id}/subcategories/{subcategory_id}": {
+            "get": {
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
+                "description": "Fetches a subcategory by its unique identifier.",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "subcategories"
+                ],
+                "summary": "Get subcategory by ID",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "Unique identifier for the category",
+                        "name": "category_id",
+                        "in": "path",
+                        "required": true
+                    },
+                    {
+                        "type": "string",
+                        "description": "Unique identifier for the subcategory",
+                        "name": "subcategory_id",
+                        "in": "path",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "allOf": [
+                                {
+                                    "$ref": "#/definitions/dto.Response"
+                                },
+                                {
+                                    "type": "object",
+                                    "properties": {
+                                        "data": {
+                                            "$ref": "#/definitions/dto.SubCategory"
+                                        }
+                                    }
+                                }
+                            ]
+                        }
+                    },
+                    "401": {
+                        "description": "Unauthorized",
+                        "schema": {
+                            "allOf": [
+                                {
+                                    "$ref": "#/definitions/dto.Response"
+                                },
+                                {
+                                    "type": "object",
+                                    "properties": {
+                                        "data": {
+                                            "type": "string"
+                                        }
+                                    }
+                                }
+                            ]
+                        }
+                    },
+                    "403": {
+                        "description": "Forbidden",
+                        "schema": {
+                            "allOf": [
+                                {
+                                    "$ref": "#/definitions/dto.Response"
+                                },
+                                {
+                                    "type": "object",
+                                    "properties": {
+                                        "data": {
+                                            "type": "string"
+                                        }
+                                    }
+                                }
+                            ]
+                        }
+                    },
+                    "404": {
+                        "description": "Not Found",
                         "schema": {
                             "allOf": [
                                 {
@@ -2590,7 +2807,7 @@ const docTemplate = `{
                 ],
                 "description": "Creates a new inventory item in the system. This endpoint is intended for internal use and should be secured appropriately.",
                 "consumes": [
-                    "multipart/form-data"
+                    "application/json"
                 ],
                 "produces": [
                     "application/json"
@@ -2601,57 +2818,13 @@ const docTemplate = `{
                 "summary": "Create a new inventory item",
                 "parameters": [
                     {
-                        "type": "file",
-                        "description": "Image file for the product",
-                        "name": "image",
-                        "in": "formData",
-                        "required": true
-                    },
-                    {
-                        "type": "string",
-                        "description": "Display name of the product",
-                        "name": "product_name",
-                        "in": "formData",
-                        "required": true
-                    },
-                    {
-                        "type": "string",
-                        "description": "Description of the product",
-                        "name": "product_description",
-                        "in": "formData",
-                        "required": true
-                    },
-                    {
-                        "type": "string",
-                        "description": "Unique identifier for the brand",
-                        "name": "brand_id",
-                        "in": "formData",
-                        "required": true
-                    },
-                    {
-                        "type": "string",
-                        "description": "Unique identifier for the category",
-                        "name": "category_id",
-                        "in": "formData",
-                        "required": true
-                    },
-                    {
-                        "type": "boolean",
-                        "description": "Whether the product is flagged as a top/featured item",
-                        "name": "is_top_item",
-                        "in": "formData",
-                        "required": true
-                    },
-                    {
-                        "enum": [
-                            "active",
-                            "disabled"
-                        ],
-                        "type": "string",
-                        "description": "Status of the product",
-                        "name": "status",
-                        "in": "formData",
-                        "required": true
+                        "description": "Create New Item Request",
+                        "name": "item",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/v1.CreateNewItemRequest"
+                        }
                     }
                 ],
                 "responses": {
@@ -2804,7 +2977,7 @@ const docTemplate = `{
                 ],
                 "description": "Updates an existing inventory item in the system. This endpoint is intended for internal use and should be secured appropriately.",
                 "consumes": [
-                    "multipart/form-data"
+                    "application/json"
                 ],
                 "produces": [
                     "application/json"
@@ -2815,57 +2988,13 @@ const docTemplate = `{
                 "summary": "Update an existing inventory item",
                 "parameters": [
                     {
-                        "type": "string",
-                        "description": "Unique identifier for the product",
-                        "name": "product_id",
-                        "in": "formData",
-                        "required": true
-                    },
-                    {
-                        "type": "file",
-                        "description": "Image file for the product",
-                        "name": "image",
-                        "in": "formData"
-                    },
-                    {
-                        "type": "string",
-                        "description": "Display name of the product",
-                        "name": "product_name",
-                        "in": "formData"
-                    },
-                    {
-                        "type": "string",
-                        "description": "Description of the product",
-                        "name": "product_description",
-                        "in": "formData"
-                    },
-                    {
-                        "type": "string",
-                        "description": "Unique identifier for the brand",
-                        "name": "brand_id",
-                        "in": "formData"
-                    },
-                    {
-                        "type": "string",
-                        "description": "Unique identifier for the category",
-                        "name": "category_id",
-                        "in": "formData"
-                    },
-                    {
-                        "type": "boolean",
-                        "description": "Whether the product is flagged as a top/featured item",
-                        "name": "is_top_item",
-                        "in": "formData"
-                    },
-                    {
-                        "enum": [
-                            "active",
-                            "disabled"
-                        ],
-                        "type": "string",
-                        "description": "Status of the product",
-                        "name": "status",
-                        "in": "formData"
+                        "description": "Update Item Request",
+                        "name": "item",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/v1.UpdateItemRequest"
+                        }
                     }
                 ],
                 "responses": {
@@ -3313,6 +3442,109 @@ const docTemplate = `{
                 }
             }
         },
+        "/v1/inventory-management/{product_id}": {
+            "get": {
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
+                "description": "Fetches an inventory item by its unique identifier.",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "inventory-management"
+                ],
+                "summary": "Get inventory item by ID",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "Unique identifier for the inventory item",
+                        "name": "product_id",
+                        "in": "path",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "allOf": [
+                                {
+                                    "$ref": "#/definitions/dto.Response"
+                                },
+                                {
+                                    "type": "object",
+                                    "properties": {
+                                        "data": {
+                                            "$ref": "#/definitions/dto.ProductItem"
+                                        }
+                                    }
+                                }
+                            ]
+                        }
+                    },
+                    "401": {
+                        "description": "Unauthorized",
+                        "schema": {
+                            "allOf": [
+                                {
+                                    "$ref": "#/definitions/dto.Response"
+                                },
+                                {
+                                    "type": "object",
+                                    "properties": {
+                                        "data": {
+                                            "type": "string"
+                                        }
+                                    }
+                                }
+                            ]
+                        }
+                    },
+                    "403": {
+                        "description": "Forbidden",
+                        "schema": {
+                            "allOf": [
+                                {
+                                    "$ref": "#/definitions/dto.Response"
+                                },
+                                {
+                                    "type": "object",
+                                    "properties": {
+                                        "data": {
+                                            "type": "string"
+                                        }
+                                    }
+                                }
+                            ]
+                        }
+                    },
+                    "404": {
+                        "description": "Not Found",
+                        "schema": {
+                            "allOf": [
+                                {
+                                    "$ref": "#/definitions/dto.Response"
+                                },
+                                {
+                                    "type": "object",
+                                    "properties": {
+                                        "data": {
+                                            "type": "string"
+                                        }
+                                    }
+                                }
+                            ]
+                        }
+                    }
+                }
+            }
+        },
         "/v1/inventory-management/{product_id}/variants": {
             "get": {
                 "security": [
@@ -3353,6 +3585,221 @@ const docTemplate = `{
                                     "properties": {
                                         "data": {
                                             "$ref": "#/definitions/dto.ProductVariantItems"
+                                        }
+                                    }
+                                }
+                            ]
+                        }
+                    },
+                    "401": {
+                        "description": "Unauthorized",
+                        "schema": {
+                            "allOf": [
+                                {
+                                    "$ref": "#/definitions/dto.Response"
+                                },
+                                {
+                                    "type": "object",
+                                    "properties": {
+                                        "data": {
+                                            "type": "string"
+                                        }
+                                    }
+                                }
+                            ]
+                        }
+                    },
+                    "403": {
+                        "description": "Forbidden",
+                        "schema": {
+                            "allOf": [
+                                {
+                                    "$ref": "#/definitions/dto.Response"
+                                },
+                                {
+                                    "type": "object",
+                                    "properties": {
+                                        "data": {
+                                            "type": "string"
+                                        }
+                                    }
+                                }
+                            ]
+                        }
+                    }
+                }
+            }
+        },
+        "/v1/inventory-management/{product_id}/variants/{variant_id}": {
+            "get": {
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
+                "description": "Fetches the variants of an inventory item by its unique identifier.",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "inventory-management"
+                ],
+                "summary": "Get inventory item variants by product ID",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "Unique identifier for the inventory item",
+                        "name": "product_id",
+                        "in": "path",
+                        "required": true
+                    },
+                    {
+                        "type": "string",
+                        "description": "Unique identifier for the variant",
+                        "name": "variant_id",
+                        "in": "path",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "allOf": [
+                                {
+                                    "$ref": "#/definitions/dto.Response"
+                                },
+                                {
+                                    "type": "object",
+                                    "properties": {
+                                        "data": {
+                                            "$ref": "#/definitions/dto.ProductVariantItems"
+                                        }
+                                    }
+                                }
+                            ]
+                        }
+                    },
+                    "401": {
+                        "description": "Unauthorized",
+                        "schema": {
+                            "allOf": [
+                                {
+                                    "$ref": "#/definitions/dto.Response"
+                                },
+                                {
+                                    "type": "object",
+                                    "properties": {
+                                        "data": {
+                                            "type": "string"
+                                        }
+                                    }
+                                }
+                            ]
+                        }
+                    },
+                    "403": {
+                        "description": "Forbidden",
+                        "schema": {
+                            "allOf": [
+                                {
+                                    "$ref": "#/definitions/dto.Response"
+                                },
+                                {
+                                    "type": "object",
+                                    "properties": {
+                                        "data": {
+                                            "type": "string"
+                                        }
+                                    }
+                                }
+                            ]
+                        }
+                    },
+                    "404": {
+                        "description": "Not Found",
+                        "schema": {
+                            "allOf": [
+                                {
+                                    "$ref": "#/definitions/dto.Response"
+                                },
+                                {
+                                    "type": "object",
+                                    "properties": {
+                                        "data": {
+                                            "type": "string"
+                                        }
+                                    }
+                                }
+                            ]
+                        }
+                    }
+                }
+            }
+        },
+        "/v1/presigned-url": {
+            "post": {
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
+                "description": "Generate a presigned PUT URL so client can upload directly to S3",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "File Upload"
+                ],
+                "summary": "Get presigned URL for S3 upload",
+                "parameters": [
+                    {
+                        "description": "Presign Request",
+                        "name": "request",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/v1.PresignRequest"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "allOf": [
+                                {
+                                    "$ref": "#/definitions/dto.Response"
+                                },
+                                {
+                                    "type": "object",
+                                    "properties": {
+                                        "data": {
+                                            "$ref": "#/definitions/dto.PresignedURL"
+                                        }
+                                    }
+                                }
+                            ]
+                        }
+                    },
+                    "400": {
+                        "description": "Bad Request",
+                        "schema": {
+                            "allOf": [
+                                {
+                                    "$ref": "#/definitions/dto.Response"
+                                },
+                                {
+                                    "type": "object",
+                                    "properties": {
+                                        "data": {
+                                            "type": "string"
                                         }
                                     }
                                 }
@@ -3728,6 +4175,18 @@ const docTemplate = `{
                 }
             }
         },
+        "dto.CategoryData": {
+            "description": "Data Transfer Object for a Category entity.",
+            "type": "object",
+            "properties": {
+                "category_id": {
+                    "type": "string"
+                },
+                "category_name": {
+                    "type": "string"
+                }
+            }
+        },
         "dto.DailyActiveUsers": {
             "description": "Daily active user counts for the current week, keyed by day.",
             "type": "object",
@@ -4016,6 +4475,28 @@ const docTemplate = `{
                 }
             }
         },
+        "dto.PresignedURL": {
+            "description": "Signed URL for uploading a file to the storage bucket.",
+            "type": "object",
+            "properties": {
+                "expires_at": {
+                    "description": "Expiration timestamp of the signed URL, RFC3339",
+                    "type": "string"
+                },
+                "key": {
+                    "description": "Key of the file in the storage bucket",
+                    "type": "string"
+                },
+                "presigned_url": {
+                    "description": "Signed URL for uploading the file",
+                    "type": "string"
+                },
+                "public_url": {
+                    "description": "Public URL of the uploaded file",
+                    "type": "string"
+                }
+            }
+        },
         "dto.Pricing": {
             "description": "Price and stock details for a product variant.",
             "type": "object",
@@ -4234,6 +4715,9 @@ const docTemplate = `{
             "description": "Paginated list of subcategories.",
             "type": "object",
             "properties": {
+                "category": {
+                    "$ref": "#/definitions/dto.CategoryData"
+                },
                 "meta": {
                     "description": "Pagination metadata",
                     "allOf": [
@@ -4300,6 +4784,14 @@ const docTemplate = `{
                 "refresh_token": {
                     "description": "Token used to obtain a new access token once the current one expires",
                     "type": "string"
+                },
+                "user_data": {
+                    "description": "User data associated with the authenticated user",
+                    "allOf": [
+                        {
+                            "$ref": "#/definitions/dto.UserData"
+                        }
+                    ]
                 }
             }
         },
@@ -4401,6 +4893,21 @@ const docTemplate = `{
                 }
             }
         },
+        "dto.UserData": {
+            "description": "User data associated with the authenticated user.",
+            "type": "object",
+            "properties": {
+                "full_name": {
+                    "type": "string"
+                },
+                "image_url": {
+                    "type": "string"
+                },
+                "role": {
+                    "type": "string"
+                }
+            }
+        },
         "dto.UserListItemDTO": {
             "description": "Per-row shape returned by GET /v1/users.",
             "type": "object",
@@ -4413,20 +4920,12 @@ const docTemplate = `{
                     "description": "Email address of the user",
                     "type": "string"
                 },
-                "id": {
-                    "description": "Unique identifier for the user",
-                    "type": "string"
-                },
                 "last_active_at": {
                     "description": "Timestamp of the user's last activity, RFC3339",
                     "type": "string"
                 },
                 "location": {
                     "description": "Free-text location of the user",
-                    "type": "string"
-                },
-                "name": {
-                    "description": "Name of the user",
                     "type": "string"
                 },
                 "profile_picture_url": {
@@ -4447,8 +4946,16 @@ const docTemplate = `{
                     "type": "string",
                     "enum": [
                         "active",
-                        "disabled"
+                        "suspended"
                     ]
+                },
+                "user_id": {
+                    "description": "Unique identifier for the user",
+                    "type": "string"
+                },
+                "user_name": {
+                    "description": "Name of the user",
+                    "type": "string"
                 }
             }
         },
@@ -4497,6 +5004,153 @@ const docTemplate = `{
             ],
             "properties": {
                 "user_id": {
+                    "type": "string"
+                }
+            }
+        },
+        "v1.CreateBannerRequest": {
+            "type": "object",
+            "required": [
+                "end_date",
+                "image_url",
+                "start_date"
+            ],
+            "properties": {
+                "end_date": {
+                    "type": "string"
+                },
+                "image_url": {
+                    "type": "string"
+                },
+                "is_active": {
+                    "type": "boolean",
+                    "default": true
+                },
+                "start_date": {
+                    "type": "string"
+                }
+            }
+        },
+        "v1.CreateBrandRequest": {
+            "type": "object",
+            "required": [
+                "brand_name",
+                "image_url",
+                "is_top_brand",
+                "status"
+            ],
+            "properties": {
+                "brand_name": {
+                    "type": "string"
+                },
+                "image_url": {
+                    "type": "string"
+                },
+                "is_top_brand": {
+                    "type": "boolean"
+                },
+                "status": {
+                    "type": "string",
+                    "enum": [
+                        "active",
+                        "disabled"
+                    ]
+                }
+            }
+        },
+        "v1.CreateCategoryRequest": {
+            "type": "object",
+            "required": [
+                "category_name",
+                "image_url",
+                "is_top_category",
+                "status"
+            ],
+            "properties": {
+                "category_name": {
+                    "type": "string"
+                },
+                "image_url": {
+                    "type": "string"
+                },
+                "is_top_category": {
+                    "type": "boolean"
+                },
+                "status": {
+                    "type": "string",
+                    "enum": [
+                        "active",
+                        "disabled"
+                    ]
+                }
+            }
+        },
+        "v1.CreateNewItemRequest": {
+            "type": "object",
+            "required": [
+                "brand_id",
+                "category_id",
+                "image_url",
+                "is_top_item",
+                "product_description",
+                "product_name",
+                "status"
+            ],
+            "properties": {
+                "brand_id": {
+                    "type": "string"
+                },
+                "category_id": {
+                    "type": "string"
+                },
+                "image_url": {
+                    "type": "string"
+                },
+                "is_top_item": {
+                    "type": "boolean"
+                },
+                "product_description": {
+                    "type": "string"
+                },
+                "product_name": {
+                    "type": "string"
+                },
+                "status": {
+                    "type": "string",
+                    "enum": [
+                        "active",
+                        "disabled"
+                    ]
+                }
+            }
+        },
+        "v1.CreateSubcategoryRequest": {
+            "type": "object",
+            "required": [
+                "category_id",
+                "image_url",
+                "is_top_sub_category",
+                "status",
+                "sub_category_name"
+            ],
+            "properties": {
+                "category_id": {
+                    "type": "string"
+                },
+                "image_url": {
+                    "type": "string"
+                },
+                "is_top_sub_category": {
+                    "type": "boolean"
+                },
+                "status": {
+                    "type": "string",
+                    "enum": [
+                        "active",
+                        "disabled"
+                    ]
+                },
+                "sub_category_name": {
                     "type": "string"
                 }
             }
@@ -4629,6 +5283,25 @@ const docTemplate = `{
                 }
             }
         },
+        "v1.PresignRequest": {
+            "type": "object",
+            "required": [
+                "contentType",
+                "fileName",
+                "folder"
+            ],
+            "properties": {
+                "contentType": {
+                    "type": "string"
+                },
+                "fileName": {
+                    "type": "string"
+                },
+                "folder": {
+                    "type": "string"
+                }
+            }
+        },
         "v1.RefreshTokenRequest": {
             "type": "object",
             "required": [
@@ -4672,6 +5345,149 @@ const docTemplate = `{
                     "minLength": 6
                 },
                 "token": {
+                    "type": "string"
+                }
+            }
+        },
+        "v1.UpdateBannerRequest": {
+            "type": "object",
+            "required": [
+                "banner_id"
+            ],
+            "properties": {
+                "banner_id": {
+                    "type": "string"
+                },
+                "end_date": {
+                    "type": "string"
+                },
+                "image_url": {
+                    "type": "string"
+                },
+                "is_active": {
+                    "type": "boolean"
+                },
+                "start_date": {
+                    "type": "string"
+                }
+            }
+        },
+        "v1.UpdateBrandRequest": {
+            "type": "object",
+            "required": [
+                "brand_id"
+            ],
+            "properties": {
+                "brand_id": {
+                    "type": "string"
+                },
+                "brand_name": {
+                    "type": "string"
+                },
+                "image_url": {
+                    "type": "string"
+                },
+                "is_top_brand": {
+                    "type": "boolean"
+                },
+                "status": {
+                    "type": "string",
+                    "enum": [
+                        "active",
+                        "disabled"
+                    ]
+                }
+            }
+        },
+        "v1.UpdateCategoryRequest": {
+            "type": "object",
+            "required": [
+                "category_id"
+            ],
+            "properties": {
+                "category_id": {
+                    "type": "string"
+                },
+                "category_name": {
+                    "type": "string"
+                },
+                "image_url": {
+                    "type": "string"
+                },
+                "is_top_category": {
+                    "type": "boolean"
+                },
+                "status": {
+                    "type": "string",
+                    "enum": [
+                        "active",
+                        "disabled"
+                    ]
+                }
+            }
+        },
+        "v1.UpdateItemRequest": {
+            "type": "object",
+            "required": [
+                "product_id"
+            ],
+            "properties": {
+                "brand_id": {
+                    "type": "string"
+                },
+                "category_id": {
+                    "type": "string"
+                },
+                "image_url": {
+                    "type": "string"
+                },
+                "is_top_item": {
+                    "type": "boolean"
+                },
+                "product_description": {
+                    "type": "string"
+                },
+                "product_id": {
+                    "type": "string"
+                },
+                "product_name": {
+                    "type": "string"
+                },
+                "status": {
+                    "type": "string",
+                    "enum": [
+                        "active",
+                        "disabled"
+                    ]
+                }
+            }
+        },
+        "v1.UpdateSubcategoryRequest": {
+            "type": "object",
+            "required": [
+                "sub_category_id"
+            ],
+            "properties": {
+                "category_id": {
+                    "type": "string"
+                },
+                "image_url": {
+                    "type": "string"
+                },
+                "is_top_sub_category": {
+                    "type": "boolean"
+                },
+                "status": {
+                    "type": "string",
+                    "enum": [
+                        "active",
+                        "disabled"
+                    ]
+                },
+                "sub_category_id": {
+                    "type": "string"
+                },
+                "sub_category_name": {
                     "type": "string"
                 }
             }
