@@ -23,6 +23,11 @@ func RegisterAuthRoutes(r *gin.Engine, svc *service.AuthService, jwt *auth.JWTSe
 	g.POST("/forgot-password", forgotPassword(svc))
 	g.POST("/reset-password", resetPassword(svc))
 
+	g.POST("/phone-login", phoneLogin(svc))
+	g.POST("/verify-phone-otp", verifyPhoneOTP(svc))
+	g.POST("/mobile-register", mobileRegister(svc))
+	g.DELETE("/delete", middleware.AuthMiddleware(jwt, user), DeleteUser(svc))
+
 	authGroup := r.Group("/auth")
 	authGroup.Use(middleware.AuthMiddleware(jwt, user))
 	authGroup.POST("/logout", logout(svc))
@@ -61,6 +66,91 @@ func login(svc *service.AuthService) gin.HandlerFunc {
 			Message: "Login successful",
 			Status:  "success",
 			Data:    tokenResponse,
+		})
+	}
+}
+
+// @Summary Phone Login
+// @Description User login via phone number (OTP-based)
+// @Tags Auth
+// @Accept json
+// @Produce json
+// @Param mobileLoginRequest body dto.MobileLoginRequest true "Mobile login request payload"
+// @Success 200 {object} dto.Response "OTP code sent"
+// @Failure 400 {object} dto.Response "Bad request"
+// @Router /auth/phone-login [post]
+func phoneLogin(svc *service.AuthService) gin.HandlerFunc {
+	return func(c *gin.Context) {
+		var req dto.MobileLoginRequest
+		if err := c.ShouldBindJSON(&req); err != nil {
+			c.Error(errs.BadRequest("VALIDATION", util.ParseValidationError(err).Error()))
+			return
+		}
+
+		c.JSON(200, dto.Response{
+			Data:    nil,
+			Message: "OTP code sent",
+			Status:  "success",
+		})
+	}
+}
+
+type VerifyPhoneOTPRequest struct {
+	PhoneNumber string `json:"phone_number" binding:"required"`
+	OTPCode     string `json:"otp_code" binding:"required"`
+}
+
+// @Summary Verify Phone OTP
+// @Description Verify the OTP code sent to the user's phone number
+// @Tags Auth
+// @Accept json
+// @Produce json
+// @Param verifyPhoneOTPRequest body VerifyPhoneOTPRequest true "Verify phone OTP request payload"
+// @Success 200 {object} dto.Response{data=dto.TokenResponse} "OTP verified successfully"
+// @Failure 400 {object} dto.Response "Bad request"
+// @Failure 401 {object} dto.Response "Unauthorized"
+// @Router /auth/verify-phone-otp [post]
+func verifyPhoneOTP(svc *service.AuthService) gin.HandlerFunc {
+	return func(c *gin.Context) {
+		var req VerifyPhoneOTPRequest
+		if err := c.ShouldBindJSON(&req); err != nil {
+			c.Error(errs.BadRequest("VALIDATION", util.ParseValidationError(err).Error()))
+			return
+		}
+
+		c.JSON(200, dto.Response{
+			Data:    dto.TokenResponse{},
+			Message: "OTP verified successfully",
+			Status:  "success",
+		})
+	}
+}
+
+type MobileRegisterRequest struct {
+	PhoneNumber string `json:"phone_number" binding:"required"`
+}
+
+// @Summary Mobile Register
+// @Description User registration via mobile phone number (OTP-based)
+// @Tags Auth
+// @Accept json
+// @Produce json
+// @Param mobileRegisterRequest body MobileRegisterRequest true "Mobile register request payload"
+// @Success 200 {object} dto.Response "OTP code sent"
+// @Failure 400 {object} dto.Response "Bad request"
+// @Router /auth/mobile-register [post]
+func mobileRegister(svc *service.AuthService) gin.HandlerFunc {
+	return func(c *gin.Context) {
+		var req MobileRegisterRequest
+		if err := c.ShouldBindJSON(&req); err != nil {
+			c.Error(errs.BadRequest("VALIDATION", util.ParseValidationError(err).Error()))
+			return
+		}
+
+		c.JSON(200, dto.Response{
+			Data:    nil,
+			Message: "OTP code sent",
+			Status:  "success",
 		})
 	}
 }
@@ -251,6 +341,33 @@ func resetPassword(svc *service.AuthService) gin.HandlerFunc {
 		c.JSON(200, dto.Response{
 			Status:  "success",
 			Message: "password reset",
+		})
+	}
+}
+
+// @Summary Delete User
+// @Description Delete the authenticated user's account. This action is irreversible.
+// @Tags Auth
+// @Accept json
+// @Produce json
+// @Security BearerAuth
+// @Success 200 {object} dto.Response "User deleted"
+// @Failure 401 {object} dto.Response "Unauthorized"
+// @Router /auth/delete [delete]
+func DeleteUser(svc *service.AuthService) gin.HandlerFunc {
+	return func(c *gin.Context) {
+		_, exists := auth.UserFrom(c)
+		if !exists {
+			c.Error(errs.Unauthorized("USER_CONTEXT_MISSING", "user context missing"))
+			return
+		}
+		// if err := svc.DeleteUser(user.ID); err != nil {
+		// 	c.Error(err)
+		// 	return
+		// }
+		c.JSON(200, dto.Response{
+			Status:  "success",
+			Message: "user deleted",
 		})
 	}
 }

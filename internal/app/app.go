@@ -123,6 +123,12 @@ func (a *App) buildRouter() *gin.Engine {
 	v1.RegisterCategoryRoutes(a.JWTService, a.UserRepo, r)
 	v1.RegisterSubcategoryRoutes(a.JWTService, a.UserRepo, r)
 	v1.RegisterPresignedURLRoutes(r, a.JWTService, a.UserRepo)
+	v1.RegisterAddressRoutes(r)
+	v1.RegisterProductRoutes(r)
+	v1.RegisterTopDealsRoutes(r)
+	v1.RegiterCartRoutes(r)
+	v1.RegiterWishlistRoutes(r)
+	v1.RegisterSettingsRoutes(r)
 
 	docs.SwaggerInfo.BasePath = "/"
 	r.GET("/swagger/*any", ginSwagger.WrapHandler(swaggerFile.Handler))
