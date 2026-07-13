@@ -113,6 +113,12 @@ func (a *App) buildRouter() *gin.Engine {
 		Loc:     service.NewLocationResolver(a.DB),
 	})
 
+	v1.RegisterProfileRoutes(r, v1.ProfileDeps{
+		JWT:     a.JWTService,
+		Users:   a.UserRepo,
+		Profile: service.NewProfileService(a.DB),
+	})
+
 	docs.SwaggerInfo.BasePath = "/"
 	r.GET("/swagger/*any", ginSwagger.WrapHandler(swaggerFile.Handler))
 	return r

@@ -113,3 +113,14 @@ func (r *AddressRepository) UnsetDefaults(userID string) error {
 	}
 	return nil
 }
+
+func (r *AddressRepository) Delete(id string) error {
+	err := r.db.WithContext(context.Background()).
+		Model(&domain.UserAddress{}).
+		Where("id = ? AND deleted_at IS NULL", id).
+		Update("deleted_at", gorm.Expr("now()")).Error
+	if err != nil {
+		return util.ParseDatabaseError(err, "idx_user_addresses_")
+	}
+	return nil
+}
