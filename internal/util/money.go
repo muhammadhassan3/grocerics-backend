@@ -17,6 +17,10 @@ func FormatPaise(paise int64) string {
 	return fmt.Sprintf("%s₹%d.%02d", neg, paise/100, paise%100)
 }
 
+func RupeesToPaise(rupees float64) int64 {
+	return int64(math.Round(rupees * 100))
+}
+
 func AveragePaise(amounts []int64) (int64, bool) {
 	if len(amounts) == 0 {
 		return 0, false

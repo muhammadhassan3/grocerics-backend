@@ -16,8 +16,8 @@ type Config struct {
 	DB   DBConfig
 	JWT  JWTConfig
 	Seed SeedConfig
-
-	AWS AWSConfig
+	QC   QCConfig
+	AWS  AWSConfig
 }
 
 type DBConfig struct {
@@ -40,6 +40,13 @@ type JWTConfig struct {
 type SeedConfig struct {
 	AdminEmail    string // Email for the initial admin user
 	AdminPassword string // Password for the initial admin user
+}
+
+// QCConfig holds QuickCommerce settings. An empty APIKey selects the mock
+// client so the stack runs before a real key is provisioned.
+type QCConfig struct {
+	APIKey  string
+	BaseURL string
 }
 
 type AWSConfig struct {
@@ -71,6 +78,10 @@ func Load() (*Config, error) {
 			AdminPassword: envOr("SEED_ADMIN_PASSWORD", "adminpassword"),
 		},
 		FrontendURL: splitCSV(envOr("FRONTEND_ORIGINS", "http://localhost:5500,http://localhost:3000")),
+		QC: QCConfig{
+			APIKey:  envOr("QC_API_KEY", ""),
+			BaseURL: envOr("QC_BASE_URL", ""),
+		},
 		AWS: AWSConfig{
 			AccessKeyID:     envOr("AWS_ACCESS_KEY_ID", ""),
 			SecretAccessKey: envOr("AWS_SECRET_ACCESS_KEY", ""),

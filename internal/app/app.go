@@ -6,6 +6,7 @@ import (
 	"grocerics-backend/internal/auth"
 	"grocerics-backend/internal/config"
 	"grocerics-backend/internal/dto"
+	"grocerics-backend/internal/integration/quickcommerce"
 	"grocerics-backend/internal/logging"
 	"grocerics-backend/internal/middleware"
 	"grocerics-backend/internal/migrate"
@@ -36,6 +37,7 @@ type App struct {
 	AWSClient   *config.AWSClient
 
 	UserRepo *repository.UserRepository
+	QC       quickcommerce.Client
 
 	AuthService *service.AuthService
 }
@@ -54,16 +56,25 @@ func New(cfg *config.Config) (*App, error) {
 
 	jwt := auth.NewJWTService(cfg.JWT.SecretKey)
 	userRepo := repository.NewUserRepository(db)
+	qc := quickcommerce.New(quickcommerce.Config{APIKey: cfg.QC.APIKey, BaseURL: cfg.QC.BaseURL})
 
-	authService := service.NewAuthService(userRepo, nil, nil, jwt, "")
+	authService := service.NewAuthService(
+		userRepo,
+		repository.NewRefreshTokenRepository(db),
+		repository.NewPasswordResetRepository(db),
+		jwt,
+		"",
+	)
 
 	config.SeedAdmin(db, cfg.Seed, cfg.Env)
+	config.SeedDemo(db, cfg.Env)
 
 	a := &App{
 		Cfg:         cfg,
 		DB:          db,
 		JWTService:  jwt,
 		UserRepo:    userRepo,
+		QC:          qc,
 		AuthService: authService,
 	}
 	a.Router = a.buildRouter()
@@ -123,6 +134,21 @@ func (a *App) buildRouter() *gin.Engine {
 	v1.RegisterCategoryRoutes(a.JWTService, a.UserRepo, r)
 	v1.RegisterSubcategoryRoutes(a.JWTService, a.UserRepo, r)
 	v1.RegisterPresignedURLRoutes(r, a.JWTService, a.UserRepo)
+
+	v1.RegisterConsumerRoutes(r, v1.ConsumerDeps{
+		JWT:     a.JWTService,
+		Users:   a.UserRepo,
+		Cities:  repository.NewCityRepository(a.DB),
+		Catalog: service.NewCatalogService(a.DB),
+		Cart:    service.NewCartService(a.DB),
+		Loc:     service.NewLocationResolver(a.DB),
+	})
+
+	v1.RegisterProfileRoutes(r, v1.ProfileDeps{
+		JWT:     a.JWTService,
+		Users:   a.UserRepo,
+		Profile: service.NewProfileService(a.DB),
+	})
 
 	docs.SwaggerInfo.BasePath = "/"
 	r.GET("/swagger/*any", ginSwagger.WrapHandler(swaggerFile.Handler))

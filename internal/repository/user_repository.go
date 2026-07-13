@@ -81,6 +81,17 @@ func (r *UserRepository) Update(user *domain.User) (*domain.User, error) {
 	return user, nil
 }
 
+func (r *UserRepository) SetCurrentCity(userID string, cityID *string) error {
+	err := r.db.WithContext(context.Background()).
+		Model(&domain.User{}).
+		Where("id = ? AND deleted_at IS NULL", userID).
+		Update("current_city_id", cityID).Error
+	if err != nil {
+		return util.ParseDatabaseError(err, "idx_users_")
+	}
+	return nil
+}
+
 func (r *UserRepository) RemoveCompanyFromUser(userID string) error {
 	ctx := context.Background()
 	_, err := gorm.G[map[string]interface{}](r.db).Table("users").Where("id = ? AND deleted_at IS NULL", userID).Updates(ctx, map[string]interface{}{
