@@ -4,6 +4,7 @@ package logging
 
 import (
 	"context"
+	"fmt"
 
 	"go.uber.org/zap"
 )
@@ -13,7 +14,7 @@ var Log *zap.Logger
 // Init builds a zap logger tuned for env (production: JSON, info level;
 // otherwise: human-readable console, debug level), installs it as the
 // global logger (zap.L()/zap.S()), and returns the sugared handle.
-func Init(env string) *zap.SugaredLogger {
+func Init(env string) (*zap.SugaredLogger, error) {
 	var cfg zap.Config
 	if env == "production" {
 		cfg = zap.NewProductionConfig()
@@ -23,13 +24,13 @@ func Init(env string) *zap.SugaredLogger {
 
 	logger, err := cfg.Build()
 	if err != nil {
-		panic("logging: failed to build zap logger: " + err.Error())
+		return nil, fmt.Errorf("logging: failed to build zap logger: %w", err)
 	}
 
 	Log = logger
 
 	zap.ReplaceGlobals(logger)
-	return logger.Sugar()
+	return logger.Sugar(), nil
 }
 
 type loggerCtxKey struct{}

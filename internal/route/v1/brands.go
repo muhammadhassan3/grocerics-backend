@@ -10,10 +10,11 @@ import (
 	"github.com/gin-gonic/gin"
 )
 
-func RegisterBrandsRoutes(jwt *auth.JWTService, users *repository.UserRepository, r *gin.RouterGroup) {
+func RegisterBrandsRoutes(jwt *auth.JWTService, users *repository.UserRepository, r *gin.Engine) {
 	group := r.Group("/v1")
 	group.Use(middleware.AuthMiddleware(jwt, users))
 	group.GET("/brands", getBrands())
+	group.GET("/brands/:brand_id", getBrandByID())
 	adminGroup := group.Group("")
 	adminGroup.Use(middleware.RequireRole(domain.RoleAdmin))
 	adminGroup.POST("/brands", CreateNewBrand())
@@ -46,16 +47,43 @@ func getBrands() gin.HandlerFunc {
 	}
 }
 
+// @Swagger:route GET /v1/brands/{brand_id} brands getBrandByID
+// @Summary Get brand by ID
+// @Description Fetches a brand by its unique identifier.
+// @Tags brands
+// @Accept json
+// @Produce json
+// @Param brand_id path string true "Unique identifier for the brand"
+// @Success 200 {object} dto.Response{data=dto.BrandItem}
+// @Failure 401 {object} dto.Response{data=string}
+// @Failure 403 {object} dto.Response{data=string}
+// @Failure 404 {object} dto.Response{data=string}
+// @Security BearerAuth
+// @Router /v1/brands/{brand_id} [get]
+func getBrandByID() gin.HandlerFunc {
+	return func(c *gin.Context) {
+		c.JSON(200, dto.Response{
+			Message: "Brand fetched successfully",
+			Status:  "success",
+			Data:    dto.BrandItem{},
+		})
+	}
+}
+
+type CreateBrandRequest struct {
+	BrandName  string `json:"brand_name" binding:"required"`
+	ImageURL   string `json:"image_url" binding:"required"`
+	Status     string `json:"status" binding:"required,oneof=active disabled"`
+	IsTopBrand bool   `json:"is_top_brand" binding:"required"`
+}
+
 // @Swagger:route POST /v1/brands brands createBrand
 // @Summary Create a new brand
 // @Description Creates a new brand. This endpoint is intended for internal use and should be secured appropriately.
 // @Tags brands
-// @Accept multipart/form-data
+// @Accept application/json
 // @Produce json
-// @Param brand_name formData string true "Display name of the brand"
-// @Param image formData file true "Image file for the brand"
-// @Param status formData string true "Status of the brand" enums(active,disabled)
-// @Param is_top_brand formData bool true "Whether the brand is flagged as a top/featured brand"
+// @Param brand body CreateBrandRequest true "Create Brand Request"
 // @Success 201 {object} dto.Response{data=dto.BrandItem}
 // @Failure 400 {object} dto.Response{data=string}
 // @Failure 401 {object} dto.Response{data=string}
@@ -72,17 +100,21 @@ func CreateNewBrand() gin.HandlerFunc {
 	}
 }
 
+type UpdateBrandRequest struct {
+	BrandID    string `json:"brand_id" binding:"required"`
+	BrandName  string `json:"brand_name"`
+	ImageURL   string `json:"image_url"`
+	Status     string `json:"status" binding:"omitempty,oneof=active disabled"`
+	IsTopBrand *bool  `json:"is_top_brand"`
+}
+
 // @Swagger:route PATCH /v1/brands brands updateBrand
 // @Summary Update an existing brand
 // @Description Updates an existing brand. This endpoint is intended for internal use and should be secured appropriately.
 // @Tags brands
-// @Accept multipart/form-data
+// @Accept application/json
 // @Produce json
-// @Param brand_id formData string true "Unique identifier for the brand"
-// @Param brand_name formData string false "Display name of the brand"
-// @Param image formData file false "Image file for the brand"
-// @Param status formData string false "Status of the brand" enums(active,disabled)
-// @Param is_top_brand formData bool false "Whether the brand is flagged as a top/featured brand"
+// @Param brand body UpdateBrandRequest true "Update Brand Request"
 // @Success 200 {object} dto.Response{data=dto.BrandItem}
 // @Failure 400 {object} dto.Response{data=string}
 // @Failure 401 {object} dto.Response{data=string}

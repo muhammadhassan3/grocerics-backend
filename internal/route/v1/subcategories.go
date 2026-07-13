@@ -10,10 +10,11 @@ import (
 	"github.com/gin-gonic/gin"
 )
 
-func RegisterSubcategoryRoutes(jwt *auth.JWTService, user *repository.UserRepository, r *gin.RouterGroup) {
+func RegisterSubcategoryRoutes(jwt *auth.JWTService, user *repository.UserRepository, r *gin.Engine) {
 	group := r.Group("/v1/categories")
 	group.Use(middleware.AuthMiddleware(jwt, user))
-	group.GET("/:id/subcategories", getSubcategories())
+	group.GET("/subcategories", getSubcategories())
+	group.GET("/:id/subcategories/:subcategory_id", getSubcategoryByID())
 	adminGroup := group.Group("")
 	adminGroup.Use(middleware.RequireRole(domain.RoleAdmin))
 	adminGroup.POST("/subcategories", CreateSubcategory())
@@ -21,20 +22,21 @@ func RegisterSubcategoryRoutes(jwt *auth.JWTService, user *repository.UserReposi
 	adminGroup.DELETE("/subcategories", DeleteSubcategory())
 }
 
-// @Swagger:route GET /v1/categories/{id}/subcategories subcategories getSubcategories
+// @Swagger:route GET /v1/categories/subcategories subcategories getSubcategories
 // @Summary Get subcategories
 // @Description Fetches a paginated list of subcategories.
 // @Tags subcategories
 // @Accept json
 // @Produce json
-// @Param id path string true "Unique identifier for the category"
+// @Param search query string false "Search term to filter subcategories by name"
+// @Param category_id query string false "Unique identifier for the category whose subcategories are to be fetched"
 // @Param page query int true "Page number"
 // @Param limit query int true "Number of items per page"
 // @Success 200 {object} dto.Response{data=dto.SubCategories}
 // @Failure 401 {object} dto.Response{data=string}
 // @Failure 403 {object} dto.Response{data=string}
 // @Security BearerAuth
-// @Router /v1/categories/{id}/subcategories [get]
+// @Router /v1/categories/subcategories [get]
 func getSubcategories() gin.HandlerFunc {
 	return func(c *gin.Context) {
 		_ = c.Param("page")
@@ -47,17 +49,45 @@ func getSubcategories() gin.HandlerFunc {
 	}
 }
 
+// @Swagger:route GET /v1/categories/{id}/subcategories/{subcategory_id} subcategories getSubcategoryByID
+// @Summary Get subcategory by ID
+// @Description Fetches a subcategory by its unique identifier.
+// @Tags subcategories
+// @Accept json
+// @Produce json
+// @Param id path string true "Unique identifier for the category"
+// @Param subcategory_id path string true "Unique identifier for the subcategory"
+// @Success 200 {object} dto.Response{data=dto.SubCategory}
+// @Failure 401 {object} dto.Response{data=string}
+// @Failure 403 {object} dto.Response{data=string}
+// @Failure 404 {object} dto.Response{data=string}
+// @Security BearerAuth
+// @Router /v1/categories/{id}/subcategories/{subcategory_id} [get]
+func getSubcategoryByID() gin.HandlerFunc {
+	return func(c *gin.Context) {
+		c.JSON(200, dto.Response{
+			Data:    dto.SubCategory{},
+			Message: "Subcategory fetched successfully",
+			Status:  "success",
+		})
+	}
+}
+
+type CreateSubcategoryRequest struct {
+	SubCategoryName  string `json:"sub_category_name" binding:"required"`
+	CategoryID       string `json:"category_id" binding:"required"`
+	ImageURL         string `json:"image_url" binding:"required"`
+	Status           string `json:"status" binding:"required,oneof=active disabled"`
+	IsTopSubCategory bool   `json:"is_top_sub_category" binding:"required"`
+}
+
 // @Swagger:route POST /v1/categories/subcategories subcategories createSubcategory
 // @Summary Create a new subcategory
 // @Description Creates a new subcategory. This endpoint is intended for internal use and should be secured appropriately.
 // @Tags subcategories
-// @Accept multipart/form-data
+// @Accept application/json
 // @Produce json
-// @Param sub_category_name formData string true "Display name of the subcategory"
-// @Param category_id formData string true "Identifier of the parent category"
-// @Param image formData file true "Image file for the subcategory"
-// @Param status formData string true "Status of the subcategory" enums(active,disabled)
-// @Param is_top_sub_category formData bool true "Whether the subcategory is flagged as a top/featured subcategory"
+// @Param subcategory body CreateSubcategoryRequest true "Create Subcategory Request"
 // @Success 201 {object} dto.Response{data=dto.SubCategory}
 // @Failure 400 {object} dto.Response{data=string}
 // @Failure 401 {object} dto.Response{data=string}
@@ -74,18 +104,22 @@ func CreateSubcategory() gin.HandlerFunc {
 	}
 }
 
+type UpdateSubcategoryRequest struct {
+	SubCategoryID    string `json:"sub_category_id" binding:"required"`
+	SubCategoryName  string `json:"sub_category_name"`
+	CategoryID       string `json:"category_id"`
+	ImageURL         string `json:"image_url"`
+	Status           string `json:"status" binding:"omitempty,oneof=active disabled"`
+	IsTopSubCategory *bool  `json:"is_top_sub_category"`
+}
+
 // @Swagger:route PATCH /v1/categories/subcategories subcategories updateSubcategory
 // @Summary Update an existing subcategory (id supplied via form data)
 // @Description Updates an existing subcategory. This endpoint is intended for internal use and should be secured appropriately.
 // @Tags subcategories
-// @Accept multipart/form-data
+// @Accept application/json
 // @Produce json
-// @Param sub_category_id formData string true "Unique identifier for the subcategory"
-// @Param sub_category_name formData string false "Display name of the subcategory"
-// @Param category_id formData string false "Identifier of the parent category"
-// @Param image formData file false "Image file for the subcategory"
-// @Param status formData string false "Status of the subcategory" enums(active,disabled)
-// @Param is_top_sub_category formData bool false "Whether the subcategory is flagged as a top/featured subcategory"
+// @Param subcategory body UpdateSubcategoryRequest true "Update Subcategory Request"
 // @Success 200 {object} dto.Response{data=dto.SubCategory}
 // @Failure 400 {object} dto.Response{data=string}
 // @Failure 401 {object} dto.Response{data=string}

@@ -17,6 +17,7 @@ type Config struct {
 	JWT  JWTConfig
 	Seed SeedConfig
 	QC   QCConfig
+	AWS  AWSConfig
 }
 
 type DBConfig struct {
@@ -41,11 +42,18 @@ type SeedConfig struct {
 	AdminPassword string // Password for the initial admin user
 }
 
-// An empty APIKey selects the mock
+// QCConfig holds QuickCommerce settings. An empty APIKey selects the mock
 // client so the stack runs before a real key is provisioned.
 type QCConfig struct {
 	APIKey  string
 	BaseURL string
+}
+
+type AWSConfig struct {
+	AccessKeyID     string
+	SecretAccessKey string
+	Region          string
+	BucketName      string
 }
 
 func Load() (*Config, error) {
@@ -74,6 +82,12 @@ func Load() (*Config, error) {
 			APIKey:  envOr("QC_API_KEY", ""),
 			BaseURL: envOr("QC_BASE_URL", ""),
 		},
+		AWS: AWSConfig{
+			AccessKeyID:     envOr("AWS_ACCESS_KEY_ID", ""),
+			SecretAccessKey: envOr("AWS_SECRET_ACCESS_KEY", ""),
+			Region:          envOr("AWS_REGION", "us-east-1"),
+			BucketName:      envOr("AWS_BUCKET_NAME", ""),
+		},
 	}
 
 	var missing []string
@@ -94,6 +108,19 @@ func Load() (*Config, error) {
 	}
 	if cfg.JWT.SecretKey == "" {
 		missing = append(missing, "JWT_SECRET_KEY")
+	}
+
+	if cfg.AWS.AccessKeyID == "" {
+		missing = append(missing, "AWS_ACCESS_KEY_ID")
+	}
+	if cfg.AWS.SecretAccessKey == "" {
+		missing = append(missing, "AWS_SECRET_ACCESS_KEY")
+	}
+	if cfg.AWS.BucketName == "" {
+		missing = append(missing, "AWS_BUCKET_NAME")
+	}
+	if cfg.AWS.Region == "" {
+		missing = append(missing, "AWS_REGION")
 	}
 
 	if len(missing) > 0 {
