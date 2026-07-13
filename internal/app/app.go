@@ -49,7 +49,13 @@ func New(cfg *config.Config) (*App, error) {
 	userRepo := repository.NewUserRepository(db)
 	qc := quickcommerce.New(quickcommerce.Config{APIKey: cfg.QC.APIKey, BaseURL: cfg.QC.BaseURL})
 
-	authService := service.NewAuthService(userRepo, nil, nil, jwt, "")
+	authService := service.NewAuthService(
+		userRepo,
+		repository.NewRefreshTokenRepository(db),
+		repository.NewPasswordResetRepository(db),
+		jwt,
+		"",
+	)
 
 	config.SeedAdmin(db, cfg.Seed, cfg.Env)
 	config.SeedDemo(db, cfg.Env)
@@ -97,6 +103,15 @@ func (a *App) buildRouter() *gin.Engine {
 	v1.RegisterBrandsRoutes(a.JWTService, a.UserRepo, rg)
 	v1.RegisterCategoryRoutes(a.JWTService, a.UserRepo, rg)
 	v1.RegisterSubcategoryRoutes(a.JWTService, a.UserRepo, rg)
+
+	v1.RegisterConsumerRoutes(r, v1.ConsumerDeps{
+		JWT:     a.JWTService,
+		Users:   a.UserRepo,
+		Cities:  repository.NewCityRepository(a.DB),
+		Catalog: service.NewCatalogService(a.DB),
+		Cart:    service.NewCartService(a.DB),
+		Loc:     service.NewLocationResolver(a.DB),
+	})
 
 	docs.SwaggerInfo.BasePath = "/"
 	r.GET("/swagger/*any", ginSwagger.WrapHandler(swaggerFile.Handler))

@@ -152,6 +152,33 @@ func (r *ProductRepository) ListSimilar(categoryID, excludeProductID string, lim
 	return items, nil
 }
 
+// returns the list of active products that have at least one discounted platform, for the TOp DEALS tab
+func (r *ProductRepository) ListDeals(cityID string, limit int) ([]domain.Product, error) {
+	ctx := context.Background()
+	var ids []string
+	err := r.db.WithContext(ctx).
+		Table("platform_prices pp").
+		Joins("JOIN product_variants v ON v.id = pp.variant_id").
+		Joins("JOIN products p ON p.id = v.product_id").
+		Where("pp.city_id = ? AND pp.available AND pp.mrp_paise IS NOT NULL AND pp.mrp_paise > pp.price_paise", cityID).
+		Where("p.status = 'active' AND p.deleted_at IS NULL AND v.deleted_at IS NULL").
+		Distinct("p.id").Limit(limit).Pluck("p.id", &ids).Error
+	if err != nil {
+		return nil, util.ParseDatabaseError(err, "idx_products_")
+	}
+	m, err := r.FindByIDs(ids)
+	if err != nil {
+		return nil, err
+	}
+	out := make([]domain.Product, 0, len(ids))
+	for _, id := range ids {
+		if p, ok := m[id]; ok {
+			out = append(out, p)
+		}
+	}
+	return out, nil
+}
+
 func paginateProducts(ctx context.Context, q gorm.ChainInterface[domain.Product], p query.Page) ([]domain.Product, int64, error) {
 	total, err := q.Count(ctx, "*")
 	if err != nil {
@@ -211,6 +238,23 @@ func (r *ProductVariantRepository) DefaultsForProducts(productIDs []string) (map
 		if _, seen := out[v.ProductID]; !seen {
 			out[v.ProductID] = v
 		}
+	}
+	return out, nil
+}
+
+// returns the requested variants queriedd by id
+func (r *ProductVariantRepository) FindByIDs(ids []string) (map[string]domain.ProductVariant, error) {
+	out := make(map[string]domain.ProductVariant, len(ids))
+	if len(ids) == 0 {
+		return out, nil
+	}
+	ctx := context.Background()
+	items, err := gorm.G[domain.ProductVariant](r.db).Where("id IN ? AND deleted_at IS NULL", ids).Find(ctx)
+	if err != nil {
+		return nil, util.ParseDatabaseError(err, "idx_product_variants_")
+	}
+	for _, v := range items {
+		out[v.ID] = v
 	}
 	return out, nil
 }

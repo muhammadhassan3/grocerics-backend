@@ -13,7 +13,7 @@ import (
 func RegisterSubcategoryRoutes(jwt *auth.JWTService, user *repository.UserRepository, r *gin.RouterGroup) {
 	group := r.Group("/v1/categories")
 	group.Use(middleware.AuthMiddleware(jwt, user))
-	group.GET("/:category_id/subcategories", getSubcategories())
+	group.GET("/:id/subcategories", getSubcategories())
 	adminGroup := group.Group("")
 	adminGroup.Use(middleware.RequireRole(domain.RoleAdmin))
 	adminGroup.POST("/subcategories", CreateSubcategory())
@@ -21,20 +21,20 @@ func RegisterSubcategoryRoutes(jwt *auth.JWTService, user *repository.UserReposi
 	adminGroup.DELETE("/subcategories", DeleteSubcategory())
 }
 
-// @Swagger:route GET /v1/categories/{category_id}/subcategories subcategories getSubcategories
+// @Swagger:route GET /v1/categories/{id}/subcategories subcategories getSubcategories
 // @Summary Get subcategories
 // @Description Fetches a paginated list of subcategories.
 // @Tags subcategories
 // @Accept json
 // @Produce json
-// @Param category_id path string true "Unique identifier for the category"
+// @Param id path string true "Unique identifier for the category"
 // @Param page query int true "Page number"
 // @Param limit query int true "Number of items per page"
 // @Success 200 {object} dto.Response{data=dto.SubCategories}
 // @Failure 401 {object} dto.Response{data=string}
 // @Failure 403 {object} dto.Response{data=string}
 // @Security BearerAuth
-// @Router /v1/categories/{category_id}/subcategories [get]
+// @Router /v1/categories/{id}/subcategories [get]
 func getSubcategories() gin.HandlerFunc {
 	return func(c *gin.Context) {
 		_ = c.Param("page")
