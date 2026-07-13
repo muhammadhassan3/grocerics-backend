@@ -16,6 +16,8 @@ type Config struct {
 	DB   DBConfig
 	JWT  JWTConfig
 	Seed SeedConfig
+
+	AWS AWSConfig
 }
 
 type DBConfig struct {
@@ -40,6 +42,13 @@ type SeedConfig struct {
 	AdminPassword string // Password for the initial admin user
 }
 
+type AWSConfig struct {
+	AccessKeyID     string
+	SecretAccessKey string
+	Region          string
+	BucketName      string
+}
+
 func Load() (*Config, error) {
 	_ = godotenv.Load()
 
@@ -62,6 +71,12 @@ func Load() (*Config, error) {
 			AdminPassword: envOr("SEED_ADMIN_PASSWORD", "adminpassword"),
 		},
 		FrontendURL: splitCSV(envOr("FRONTEND_ORIGINS", "http://localhost:5500,http://localhost:3000")),
+		AWS: AWSConfig{
+			AccessKeyID:     envOr("AWS_ACCESS_KEY_ID", ""),
+			SecretAccessKey: envOr("AWS_SECRET_ACCESS_KEY", ""),
+			Region:          envOr("AWS_REGION", "us-east-1"),
+			BucketName:      envOr("AWS_BUCKET_NAME", ""),
+		},
 	}
 
 	var missing []string
@@ -82,6 +97,19 @@ func Load() (*Config, error) {
 	}
 	if cfg.JWT.SecretKey == "" {
 		missing = append(missing, "JWT_SECRET_KEY")
+	}
+
+	if cfg.AWS.AccessKeyID == "" {
+		missing = append(missing, "AWS_ACCESS_KEY_ID")
+	}
+	if cfg.AWS.SecretAccessKey == "" {
+		missing = append(missing, "AWS_SECRET_ACCESS_KEY")
+	}
+	if cfg.AWS.BucketName == "" {
+		missing = append(missing, "AWS_BUCKET_NAME")
+	}
+	if cfg.AWS.Region == "" {
+		missing = append(missing, "AWS_REGION")
 	}
 
 	if len(missing) > 0 {
