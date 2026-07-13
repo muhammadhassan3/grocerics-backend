@@ -1,6 +1,8 @@
 package app
 
 import (
+	"context"
+
 	"grocerics-backend/internal/auth"
 	"grocerics-backend/internal/config"
 	"grocerics-backend/internal/dto"
@@ -18,14 +20,18 @@ import (
 
 	swaggerFile "github.com/swaggo/files"
 	ginSwagger "github.com/swaggo/gin-swagger"
+
+	firebase "firebase.google.com/go"
+	"google.golang.org/api/option"
 )
 
 type App struct {
-	Cfg        *config.Config
-	DB         *gorm.DB
-	JWTService *auth.JWTService
-	Router     *gin.Engine
-	UserRepo   *repository.UserRepository
+	Cfg         *config.Config
+	DB          *gorm.DB
+	JWTService  *auth.JWTService
+	Router      *gin.Engine
+	FirebaseApp *firebase.App
+	UserRepo    *repository.UserRepository
 
 	AuthService *service.AuthService
 }
@@ -52,7 +58,20 @@ func New(cfg *config.Config) (*App, error) {
 		AuthService: authService,
 	}
 	a.Router = a.buildRouter()
+	a.initializeFirebase()
 	return a, nil
+}
+
+func (a *App) initializeFirebase() error {
+	opt := option.WithAuthCredentialsFile(option.ServiceAccount, "grocerics-firebase-adminsdk.json")
+	app, err := firebase.NewApp(context.Background(), nil, opt)
+	if err != nil {
+		zap.S().Errorw("failed to initialize Firebase", "error", err)
+		return err
+	}
+	zap.S().Info("Firebase initialized")
+	a.FirebaseApp = app
+	return nil
 }
 
 func (a *App) buildRouter() *gin.Engine {
@@ -60,7 +79,8 @@ func (a *App) buildRouter() *gin.Engine {
 	r.HandleMethodNotAllowed = true
 	r.SetTrustedProxies([]string{"127.0.0.1"})
 
-	if err := logging.Init(a.Cfg.Env); err != nil {
+	_, err := logging.Init(a.Cfg.Env)
+	if err != nil {
 		zap.S().Fatalw("failed to initialize logging", "error", err)
 	}
 	r.Use(middleware.RequestID())
