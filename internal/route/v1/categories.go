@@ -15,6 +15,8 @@ func RegisterCategoryRoutes(jwt *auth.JWTService, user *repository.UserRepositor
 	group.GET("/categories", getCategories())
 	group.GET("/categories/:category_id", getCategoryByID())
 
+	group.GET("/categories/:category_id/products", GetProductsByCategory())
+
 	adminGroup := group.Group("")
 	adminGroup.Use(middleware.RequireRole("admin"))
 	adminGroup.POST("/categories", CreateCategory())
@@ -95,6 +97,32 @@ func CreateCategory() gin.HandlerFunc {
 		c.JSON(200, dto.Response{
 			Data:    dto.Category{},
 			Message: "Category created successfully",
+			Status:  "success",
+		})
+	}
+}
+
+// @Swagger:route GET /v1/categories/{category_id}/products categories getProductsByCategory
+// @Summary Get products by category
+// @Description Fetches a paginated list of products under a specific category.
+// @Tags categories
+// @Accept json
+// @Produce json
+// @Param category_id path string true "Unique identifier for the category"
+// @Param platforms query []string false "Filter by delivery platforms (comma-separated)"
+// @Param page query int true "Page number"
+// @Param limit query int true "Number of items per page"
+// @Success 200 {object} dto.Response{data=dto.ProductListingMobile}
+// @Failure 401 {object} dto.Response{data=string}
+// @Failure 403 {object} dto.Response{data=string}
+// @Failure 404 {object} dto.Response{data=string}
+// @Security BearerAuth
+// @Router /v1/categories/{category_id}/products [get]
+func GetProductsByCategory() gin.HandlerFunc {
+	return func(c *gin.Context) {
+		c.JSON(200, dto.Response{
+			Data:    dto.ProductListingMobile{},
+			Message: "Products fetched successfully",
 			Status:  "success",
 		})
 	}
