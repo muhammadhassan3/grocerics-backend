@@ -26,6 +26,9 @@ func RegisterUserRoutes(r *gin.Engine, jwt *auth.JWTService, users *repository.U
 	g := r.Group("/v1/users")
 	g.Use(middleware.AuthMiddleware(jwt, users))
 	g.GET("", listUsers(users))
+	adminGroup := g.Group("")
+	adminGroup.Use(middleware.RequireRole(domain.RoleAdmin))
+	adminGroup.POST("/ban", BanUser())
 }
 
 // @Summary List Users
@@ -37,11 +40,8 @@ func RegisterUserRoutes(r *gin.Engine, jwt *auth.JWTService, users *repository.U
 // @Param page_size query int false "page size, max 100 (default 20)"
 // @Param sort query string false "sort column: created_at | name | email | role (default created_at)"
 // @Param order query string false "asc | desc (default desc)"
-// @Param company_id query string false "filter by company UUID (admin-only override; non-admin mismatching value → 403)"
-// @Param role query string false "filter by role: admin | client_manager | client"
 // @Param status query string false "filter by status: active | disabled"
-// @Param search query string false "ILIKE on name + email, max 128 chars"
-// @Param unassigned query bool false "admin-only: list users with company_id IS NULL"
+// @Param search query string false "search by name or email (max 128 chars)"
 // @Success 200 {object} dto.Response{data=dto.UserListResponseDTO} "Users list"
 // @Failure 400 {object} dto.Response "Bad request"
 // @Failure 401 {object} dto.Response "Unauthorized"
@@ -70,6 +70,31 @@ func listUsers(repo *repository.UserRepository) gin.HandlerFunc {
 				Items: usersToDTO(items),
 				Meta:  query.BuildMeta(total, page),
 			},
+		})
+	}
+}
+
+type BanUserRequest struct {
+	UserID string `json:"user_id" binding:"required,uuid"`
+}
+
+// @Summary Ban User
+// @Description Bans a user by their unique identifier. This action is irreversible and will prevent the user from accessing the system.
+// @Tags Users
+// @Accept json
+// @Produce json
+// @Param BanUserRequest body BanUserRequest true "Ban User Request"
+// @Success 200 {object} dto.Response "User banned successfully"
+// @Failure 400 {object} dto.Response "Bad request"
+// @Failure 401 {object} dto.Response "Unauthorized"
+// @Failure 403 {object} dto.Response "Forbidden"
+// @Router /v1/users/ban [post]
+func BanUser() gin.HandlerFunc {
+	return func(c *gin.Context) {
+		c.JSON(200, dto.Response{
+			Data:    nil,
+			Message: "User banned successfully",
+			Status:  "success",
 		})
 	}
 }

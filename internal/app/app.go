@@ -6,6 +6,7 @@ import (
 	"grocerics-backend/internal/dto"
 	"grocerics-backend/internal/logging"
 	"grocerics-backend/internal/middleware"
+	"grocerics-backend/internal/migrate"
 	"grocerics-backend/internal/repository"
 	v1 "grocerics-backend/internal/route/v1"
 	"grocerics-backend/internal/service"
@@ -37,6 +38,11 @@ func New(cfg *config.Config) (*App, error) {
 	}
 	zap.S().Info("database connected")
 
+	if err := migrate.Up(db); err != nil {
+		return nil, err
+	}
+	zap.S().Info("migrations applied")
+
 	jwt := auth.NewJWTService(cfg.JWT.SecretKey)
 	userRepo := repository.NewUserRepository(db)
 
@@ -60,9 +66,8 @@ func (a *App) buildRouter() *gin.Engine {
 	r.HandleMethodNotAllowed = true
 	r.SetTrustedProxies([]string{"127.0.0.1"})
 
-	if err := logging.Init(a.Cfg.Env); err != nil {
-		zap.S().Fatalw("failed to initialize logging", "error", err)
-	}
+	// Init installs the global zap logger, it never returns nil, so there's no erro to check here
+	logging.Init(a.Cfg.Env)
 	r.Use(middleware.RequestID())
 	r.Use(middleware.CORS(a.Cfg.FrontendURL))
 	r.Use(middleware.SecurityHeaders())
@@ -79,6 +84,14 @@ func (a *App) buildRouter() *gin.Engine {
 
 	v1.RegisterAuthRoutes(r, a.AuthService, a.JWTService, a.UserRepo)
 	v1.RegisterUserRoutes(r, a.JWTService, a.UserRepo)
+	v1.RegisterBannerRoutes(a.JWTService, a.UserRepo, r)
+
+	rg := r.Group("/")
+	v1.RegisterDashboardRoutes(a.JWTService, a.UserRepo, rg)
+	v1.RegisterInventoryManagementRoutes(a.JWTService, a.UserRepo, rg)
+	v1.RegisterBrandsRoutes(a.JWTService, a.UserRepo, rg)
+	v1.RegisterCategoryRoutes(a.JWTService, a.UserRepo, rg)
+	v1.RegisterSubcategoryRoutes(a.JWTService, a.UserRepo, rg)
 
 	docs.SwaggerInfo.BasePath = "/"
 	r.GET("/swagger/*any", ginSwagger.WrapHandler(swaggerFile.Handler))

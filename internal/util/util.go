@@ -11,7 +11,10 @@ import (
 
 func ParseDatabaseError(err error, prefix string) error {
 	var pgErr *pgconn.PgError
-	errors.As(err, &pgErr)
+	if !errors.As(err, &pgErr) {
+		//rrturn it unchanged instead of nil dereferencing pgEr
+		return err
+	}
 	if pgErr.Code == "23505" {
 		field := strings.Replace(pgErr.ConstraintName, prefix, "", -1)
 		field = strings.Replace(field, "_", " ", -1)
