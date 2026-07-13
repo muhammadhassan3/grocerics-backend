@@ -2,15 +2,16 @@ package app
 
 import (
 	"context"
-
 	"grocerics-backend/internal/auth"
 	"grocerics-backend/internal/config"
 	"grocerics-backend/internal/dto"
 	"grocerics-backend/internal/logging"
 	"grocerics-backend/internal/middleware"
+	"grocerics-backend/internal/migrate"
 	"grocerics-backend/internal/repository"
-	v1 "grocerics-backend/internal/route/v1"
 	"grocerics-backend/internal/service"
+
+	v1 "grocerics-backend/internal/route/v1"
 
 	docs "grocerics-backend/docs"
 
@@ -42,6 +43,11 @@ func New(cfg *config.Config) (*App, error) {
 		return nil, err
 	}
 	zap.S().Info("database connected")
+
+	if err := migrate.Up(db); err != nil {
+		return nil, err
+	}
+	zap.S().Info("migrations applied")
 
 	jwt := auth.NewJWTService(cfg.JWT.SecretKey)
 	userRepo := repository.NewUserRepository(db)
@@ -99,6 +105,14 @@ func (a *App) buildRouter() *gin.Engine {
 
 	v1.RegisterAuthRoutes(r, a.AuthService, a.JWTService, a.UserRepo)
 	v1.RegisterUserRoutes(r, a.JWTService, a.UserRepo)
+	v1.RegisterBannerRoutes(a.JWTService, a.UserRepo, r)
+
+	rg := r.Group("/")
+	v1.RegisterDashboardRoutes(a.JWTService, a.UserRepo, rg)
+	v1.RegisterInventoryManagementRoutes(a.JWTService, a.UserRepo, rg)
+	v1.RegisterBrandsRoutes(a.JWTService, a.UserRepo, rg)
+	v1.RegisterCategoryRoutes(a.JWTService, a.UserRepo, rg)
+	v1.RegisterSubcategoryRoutes(a.JWTService, a.UserRepo, rg)
 
 	docs.SwaggerInfo.BasePath = "/"
 	r.GET("/swagger/*any", ginSwagger.WrapHandler(swaggerFile.Handler))

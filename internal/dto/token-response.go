@@ -1,10 +1,12 @@
 package dto
 
 // @Swagger:model TokenResponse
-// @Description: Response structure for authentication tokens
-// @Property access_token: The JWT access token for authentication
-// @Property refresh_token: The token used to obtain a new access token when the current one expires
+// @Property access_token: JWT access token used to authenticate subsequent requests
+// @Property refresh_token: Token used to obtain a new access token once the current one expires
+// @Description Response structure for authentication tokens.
 type TokenResponse struct {
-	AccessToken  string `json:"access_token"`
+	// JWT access token used to authenticate subsequent requests
+	AccessToken string `json:"access_token"`
+	// Token used to obtain a new access token once the current one expires
 	RefreshToken string `json:"refresh_token"`
 }
