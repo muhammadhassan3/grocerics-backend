@@ -102,6 +102,7 @@ type CreateNewItemRequest struct {
 	ProductDescription string `json:"product_description" binding:"required"`
 	BrandID            string `json:"brand_id" binding:"required"`
 	CategoryID         string `json:"category_id" binding:"required"`
+	SubCategoryID      string `json:"sub_category_id" binding:"required"`
 	IsTopItem          bool   `json:"is_top_item" binding:"required"`
 	Status             string `json:"status" binding:"required,oneof=active disabled"`
 }
