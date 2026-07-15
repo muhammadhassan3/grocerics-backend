@@ -136,6 +136,7 @@ type UpdateItemRequest struct {
 	ProductDescription string `json:"product_description"`
 	BrandID            string `json:"brand_id"`
 	CategoryID         string `json:"category_id"`
+	SubCategoryID      string `json:"sub_category_id"`
 	IsTopItem          *bool  `json:"is_top_item"`
 	Status             string `json:"status" binding:"omitempty,oneof=active disabled"`
 }
