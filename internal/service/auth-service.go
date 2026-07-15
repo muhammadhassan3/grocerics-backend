@@ -20,6 +20,7 @@ type AuthService struct {
 	passwordReset    *repository.PasswordResetRepository
 	jwt              *auth.JWTService
 	frontendResetURL string
+	env              string
 }
 
 func NewAuthService(
@@ -28,6 +29,7 @@ func NewAuthService(
 	passwordResetRepo *repository.PasswordResetRepository,
 	jwt *auth.JWTService,
 	frontendResetURL string,
+	env string,
 ) *AuthService {
 	return &AuthService{
 		user:             userRepo,
@@ -35,6 +37,7 @@ func NewAuthService(
 		passwordReset:    passwordResetRepo,
 		jwt:              jwt,
 		frontendResetURL: frontendResetURL,
+		env:              env,
 	}
 }
 
@@ -53,6 +56,23 @@ func (a *AuthService) CreateUser(name, email, password, role string) (*domain.Us
 	created, err := a.user.Create(&user)
 	if err != nil {
 		return nil, errs.BadRequest("CREATE_USER_FAILED", err.Error()).WithCause(err)
+	}
+	return created, nil
+}
+
+func (a *AuthService) CreateMobileUser(name, phoneNumber string) (*domain.User, error) {
+	r := domain.RoleUser
+	user := domain.User{
+		Name:         name,
+		Email:        "",
+		PasswordHash: "",
+		Phone:        &phoneNumber,
+		Role:         r,
+		Status:       domain.UserStatusActive,
+	}
+	created, err := a.user.Create(&user)
+	if err != nil {
+		return nil, errs.BadRequest("CREATE_MOBILE_USER_FAILED", err.Error()).WithCause(err)
 	}
 	return created, nil
 }
@@ -82,6 +102,42 @@ func (a *AuthService) Login(email, password string) (*dto.TokenResponse, error) 
 		AccessToken:  accessToken,
 		RefreshToken: refreshToken,
 	}, nil
+}
+
+func (a *AuthService) MobileLogin(phoneNumber string) (string, error) {
+	if phoneNumber == "" {
+		return "", errs.BadRequest("MOBILE_LOGIN_FAILED", "phone number is required")
+	}
+	if a.env != "production" {
+		return "1234", nil
+	}
+	// Generating OTP code and sending it via SMS would be implemented here in production.
+
+	// Saving OTP to otp table
+
+	return "", nil
+}
+
+func (a *AuthService) VerifyMobileOTP(phoneNumber, otpCode string) (*dto.TokenResponse, error) {
+	if phoneNumber == "" || otpCode == "" {
+		return nil, errs.BadRequest("MOBILE_OTP_VERIFY_FAILED", "phone number and OTP code are required")
+	}
+
+	if a.env != "production" && otpCode == "1234" {
+		user, err := a.user.FindByPhone(phoneNumber)
+		if err != nil {
+			return nil, errs.Internal("MOBILE_USER_LOOKUP_FAILED", err)
+		}
+		accessToken := a.jwt.Generate(user.Name, user.ID, string(domain.RoleUser), 2*time.Hour)
+		refreshToken := a.jwt.Generate(user.Name, user.ID, string(domain.RoleUser), 7*24*time.Hour)
+
+		return &dto.TokenResponse{
+			AccessToken:  accessToken,
+			RefreshToken: refreshToken,
+		}, nil
+	}
+
+	return nil, errs.BadRequest("MOBILE_OTP_VERIFY_FAILED", "Invalid OTP code")
 }
 
 func (a *AuthService) RefreshToken(refreshToken string) (*dto.TokenResponse, error) {

@@ -87,8 +87,14 @@ func phoneLogin(svc *service.AuthService) gin.HandlerFunc {
 			return
 		}
 
+		token, err := svc.MobileLogin(req.PhoneNumber)
+		if err != nil {
+			c.Error(err)
+			return
+		}
+
 		c.JSON(200, dto.Response{
-			Data:    nil,
+			Data:    token,
 			Message: "OTP code sent",
 			Status:  "success",
 		})
@@ -118,8 +124,14 @@ func verifyPhoneOTP(svc *service.AuthService) gin.HandlerFunc {
 			return
 		}
 
+		result, err := svc.VerifyMobileOTP(req.PhoneNumber, req.OTPCode)
+		if err != nil {
+			c.Error(err)
+			return
+		}
+
 		c.JSON(200, dto.Response{
-			Data:    dto.TokenResponse{},
+			Data:    result,
 			Message: "OTP verified successfully",
 			Status:  "success",
 		})
