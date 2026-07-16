@@ -86,6 +86,10 @@ func (r *PlatformRepository) SoftDelete(id, adminID string) error {
 	return adminSoftDelete[domain.Platform](r.db, id, adminID, "idx_platforms_")
 }
 
+func (r *PlatformRepository) Reorder(ids []string) error {
+	return adminReorder[domain.Platform](r.db, ids, "idx_platforms_")
+}
+
 func (r *PlatformRepository) FindByIDs(ids []string) (map[string]domain.Platform, error) {
 	out := make(map[string]domain.Platform, len(ids))
 	if len(ids) == 0 {

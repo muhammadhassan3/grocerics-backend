@@ -24,6 +24,8 @@ type Category struct {
 	Status string `json:"status" enums:"active,disabled"`
 	// Whether the category is flagged as a top/featured category
 	IsTopCategory bool `json:"is_top_category"`
+	// Curated sort order (lower shows first in the app)
+	DisplayOrder int `json:"display_order"`
 	// Creation timestamp, RFC3339
 	CreatedAt string `json:"created_at"`
 }

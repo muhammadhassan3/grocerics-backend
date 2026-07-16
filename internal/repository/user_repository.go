@@ -81,6 +81,14 @@ func (r *UserRepository) Update(user *domain.User) (*domain.User, error) {
 	return user, nil
 }
 
+func (r *UserRepository) Count() (int64, error) {
+	n, err := gorm.G[domain.User](r.db).Where("deleted_at IS NULL").Count(context.Background(), "*")
+	if err != nil {
+		return 0, util.ParseDatabaseError(err, "idx_users_")
+	}
+	return n, nil
+}
+
 func (r *UserRepository) SetStatus(userID string, status domain.UserStatus) (int64, error) {
 	res := r.db.WithContext(context.Background()).
 		Model(&domain.User{}).

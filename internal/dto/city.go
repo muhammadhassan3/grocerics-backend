@@ -22,8 +22,6 @@ type CityItem struct {
 	DefaultPincode string `json:"default_pincode,omitempty"`
 	// Whether the city is serviceable
 	Enabled bool `json:"enabled"`
-	// Sort order in pickers
-	DisplayOrder int `json:"display_order"`
 }
 
 // @Swagger:model Cities

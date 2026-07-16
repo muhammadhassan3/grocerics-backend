@@ -31,7 +31,36 @@ func RegisterCategoryRoutes(r *gin.Engine, d CategoryDeps) {
 	admin.Use(middleware.RequireRole(domain.RoleAdmin))
 	admin.POST("/categories", createCategory(d))
 	admin.PATCH("/categories", updateCategory(d))
+	admin.PATCH("/categories/reorder", reorderCategories(d))
 	admin.DELETE("/categories", deleteCategory(d))
+}
+
+type ReorderRequest struct {
+	IDs []string `json:"ids" binding:"required"`
+}
+
+// @Summary Reorder categories
+// @Description Sets display_order from the given order (drag-to-reorder). Send every id in the desired order.
+// @Tags categories
+// @Accept json
+// @Produce json
+// @Param request body ReorderRequest true "Ordered category IDs"
+// @Success 200 {object} dto.Response{data=string}
+// @Security BearerAuth
+// @Router /v1/categories/reorder [patch]
+func reorderCategories(d CategoryDeps) gin.HandlerFunc {
+	return func(c *gin.Context) {
+		var req ReorderRequest
+		if err := c.ShouldBindJSON(&req); err != nil {
+			c.Error(errs.BadRequest("VALIDATION", util.ParseValidationError(err).Error()))
+			return
+		}
+		if err := d.Categories.Reorder(req.IDs); err != nil {
+			c.Error(err)
+			return
+		}
+		c.JSON(200, dto.Response{Status: "success", Message: "Categories reordered"})
+	}
 }
 
 func toCategoryDTO(c domain.Category, subCount int) dto.Category {
@@ -42,6 +71,7 @@ func toCategoryDTO(c domain.Category, subCount int) dto.Category {
 		SubCategoryCount: subCount,
 		Status:           string(c.Status),
 		IsTopCategory:    c.IsTopCategory,
+		DisplayOrder:     c.DisplayOrder,
 		CreatedAt:        c.CreatedAt.Format(time.RFC3339),
 	}
 }

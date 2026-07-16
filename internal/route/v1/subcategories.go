@@ -34,7 +34,32 @@ func RegisterSubcategoryRoutes(r *gin.Engine, d SubcategoryDeps) {
 	admin.Use(middleware.RequireRole(domain.RoleAdmin))
 	admin.POST("/subcategories", createSubcategory(d))
 	admin.PATCH("/subcategories", updateSubcategory(d))
+	admin.PATCH("/subcategories/reorder", reorderSubcategories(d))
 	admin.DELETE("/subcategories", deleteSubcategory(d))
+}
+
+// @Summary Reorder subcategories
+// @Description Sets display_order from the given order (drag-to-reorder). Send the ids in the desired order.
+// @Tags subcategories
+// @Accept json
+// @Produce json
+// @Param request body ReorderRequest true "Ordered subcategory IDs"
+// @Success 200 {object} dto.Response{data=string}
+// @Security BearerAuth
+// @Router /v1/subcategories/reorder [patch]
+func reorderSubcategories(d SubcategoryDeps) gin.HandlerFunc {
+	return func(c *gin.Context) {
+		var req ReorderRequest
+		if err := c.ShouldBindJSON(&req); err != nil {
+			c.Error(errs.BadRequest("VALIDATION", util.ParseValidationError(err).Error()))
+			return
+		}
+		if err := d.Subcategories.Reorder(req.IDs); err != nil {
+			c.Error(err)
+			return
+		}
+		c.JSON(200, dto.Response{Status: "success", Message: "Subcategories reordered"})
+	}
 }
 
 func toSubcategoryDTO(s domain.Subcategory, categoryName string) dto.SubCategory {
@@ -44,6 +69,7 @@ func toSubcategoryDTO(s domain.Subcategory, categoryName string) dto.SubCategory
 		ImageURL:         util.Deref(s.ImageURL),
 		Status:           string(s.Status),
 		IsTopSubCategory: s.IsTopSubcategory,
+		DisplayOrder:     s.DisplayOrder,
 		CategoryID:       s.CategoryID,
 		CategoryName:     categoryName,
 		CreatedAt:        s.CreatedAt.Format(time.RFC3339),

@@ -39,7 +39,7 @@ func SeedDemo(db *gorm.DB, env string) {
 	// Delhi's QC anchor: the serviceable pincode 110035 and its precise lat/lng
 	// (28.6980/77.1490 responds on all platforms incl. Zepto, which needs a pincode).
 	pincode := "110035"
-	city := &domain.City{Name: "Delhi", Slug: "delhi", Lat: fptr(28.6980), Lng: fptr(77.1490), DefaultPincode: sptr(pincode), Enabled: true, DisplayOrder: 1}
+	city := &domain.City{Name: "Delhi", Slug: "delhi", Lat: fptr(28.6980), Lng: fptr(77.1490), DefaultPincode: sptr(pincode), Enabled: true}
 	if err := db.Create(city).Error; err != nil {
 		zap.S().Warnw("seed: city failed", "error", err)
 		return
@@ -161,7 +161,7 @@ func SeedDemo(db *gorm.DB, env string) {
 	snacks := cats["beverages"]
 	db.Create(&domain.Banner{
 		ImageURL: "https://picsum.photos/seed/banner/800/300", TargetType: domain.BannerTargetCategory,
-		TargetID: &snacks.ID, IsActive: true, DisplayOrder: 1,
+		TargetID: &snacks.ID, IsActive: true,
 	})
 
 	zap.S().Infow("seed: demo data created", "city", city.Name, "platforms", len(platforms))

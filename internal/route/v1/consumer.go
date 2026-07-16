@@ -2,6 +2,7 @@ package v1
 
 import (
 	"grocerics-backend/internal/auth"
+	"grocerics-backend/internal/domain"
 	"grocerics-backend/internal/dto"
 	"grocerics-backend/internal/errs"
 	"grocerics-backend/internal/middleware"
@@ -15,12 +16,13 @@ import (
 
 // ConsumerDeps bundles what the consumer read/write endpoints need.
 type ConsumerDeps struct {
-	JWT     *auth.JWTService
-	Users   *repository.UserRepository
-	Cities  *repository.CityRepository
-	Catalog *service.CatalogService
-	Cart    *service.CartService
-	Loc     *service.LocationResolver
+	JWT       *auth.JWTService
+	Users     *repository.UserRepository
+	Cities    *repository.CityRepository
+	Catalog   *service.CatalogService
+	Cart      *service.CartService
+	Loc       *service.LocationResolver
+	Analytics *repository.AnalyticsRepository
 }
 
 // RegisterConsumerRoutes wires the mobile-app read/write endpoints. All are
@@ -28,6 +30,7 @@ type ConsumerDeps struct {
 func RegisterConsumerRoutes(r *gin.Engine, d ConsumerDeps) {
 	g := r.Group("/v1")
 	g.Use(middleware.AuthMiddleware(d.JWT, d.Users))
+	g.Use(middleware.ActivityTracker(d.Analytics))
 
 	g.GET("/cities", listCities(d))
 	g.GET("/home", getHome(d))
@@ -164,6 +167,16 @@ func search(d ConsumerDeps) gin.HandlerFunc {
 			c.Error(err)
 			return
 		}
+		uid := auth.MustUser(c).ID
+		cid := cityID
+		var pid *string
+		if len(cards) > 0 {
+			p := cards[0].ProductID
+			pid = &p
+		}
+		go func() {
+			_ = d.Analytics.LogSearch(&domain.SearchEvent{UserID: &uid, Query: term, ResultProductID: pid, CityID: &cid})
+		}()
 		ok(c, dto.ProductCardListDTO{Items: cards, Meta: meta})
 	}
 }

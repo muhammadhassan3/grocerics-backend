@@ -28,6 +28,14 @@ func (r *ProductRepository) SoftDelete(id, adminID string) error {
 	return adminSoftDelete[domain.Product](r.db, id, adminID, "idx_products_")
 }
 
+func (r *ProductRepository) Reorder(ids []string) error {
+	return adminReorder[domain.Product](r.db, ids, "idx_products_")
+}
+
+func (r *ProductVariantRepository) Reorder(ids []string) error {
+	return adminReorder[domain.ProductVariant](r.db, ids, "idx_product_variants_")
+}
+
 func (r *ProductRepository) ListAdmin(p query.Page, search string) ([]domain.Product, int64, error) {
 	ctx := context.Background()
 	q := gorm.G[domain.Product](r.db).Where("deleted_at IS NULL")
@@ -38,7 +46,7 @@ func (r *ProductRepository) ListAdmin(p query.Page, search string) ([]domain.Pro
 	if err != nil {
 		return nil, 0, util.ParseDatabaseError(err, "idx_products_")
 	}
-	items, err := q.Order("created_at DESC, id DESC").Limit(p.Limit()).Offset(p.Offset()).Find(ctx)
+	items, err := q.Order("display_order, created_at DESC, id DESC").Limit(p.Limit()).Offset(p.Offset()).Find(ctx)
 	if err != nil {
 		return nil, 0, util.ParseDatabaseError(err, "idx_products_")
 	}

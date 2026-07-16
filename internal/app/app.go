@@ -126,7 +126,17 @@ func (a *App) buildRouter() *gin.Engine {
 
 	v1.RegisterAuthRoutes(r, a.AuthService, a.JWTService, a.UserRepo)
 	v1.RegisterUserRoutes(r, a.JWTService, a.UserRepo)
-	v1.RegisterDashboardRoutes(a.JWTService, a.UserRepo, r)
+	v1.RegisterDashboardRoutes(r, v1.DashboardDeps{
+		JWT:            a.JWTService,
+		Users:          a.UserRepo,
+		Analytics:      repository.NewAnalyticsRepository(a.DB),
+		Products:       repository.NewProductRepository(a.DB),
+		Variants:       repository.NewProductVariantRepository(a.DB),
+		Categories:     repository.NewCategoryRepository(a.DB),
+		PlatformPrices: repository.NewPlatformPriceRepository(a.DB),
+		Platforms:      repository.NewPlatformRepository(a.DB),
+		Cities:         repository.NewCityRepository(a.DB),
+	})
 	v1.RegisterInventoryManagementRoutes(r, v1.InventoryDeps{
 		JWT:           a.JWTService,
 		Users:         a.UserRepo,
@@ -191,9 +201,10 @@ func (a *App) buildRouter() *gin.Engine {
 		JWT:     a.JWTService,
 		Users:   a.UserRepo,
 		Cities:  repository.NewCityRepository(a.DB),
-		Catalog: service.NewCatalogService(a.DB),
-		Cart:    service.NewCartService(a.DB),
-		Loc:     service.NewLocationResolver(a.DB),
+		Catalog:   service.NewCatalogService(a.DB),
+		Cart:      service.NewCartService(a.DB),
+		Loc:       service.NewLocationResolver(a.DB),
+		Analytics: repository.NewAnalyticsRepository(a.DB),
 	})
 
 	v1.RegisterProfileRoutes(r, v1.ProfileDeps{

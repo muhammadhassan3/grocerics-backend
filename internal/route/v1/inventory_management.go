@@ -35,13 +35,63 @@ func RegisterInventoryManagementRoutes(r *gin.Engine, d InventoryDeps) {
 	group.GET("/inventory-management/:product_id", getInventoryItem(d))
 	group.POST("/inventory-management", createItem(d))
 	group.PATCH("/inventory-management", updateItem(d))
+	group.PATCH("/inventory-management/reorder", reorderProducts(d))
 	group.DELETE("/inventory-management", deleteItem(d))
 
 	group.GET("/inventory-management/:product_id/variants", listVariants(d))
 	group.GET("/inventory-management/:product_id/variants/:variant_id", getVariant(d))
 	group.POST("/inventory-management/variants", createVariant(d))
 	group.PATCH("/inventory-management/variants", updateVariant(d))
+	group.PATCH("/inventory-management/variants/reorder", reorderVariants(d))
 	group.DELETE("/inventory-management/variants", deleteVariant(d))
+}
+
+// @Summary Reorder products
+// @Description Sets display_order from the given order (drag-to-reorder). Send product ids in the desired order.
+// @Tags inventory-management
+// @Accept json
+// @Produce json
+// @Param request body ReorderRequest true "Ordered product IDs"
+// @Success 200 {object} dto.Response{data=string}
+// @Security BearerAuth
+// @Router /v1/inventory-management/reorder [patch]
+func reorderProducts(d InventoryDeps) gin.HandlerFunc {
+	return func(c *gin.Context) {
+		var req ReorderRequest
+		if err := c.ShouldBindJSON(&req); err != nil {
+			c.Error(errs.BadRequest("VALIDATION", util.ParseValidationError(err).Error()))
+			return
+		}
+		if err := d.Products.Reorder(req.IDs); err != nil {
+			c.Error(err)
+			return
+		}
+		c.JSON(200, dto.Response{Status: "success", Message: "Products reordered"})
+	}
+}
+
+// @Summary Reorder a product's variants
+// @Description Sets display_order from the given order (drag-to-reorder). Send variant ids in the desired order.
+// @Tags inventory-management
+// @Accept json
+// @Produce json
+// @Param request body ReorderRequest true "Ordered variant IDs"
+// @Success 200 {object} dto.Response{data=string}
+// @Security BearerAuth
+// @Router /v1/inventory-management/variants/reorder [patch]
+func reorderVariants(d InventoryDeps) gin.HandlerFunc {
+	return func(c *gin.Context) {
+		var req ReorderRequest
+		if err := c.ShouldBindJSON(&req); err != nil {
+			c.Error(errs.BadRequest("VALIDATION", util.ParseValidationError(err).Error()))
+			return
+		}
+		if err := d.Variants.Reorder(req.IDs); err != nil {
+			c.Error(err)
+			return
+		}
+		c.JSON(200, dto.Response{Status: "success", Message: "Variants reordered"})
+	}
 }
 
 func toVariantItemDTO(v domain.ProductVariant) dto.ProductVariantItem {
