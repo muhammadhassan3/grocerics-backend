@@ -38,6 +38,10 @@ type InventoryManagementsItem struct {
 	ImageURL string `json:"image_url"`
 	// Name of the category the product belongs to
 	ProductCategory string `json:"product_category"`
+	// Name of the sub-category the product belongs to ("" if none)
+	ProductSubCategory string `json:"product_sub_category"`
+	// Unique identifier of the sub-category ("" if none)
+	SubcategoryID string `json:"subcategory_id"`
 	// Number of variants this product has
 	TotalVariants int `json:"total_variants"`
 	// Status of the product

@@ -4,6 +4,7 @@ import (
 	"context"
 
 	"grocerics-backend/internal/domain"
+	"grocerics-backend/internal/query"
 	"grocerics-backend/internal/util"
 
 	"gorm.io/gorm"
@@ -25,6 +26,80 @@ func (r *PlatformRepository) ListEnabled() ([]domain.Platform, error) {
 		return nil, util.ParseDatabaseError(err, "idx_platforms_")
 	}
 	return items, nil
+}
+
+func (r *PlatformRepository) ListSearchable() ([]domain.Platform, error) {
+	ctx := context.Background()
+	items, err := gorm.G[domain.Platform](r.db).
+		Where("enabled AND deleted_at IS NULL AND qc_name IS NOT NULL AND qc_name <> ''").
+		Order("display_order, display_name").Find(ctx)
+	if err != nil {
+		return nil, util.ParseDatabaseError(err, "idx_platforms_")
+	}
+	return items, nil
+}
+
+func (r *PlatformRepository) ListAdmin(p query.Page, search string) ([]domain.Platform, int64, error) {
+	ctx := context.Background()
+	q := gorm.G[domain.Platform](r.db).Where("deleted_at IS NULL")
+	if search != "" {
+		q = q.Where("(display_name ILIKE ? OR code ILIKE ?)", "%"+search+"%", "%"+search+"%")
+	}
+	total, err := q.Count(ctx, "*")
+	if err != nil {
+		return nil, 0, util.ParseDatabaseError(err, "idx_platforms_")
+	}
+	items, err := q.Order("display_order, display_name").Limit(p.Limit()).Offset(p.Offset()).Find(ctx)
+	if err != nil {
+		return nil, 0, util.ParseDatabaseError(err, "idx_platforms_")
+	}
+	return items, total, nil
+}
+
+func (r *PlatformRepository) FindByID(id string) (*domain.Platform, error) {
+	ctx := context.Background()
+	data, err := gorm.G[domain.Platform](r.db).Where("id = ? AND deleted_at IS NULL", id).First(ctx)
+	if err != nil {
+		if err == gorm.ErrRecordNotFound {
+			return nil, nil
+		}
+		return nil, util.ParseDatabaseError(err, "idx_platforms_")
+	}
+	return &data, nil
+}
+
+func (r *PlatformRepository) Create(p *domain.Platform) (*domain.Platform, error) {
+	if err := gorm.G[domain.Platform](r.db).Create(context.Background(), p); err != nil {
+		return nil, util.ParseDatabaseError(err, "idx_platforms_")
+	}
+	return p, nil
+}
+
+func (r *PlatformRepository) Update(id string, fields map[string]any) (*domain.Platform, error) {
+	if err := adminUpdateFields[domain.Platform](r.db, id, fields, "idx_platforms_"); err != nil {
+		return nil, err
+	}
+	return r.FindByID(id)
+}
+
+func (r *PlatformRepository) SoftDelete(id, adminID string) error {
+	return adminSoftDelete[domain.Platform](r.db, id, adminID, "idx_platforms_")
+}
+
+func (r *PlatformRepository) FindByIDs(ids []string) (map[string]domain.Platform, error) {
+	out := make(map[string]domain.Platform, len(ids))
+	if len(ids) == 0 {
+		return out, nil
+	}
+	ctx := context.Background()
+	items, err := gorm.G[domain.Platform](r.db).Where("id IN ? AND deleted_at IS NULL", ids).Find(ctx)
+	if err != nil {
+		return nil, util.ParseDatabaseError(err, "idx_platforms_")
+	}
+	for _, p := range items {
+		out[p.ID] = p
+	}
+	return out, nil
 }
 
 func (r *PlatformRepository) FindByCode(code string) (*domain.Platform, error) {

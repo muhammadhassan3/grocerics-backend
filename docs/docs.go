@@ -606,10 +606,7 @@ const docTemplate = `{
                         "BearerAuth": []
                     }
                 ],
-                "description": "Fetches a paginated list of banners.",
-                "consumes": [
-                    "application/json"
-                ],
+                "description": "Paginated list of all banners (admin sees inactive/expired too).",
                 "produces": [
                     "application/json"
                 ],
@@ -622,15 +619,13 @@ const docTemplate = `{
                         "type": "integer",
                         "description": "Page number",
                         "name": "page",
-                        "in": "query",
-                        "required": true
+                        "in": "query"
                     },
                     {
                         "type": "integer",
-                        "description": "Number of items per page",
-                        "name": "limit",
-                        "in": "query",
-                        "required": true
+                        "description": "Items per page",
+                        "name": "page_size",
+                        "in": "query"
                     }
                 ],
                 "responses": {
@@ -651,42 +646,6 @@ const docTemplate = `{
                                 }
                             ]
                         }
-                    },
-                    "401": {
-                        "description": "Unauthorized",
-                        "schema": {
-                            "allOf": [
-                                {
-                                    "$ref": "#/definitions/dto.Response"
-                                },
-                                {
-                                    "type": "object",
-                                    "properties": {
-                                        "data": {
-                                            "type": "string"
-                                        }
-                                    }
-                                }
-                            ]
-                        }
-                    },
-                    "403": {
-                        "description": "Forbidden",
-                        "schema": {
-                            "allOf": [
-                                {
-                                    "$ref": "#/definitions/dto.Response"
-                                },
-                                {
-                                    "type": "object",
-                                    "properties": {
-                                        "data": {
-                                            "type": "string"
-                                        }
-                                    }
-                                }
-                            ]
-                        }
                     }
                 }
             },
@@ -696,7 +655,6 @@ const docTemplate = `{
                         "BearerAuth": []
                     }
                 ],
-                "description": "Creates a new banner. This endpoint is intended for internal use and should be secured appropriately.",
                 "consumes": [
                     "application/json"
                 ],
@@ -706,7 +664,7 @@ const docTemplate = `{
                 "tags": [
                     "banners"
                 ],
-                "summary": "Create a new banner",
+                "summary": "Create a banner",
                 "parameters": [
                     {
                         "description": "Create Banner Request",
@@ -754,42 +712,6 @@ const docTemplate = `{
                                 }
                             ]
                         }
-                    },
-                    "401": {
-                        "description": "Unauthorized",
-                        "schema": {
-                            "allOf": [
-                                {
-                                    "$ref": "#/definitions/dto.Response"
-                                },
-                                {
-                                    "type": "object",
-                                    "properties": {
-                                        "data": {
-                                            "type": "string"
-                                        }
-                                    }
-                                }
-                            ]
-                        }
-                    },
-                    "403": {
-                        "description": "Forbidden",
-                        "schema": {
-                            "allOf": [
-                                {
-                                    "$ref": "#/definitions/dto.Response"
-                                },
-                                {
-                                    "type": "object",
-                                    "properties": {
-                                        "data": {
-                                            "type": "string"
-                                        }
-                                    }
-                                }
-                            ]
-                        }
                     }
                 }
             },
@@ -799,7 +721,6 @@ const docTemplate = `{
                         "BearerAuth": []
                     }
                 ],
-                "description": "Deletes an existing banner. This endpoint is intended for internal use and should be secured appropriately.",
                 "consumes": [
                     "application/json"
                 ],
@@ -809,7 +730,7 @@ const docTemplate = `{
                 "tags": [
                     "banners"
                 ],
-                "summary": "Delete an existing banner",
+                "summary": "Delete a banner",
                 "parameters": [
                     {
                         "description": "Delete Banner Request",
@@ -839,60 +760,6 @@ const docTemplate = `{
                                 }
                             ]
                         }
-                    },
-                    "400": {
-                        "description": "Bad Request",
-                        "schema": {
-                            "allOf": [
-                                {
-                                    "$ref": "#/definitions/dto.Response"
-                                },
-                                {
-                                    "type": "object",
-                                    "properties": {
-                                        "data": {
-                                            "type": "string"
-                                        }
-                                    }
-                                }
-                            ]
-                        }
-                    },
-                    "401": {
-                        "description": "Unauthorized",
-                        "schema": {
-                            "allOf": [
-                                {
-                                    "$ref": "#/definitions/dto.Response"
-                                },
-                                {
-                                    "type": "object",
-                                    "properties": {
-                                        "data": {
-                                            "type": "string"
-                                        }
-                                    }
-                                }
-                            ]
-                        }
-                    },
-                    "403": {
-                        "description": "Forbidden",
-                        "schema": {
-                            "allOf": [
-                                {
-                                    "$ref": "#/definitions/dto.Response"
-                                },
-                                {
-                                    "type": "object",
-                                    "properties": {
-                                        "data": {
-                                            "type": "string"
-                                        }
-                                    }
-                                }
-                            ]
-                        }
                     }
                 }
             },
@@ -902,7 +769,6 @@ const docTemplate = `{
                         "BearerAuth": []
                     }
                 ],
-                "description": "Updates an existing banner. This endpoint is intended for internal use and should be secured appropriately.",
                 "consumes": [
                     "application/json"
                 ],
@@ -912,7 +778,7 @@ const docTemplate = `{
                 "tags": [
                     "banners"
                 ],
-                "summary": "Update an existing banner",
+                "summary": "Update a banner",
                 "parameters": [
                     {
                         "description": "Update Banner Request",
@@ -943,44 +809,8 @@ const docTemplate = `{
                             ]
                         }
                     },
-                    "400": {
-                        "description": "Bad Request",
-                        "schema": {
-                            "allOf": [
-                                {
-                                    "$ref": "#/definitions/dto.Response"
-                                },
-                                {
-                                    "type": "object",
-                                    "properties": {
-                                        "data": {
-                                            "type": "string"
-                                        }
-                                    }
-                                }
-                            ]
-                        }
-                    },
-                    "401": {
-                        "description": "Unauthorized",
-                        "schema": {
-                            "allOf": [
-                                {
-                                    "$ref": "#/definitions/dto.Response"
-                                },
-                                {
-                                    "type": "object",
-                                    "properties": {
-                                        "data": {
-                                            "type": "string"
-                                        }
-                                    }
-                                }
-                            ]
-                        }
-                    },
-                    "403": {
-                        "description": "Forbidden",
+                    "404": {
+                        "description": "Not Found",
                         "schema": {
                             "allOf": [
                                 {
@@ -1007,10 +837,6 @@ const docTemplate = `{
                         "BearerAuth": []
                     }
                 ],
-                "description": "Fetches a banner by its unique identifier.",
-                "consumes": [
-                    "application/json"
-                ],
                 "produces": [
                     "application/json"
                 ],
@@ -1021,7 +847,7 @@ const docTemplate = `{
                 "parameters": [
                     {
                         "type": "string",
-                        "description": "Unique identifier for the banner",
+                        "description": "Banner ID",
                         "name": "banner_id",
                         "in": "path",
                         "required": true
@@ -1040,42 +866,6 @@ const docTemplate = `{
                                     "properties": {
                                         "data": {
                                             "$ref": "#/definitions/dto.BannerItem"
-                                        }
-                                    }
-                                }
-                            ]
-                        }
-                    },
-                    "401": {
-                        "description": "Unauthorized",
-                        "schema": {
-                            "allOf": [
-                                {
-                                    "$ref": "#/definitions/dto.Response"
-                                },
-                                {
-                                    "type": "object",
-                                    "properties": {
-                                        "data": {
-                                            "type": "string"
-                                        }
-                                    }
-                                }
-                            ]
-                        }
-                    },
-                    "403": {
-                        "description": "Forbidden",
-                        "schema": {
-                            "allOf": [
-                                {
-                                    "$ref": "#/definitions/dto.Response"
-                                },
-                                {
-                                    "type": "object",
-                                    "properties": {
-                                        "data": {
-                                            "type": "string"
                                         }
                                     }
                                 }
@@ -1110,10 +900,6 @@ const docTemplate = `{
                         "BearerAuth": []
                     }
                 ],
-                "description": "Fetches a paginated list of brands.",
-                "consumes": [
-                    "application/json"
-                ],
                 "produces": [
                     "application/json"
                 ],
@@ -1126,15 +912,19 @@ const docTemplate = `{
                         "type": "integer",
                         "description": "Page number",
                         "name": "page",
-                        "in": "query",
-                        "required": true
+                        "in": "query"
                     },
                     {
                         "type": "integer",
-                        "description": "Number of items per page",
-                        "name": "limit",
-                        "in": "query",
-                        "required": true
+                        "description": "Items per page",
+                        "name": "page_size",
+                        "in": "query"
+                    },
+                    {
+                        "type": "string",
+                        "description": "Filter by name",
+                        "name": "search",
+                        "in": "query"
                     }
                 ],
                 "responses": {
@@ -1155,42 +945,6 @@ const docTemplate = `{
                                 }
                             ]
                         }
-                    },
-                    "401": {
-                        "description": "Unauthorized",
-                        "schema": {
-                            "allOf": [
-                                {
-                                    "$ref": "#/definitions/dto.Response"
-                                },
-                                {
-                                    "type": "object",
-                                    "properties": {
-                                        "data": {
-                                            "type": "string"
-                                        }
-                                    }
-                                }
-                            ]
-                        }
-                    },
-                    "403": {
-                        "description": "Forbidden",
-                        "schema": {
-                            "allOf": [
-                                {
-                                    "$ref": "#/definitions/dto.Response"
-                                },
-                                {
-                                    "type": "object",
-                                    "properties": {
-                                        "data": {
-                                            "type": "string"
-                                        }
-                                    }
-                                }
-                            ]
-                        }
                     }
                 }
             },
@@ -1200,7 +954,6 @@ const docTemplate = `{
                         "BearerAuth": []
                     }
                 ],
-                "description": "Creates a new brand. This endpoint is intended for internal use and should be secured appropriately.",
                 "consumes": [
                     "application/json"
                 ],
@@ -1210,7 +963,7 @@ const docTemplate = `{
                 "tags": [
                     "brands"
                 ],
-                "summary": "Create a new brand",
+                "summary": "Create a brand",
                 "parameters": [
                     {
                         "description": "Create Brand Request",
@@ -1258,42 +1011,6 @@ const docTemplate = `{
                                 }
                             ]
                         }
-                    },
-                    "401": {
-                        "description": "Unauthorized",
-                        "schema": {
-                            "allOf": [
-                                {
-                                    "$ref": "#/definitions/dto.Response"
-                                },
-                                {
-                                    "type": "object",
-                                    "properties": {
-                                        "data": {
-                                            "type": "string"
-                                        }
-                                    }
-                                }
-                            ]
-                        }
-                    },
-                    "403": {
-                        "description": "Forbidden",
-                        "schema": {
-                            "allOf": [
-                                {
-                                    "$ref": "#/definitions/dto.Response"
-                                },
-                                {
-                                    "type": "object",
-                                    "properties": {
-                                        "data": {
-                                            "type": "string"
-                                        }
-                                    }
-                                }
-                            ]
-                        }
                     }
                 }
             },
@@ -1303,7 +1020,6 @@ const docTemplate = `{
                         "BearerAuth": []
                     }
                 ],
-                "description": "Deletes a brand. This endpoint is intended for internal use and should be secured appropriately.",
                 "consumes": [
                     "application/json"
                 ],
@@ -1316,7 +1032,7 @@ const docTemplate = `{
                 "summary": "Delete a brand",
                 "parameters": [
                     {
-                        "description": "Unique identifier for the brand",
+                        "description": "Delete Brand Request",
                         "name": "DeleteBrandRequest",
                         "in": "body",
                         "required": true,
@@ -1343,60 +1059,6 @@ const docTemplate = `{
                                 }
                             ]
                         }
-                    },
-                    "400": {
-                        "description": "Bad Request",
-                        "schema": {
-                            "allOf": [
-                                {
-                                    "$ref": "#/definitions/dto.Response"
-                                },
-                                {
-                                    "type": "object",
-                                    "properties": {
-                                        "data": {
-                                            "type": "string"
-                                        }
-                                    }
-                                }
-                            ]
-                        }
-                    },
-                    "401": {
-                        "description": "Unauthorized",
-                        "schema": {
-                            "allOf": [
-                                {
-                                    "$ref": "#/definitions/dto.Response"
-                                },
-                                {
-                                    "type": "object",
-                                    "properties": {
-                                        "data": {
-                                            "type": "string"
-                                        }
-                                    }
-                                }
-                            ]
-                        }
-                    },
-                    "403": {
-                        "description": "Forbidden",
-                        "schema": {
-                            "allOf": [
-                                {
-                                    "$ref": "#/definitions/dto.Response"
-                                },
-                                {
-                                    "type": "object",
-                                    "properties": {
-                                        "data": {
-                                            "type": "string"
-                                        }
-                                    }
-                                }
-                            ]
-                        }
                     }
                 }
             },
@@ -1406,7 +1068,6 @@ const docTemplate = `{
                         "BearerAuth": []
                     }
                 ],
-                "description": "Updates an existing brand. This endpoint is intended for internal use and should be secured appropriately.",
                 "consumes": [
                     "application/json"
                 ],
@@ -1416,7 +1077,7 @@ const docTemplate = `{
                 "tags": [
                     "brands"
                 ],
-                "summary": "Update an existing brand",
+                "summary": "Update a brand",
                 "parameters": [
                     {
                         "description": "Update Brand Request",
@@ -1447,44 +1108,8 @@ const docTemplate = `{
                             ]
                         }
                     },
-                    "400": {
-                        "description": "Bad Request",
-                        "schema": {
-                            "allOf": [
-                                {
-                                    "$ref": "#/definitions/dto.Response"
-                                },
-                                {
-                                    "type": "object",
-                                    "properties": {
-                                        "data": {
-                                            "type": "string"
-                                        }
-                                    }
-                                }
-                            ]
-                        }
-                    },
-                    "401": {
-                        "description": "Unauthorized",
-                        "schema": {
-                            "allOf": [
-                                {
-                                    "$ref": "#/definitions/dto.Response"
-                                },
-                                {
-                                    "type": "object",
-                                    "properties": {
-                                        "data": {
-                                            "type": "string"
-                                        }
-                                    }
-                                }
-                            ]
-                        }
-                    },
-                    "403": {
-                        "description": "Forbidden",
+                    "404": {
+                        "description": "Not Found",
                         "schema": {
                             "allOf": [
                                 {
@@ -1511,10 +1136,6 @@ const docTemplate = `{
                         "BearerAuth": []
                     }
                 ],
-                "description": "Fetches a brand by its unique identifier.",
-                "consumes": [
-                    "application/json"
-                ],
                 "produces": [
                     "application/json"
                 ],
@@ -1525,7 +1146,7 @@ const docTemplate = `{
                 "parameters": [
                     {
                         "type": "string",
-                        "description": "Unique identifier for the brand",
+                        "description": "Brand ID",
                         "name": "brand_id",
                         "in": "path",
                         "required": true
@@ -1544,42 +1165,6 @@ const docTemplate = `{
                                     "properties": {
                                         "data": {
                                             "$ref": "#/definitions/dto.BrandItem"
-                                        }
-                                    }
-                                }
-                            ]
-                        }
-                    },
-                    "401": {
-                        "description": "Unauthorized",
-                        "schema": {
-                            "allOf": [
-                                {
-                                    "$ref": "#/definitions/dto.Response"
-                                },
-                                {
-                                    "type": "object",
-                                    "properties": {
-                                        "data": {
-                                            "type": "string"
-                                        }
-                                    }
-                                }
-                            ]
-                        }
-                    },
-                    "403": {
-                        "description": "Forbidden",
-                        "schema": {
-                            "allOf": [
-                                {
-                                    "$ref": "#/definitions/dto.Response"
-                                },
-                                {
-                                    "type": "object",
-                                    "properties": {
-                                        "data": {
-                                            "type": "string"
                                         }
                                     }
                                 }
@@ -1614,7 +1199,44 @@ const docTemplate = `{
                         "BearerAuth": []
                     }
                 ],
-                "description": "Fetches a cart by its unique identifier.",
+                "description": "The cart plus, for every enabled platform, the available/not-available split and totals.",
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "consumer"
+                ],
+                "summary": "Get cart with per-platform breakdown",
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "allOf": [
+                                {
+                                    "$ref": "#/definitions/dto.Response"
+                                },
+                                {
+                                    "type": "object",
+                                    "properties": {
+                                        "data": {
+                                            "$ref": "#/definitions/dto.CartResponse"
+                                        }
+                                    }
+                                }
+                            ]
+                        }
+                    }
+                }
+            }
+        },
+        "/v1/cart/items": {
+            "post": {
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
+                "description": "Add a variant (upserts quantity if already present). Returns the updated cart.",
                 "consumes": [
                     "application/json"
                 ],
@@ -1622,14 +1244,67 @@ const docTemplate = `{
                     "application/json"
                 ],
                 "tags": [
-                    "cart"
+                    "consumer"
                 ],
-                "summary": "Get cart",
+                "summary": "Add an item to the cart",
+                "parameters": [
+                    {
+                        "description": "variant + quantity",
+                        "name": "request",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/v1.addCartItemRequest"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "allOf": [
+                                {
+                                    "$ref": "#/definitions/dto.Response"
+                                },
+                                {
+                                    "type": "object",
+                                    "properties": {
+                                        "data": {
+                                            "$ref": "#/definitions/dto.CartResponse"
+                                        }
+                                    }
+                                }
+                            ]
+                        }
+                    },
+                    "400": {
+                        "description": "Bad Request",
+                        "schema": {
+                            "$ref": "#/definitions/dto.Response"
+                        }
+                    }
+                }
+            }
+        },
+        "/v1/cart/items/{id}": {
+            "delete": {
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "consumer"
+                ],
+                "summary": "Remove a cart item",
                 "parameters": [
                     {
                         "type": "string",
-                        "description": "Unique identifier for the cart",
-                        "name": "cart_id",
+                        "description": "Cart item ID",
+                        "name": "id",
                         "in": "path",
                         "required": true
                     }
@@ -1646,43 +1321,7 @@ const docTemplate = `{
                                     "type": "object",
                                     "properties": {
                                         "data": {
-                                            "$ref": "#/definitions/dto.CartMobile"
-                                        }
-                                    }
-                                }
-                            ]
-                        }
-                    },
-                    "401": {
-                        "description": "Unauthorized",
-                        "schema": {
-                            "allOf": [
-                                {
-                                    "$ref": "#/definitions/dto.Response"
-                                },
-                                {
-                                    "type": "object",
-                                    "properties": {
-                                        "data": {
-                                            "type": "string"
-                                        }
-                                    }
-                                }
-                            ]
-                        }
-                    },
-                    "403": {
-                        "description": "Forbidden",
-                        "schema": {
-                            "allOf": [
-                                {
-                                    "$ref": "#/definitions/dto.Response"
-                                },
-                                {
-                                    "type": "object",
-                                    "properties": {
-                                        "data": {
-                                            "type": "string"
+                                            "$ref": "#/definitions/dto.CartResponse"
                                         }
                                     }
                                 }
@@ -1691,13 +1330,12 @@ const docTemplate = `{
                     }
                 }
             },
-            "post": {
+            "patch": {
                 "security": [
                     {
                         "BearerAuth": []
                     }
                 ],
-                "description": "Adds an item to the user's cart or updates its quantity.",
                 "consumes": [
                     "application/json"
                 ],
@@ -1705,17 +1343,24 @@ const docTemplate = `{
                     "application/json"
                 ],
                 "tags": [
-                    "cart"
+                    "consumer"
                 ],
-                "summary": "Add or update item in cart",
+                "summary": "Update a cart item's quantity",
                 "parameters": [
                     {
-                        "description": "Request payload containing product ID and quantity",
+                        "type": "string",
+                        "description": "Cart item ID",
+                        "name": "id",
+                        "in": "path",
+                        "required": true
+                    },
+                    {
+                        "description": "new quantity",
                         "name": "request",
                         "in": "body",
                         "required": true,
                         "schema": {
-                            "$ref": "#/definitions/v1.AddToCartRequest"
+                            "$ref": "#/definitions/v1.quantityRequest"
                         }
                     }
                 ],
@@ -1731,7 +1376,7 @@ const docTemplate = `{
                                     "type": "object",
                                     "properties": {
                                         "data": {
-                                            "$ref": "#/definitions/dto.CartMobile"
+                                            "$ref": "#/definitions/dto.CartResponse"
                                         }
                                     }
                                 }
@@ -1741,158 +1386,7 @@ const docTemplate = `{
                     "400": {
                         "description": "Bad Request",
                         "schema": {
-                            "allOf": [
-                                {
-                                    "$ref": "#/definitions/dto.Response"
-                                },
-                                {
-                                    "type": "object",
-                                    "properties": {
-                                        "data": {
-                                            "type": "string"
-                                        }
-                                    }
-                                }
-                            ]
-                        }
-                    },
-                    "401": {
-                        "description": "Unauthorized",
-                        "schema": {
-                            "allOf": [
-                                {
-                                    "$ref": "#/definitions/dto.Response"
-                                },
-                                {
-                                    "type": "object",
-                                    "properties": {
-                                        "data": {
-                                            "type": "string"
-                                        }
-                                    }
-                                }
-                            ]
-                        }
-                    },
-                    "403": {
-                        "description": "Forbidden",
-                        "schema": {
-                            "allOf": [
-                                {
-                                    "$ref": "#/definitions/dto.Response"
-                                },
-                                {
-                                    "type": "object",
-                                    "properties": {
-                                        "data": {
-                                            "type": "string"
-                                        }
-                                    }
-                                }
-                            ]
-                        }
-                    }
-                }
-            },
-            "delete": {
-                "security": [
-                    {
-                        "BearerAuth": []
-                    }
-                ],
-                "description": "Removes an item from the user's cart.",
-                "consumes": [
-                    "application/json"
-                ],
-                "produces": [
-                    "application/json"
-                ],
-                "tags": [
-                    "cart"
-                ],
-                "summary": "Remove item from cart",
-                "parameters": [
-                    {
-                        "description": "Request payload containing product ID",
-                        "name": "request",
-                        "in": "body",
-                        "required": true,
-                        "schema": {
-                            "$ref": "#/definitions/v1.RemoveFromCartRequest"
-                        }
-                    }
-                ],
-                "responses": {
-                    "200": {
-                        "description": "OK",
-                        "schema": {
-                            "allOf": [
-                                {
-                                    "$ref": "#/definitions/dto.Response"
-                                },
-                                {
-                                    "type": "object",
-                                    "properties": {
-                                        "data": {
-                                            "$ref": "#/definitions/dto.CartMobile"
-                                        }
-                                    }
-                                }
-                            ]
-                        }
-                    },
-                    "400": {
-                        "description": "Bad Request",
-                        "schema": {
-                            "allOf": [
-                                {
-                                    "$ref": "#/definitions/dto.Response"
-                                },
-                                {
-                                    "type": "object",
-                                    "properties": {
-                                        "data": {
-                                            "type": "string"
-                                        }
-                                    }
-                                }
-                            ]
-                        }
-                    },
-                    "401": {
-                        "description": "Unauthorized",
-                        "schema": {
-                            "allOf": [
-                                {
-                                    "$ref": "#/definitions/dto.Response"
-                                },
-                                {
-                                    "type": "object",
-                                    "properties": {
-                                        "data": {
-                                            "type": "string"
-                                        }
-                                    }
-                                }
-                            ]
-                        }
-                    },
-                    "403": {
-                        "description": "Forbidden",
-                        "schema": {
-                            "allOf": [
-                                {
-                                    "$ref": "#/definitions/dto.Response"
-                                },
-                                {
-                                    "type": "object",
-                                    "properties": {
-                                        "data": {
-                                            "type": "string"
-                                        }
-                                    }
-                                }
-                            ]
+                            "$ref": "#/definitions/dto.Response"
                         }
                     }
                 }
@@ -1905,10 +1399,7 @@ const docTemplate = `{
                         "BearerAuth": []
                     }
                 ],
-                "description": "Fetches a paginated list of categories.",
-                "consumes": [
-                    "application/json"
-                ],
+                "description": "Paginated list of categories (admin sees all, including disabled).",
                 "produces": [
                     "application/json"
                 ],
@@ -1921,15 +1412,19 @@ const docTemplate = `{
                         "type": "integer",
                         "description": "Page number",
                         "name": "page",
-                        "in": "query",
-                        "required": true
+                        "in": "query"
                     },
                     {
                         "type": "integer",
-                        "description": "Number of items per page",
-                        "name": "limit",
-                        "in": "query",
-                        "required": true
+                        "description": "Items per page",
+                        "name": "page_size",
+                        "in": "query"
+                    },
+                    {
+                        "type": "string",
+                        "description": "Filter by name",
+                        "name": "search",
+                        "in": "query"
                     }
                 ],
                 "responses": {
@@ -1950,42 +1445,6 @@ const docTemplate = `{
                                 }
                             ]
                         }
-                    },
-                    "401": {
-                        "description": "Unauthorized",
-                        "schema": {
-                            "allOf": [
-                                {
-                                    "$ref": "#/definitions/dto.Response"
-                                },
-                                {
-                                    "type": "object",
-                                    "properties": {
-                                        "data": {
-                                            "type": "string"
-                                        }
-                                    }
-                                }
-                            ]
-                        }
-                    },
-                    "403": {
-                        "description": "Forbidden",
-                        "schema": {
-                            "allOf": [
-                                {
-                                    "$ref": "#/definitions/dto.Response"
-                                },
-                                {
-                                    "type": "object",
-                                    "properties": {
-                                        "data": {
-                                            "type": "string"
-                                        }
-                                    }
-                                }
-                            ]
-                        }
                     }
                 }
             },
@@ -1995,7 +1454,6 @@ const docTemplate = `{
                         "BearerAuth": []
                     }
                 ],
-                "description": "Creates a new category. This endpoint is intended for internal use and should be secured appropriately.",
                 "consumes": [
                     "application/json"
                 ],
@@ -2005,7 +1463,7 @@ const docTemplate = `{
                 "tags": [
                     "categories"
                 ],
-                "summary": "Create a new category",
+                "summary": "Create a category",
                 "parameters": [
                     {
                         "description": "Create Category Request",
@@ -2053,42 +1511,6 @@ const docTemplate = `{
                                 }
                             ]
                         }
-                    },
-                    "401": {
-                        "description": "Unauthorized",
-                        "schema": {
-                            "allOf": [
-                                {
-                                    "$ref": "#/definitions/dto.Response"
-                                },
-                                {
-                                    "type": "object",
-                                    "properties": {
-                                        "data": {
-                                            "type": "string"
-                                        }
-                                    }
-                                }
-                            ]
-                        }
-                    },
-                    "403": {
-                        "description": "Forbidden",
-                        "schema": {
-                            "allOf": [
-                                {
-                                    "$ref": "#/definitions/dto.Response"
-                                },
-                                {
-                                    "type": "object",
-                                    "properties": {
-                                        "data": {
-                                            "type": "string"
-                                        }
-                                    }
-                                }
-                            ]
-                        }
                     }
                 }
             },
@@ -2098,7 +1520,6 @@ const docTemplate = `{
                         "BearerAuth": []
                     }
                 ],
-                "description": "Deletes an existing category. This endpoint is intended for internal use and should be secured appropriately.",
                 "consumes": [
                     "application/json"
                 ],
@@ -2108,10 +1529,10 @@ const docTemplate = `{
                 "tags": [
                     "categories"
                 ],
-                "summary": "Delete an existing category",
+                "summary": "Delete a category",
                 "parameters": [
                     {
-                        "description": "Unique identifier for the category",
+                        "description": "Delete Category Request",
                         "name": "DeleteCategoryRequest",
                         "in": "body",
                         "required": true,
@@ -2156,42 +1577,6 @@ const docTemplate = `{
                                 }
                             ]
                         }
-                    },
-                    "401": {
-                        "description": "Unauthorized",
-                        "schema": {
-                            "allOf": [
-                                {
-                                    "$ref": "#/definitions/dto.Response"
-                                },
-                                {
-                                    "type": "object",
-                                    "properties": {
-                                        "data": {
-                                            "type": "string"
-                                        }
-                                    }
-                                }
-                            ]
-                        }
-                    },
-                    "403": {
-                        "description": "Forbidden",
-                        "schema": {
-                            "allOf": [
-                                {
-                                    "$ref": "#/definitions/dto.Response"
-                                },
-                                {
-                                    "type": "object",
-                                    "properties": {
-                                        "data": {
-                                            "type": "string"
-                                        }
-                                    }
-                                }
-                            ]
-                        }
                     }
                 }
             },
@@ -2201,7 +1586,6 @@ const docTemplate = `{
                         "BearerAuth": []
                     }
                 ],
-                "description": "Updates an existing category. This endpoint is intended for internal use and should be secured appropriately.",
                 "consumes": [
                     "application/json"
                 ],
@@ -2211,7 +1595,7 @@ const docTemplate = `{
                 "tags": [
                     "categories"
                 ],
-                "summary": "Update an existing category",
+                "summary": "Update a category",
                 "parameters": [
                     {
                         "description": "Update Category Request",
@@ -2260,26 +1644,8 @@ const docTemplate = `{
                             ]
                         }
                     },
-                    "401": {
-                        "description": "Unauthorized",
-                        "schema": {
-                            "allOf": [
-                                {
-                                    "$ref": "#/definitions/dto.Response"
-                                },
-                                {
-                                    "type": "object",
-                                    "properties": {
-                                        "data": {
-                                            "type": "string"
-                                        }
-                                    }
-                                }
-                            ]
-                        }
-                    },
-                    "403": {
-                        "description": "Forbidden",
+                    "404": {
+                        "description": "Not Found",
                         "schema": {
                             "allOf": [
                                 {
@@ -2299,49 +1665,26 @@ const docTemplate = `{
                 }
             }
         },
-        "/v1/categories/subcategories": {
+        "/v1/categories/{id}": {
             "get": {
                 "security": [
                     {
                         "BearerAuth": []
                     }
                 ],
-                "description": "Fetches a paginated list of subcategories.",
-                "consumes": [
-                    "application/json"
-                ],
                 "produces": [
                     "application/json"
                 ],
                 "tags": [
-                    "subcategories"
+                    "categories"
                 ],
-                "summary": "Get subcategories",
+                "summary": "Get category by ID",
                 "parameters": [
                     {
                         "type": "string",
-                        "description": "Search term to filter subcategories by name",
-                        "name": "search",
-                        "in": "query"
-                    },
-                    {
-                        "type": "string",
-                        "description": "Unique identifier for the category whose subcategories are to be fetched",
-                        "name": "category_id",
-                        "in": "query"
-                    },
-                    {
-                        "type": "integer",
-                        "description": "Page number",
-                        "name": "page",
-                        "in": "query",
-                        "required": true
-                    },
-                    {
-                        "type": "integer",
-                        "description": "Number of items per page",
-                        "name": "limit",
-                        "in": "query",
+                        "description": "Category ID",
+                        "name": "id",
+                        "in": "path",
                         "required": true
                     }
                 ],
@@ -2357,33 +1700,15 @@ const docTemplate = `{
                                     "type": "object",
                                     "properties": {
                                         "data": {
-                                            "$ref": "#/definitions/dto.SubCategories"
+                                            "$ref": "#/definitions/dto.Category"
                                         }
                                     }
                                 }
                             ]
                         }
                     },
-                    "401": {
-                        "description": "Unauthorized",
-                        "schema": {
-                            "allOf": [
-                                {
-                                    "$ref": "#/definitions/dto.Response"
-                                },
-                                {
-                                    "type": "object",
-                                    "properties": {
-                                        "data": {
-                                            "type": "string"
-                                        }
-                                    }
-                                }
-                            ]
-                        }
-                    },
-                    "403": {
-                        "description": "Forbidden",
+                    "404": {
+                        "description": "Not Found",
                         "schema": {
                             "allOf": [
                                 {
@@ -2401,6 +1726,116 @@ const docTemplate = `{
                         }
                     }
                 }
+            }
+        },
+        "/v1/categories/{id}/products": {
+            "get": {
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
+                "description": "Paginated grid of product cards for a category in the user's city.",
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "consumer"
+                ],
+                "summary": "Products in a category (PLP)",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "Category ID",
+                        "name": "id",
+                        "in": "path",
+                        "required": true
+                    },
+                    {
+                        "type": "integer",
+                        "description": "page number (default 1)",
+                        "name": "page",
+                        "in": "query"
+                    },
+                    {
+                        "type": "integer",
+                        "description": "page size, max 100 (default 20)",
+                        "name": "page_size",
+                        "in": "query"
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "allOf": [
+                                {
+                                    "$ref": "#/definitions/dto.Response"
+                                },
+                                {
+                                    "type": "object",
+                                    "properties": {
+                                        "data": {
+                                            "$ref": "#/definitions/dto.ProductCardListDTO"
+                                        }
+                                    }
+                                }
+                            ]
+                        }
+                    },
+                    "401": {
+                        "description": "Unauthorized",
+                        "schema": {
+                            "$ref": "#/definitions/dto.Response"
+                        }
+                    }
+                }
+            }
+        },
+        "/v1/cities": {
+            "get": {
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
+                "description": "Cities the app serves — used by the location picker.",
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "consumer"
+                ],
+                "summary": "List serviceable cities",
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "allOf": [
+                                {
+                                    "$ref": "#/definitions/dto.Response"
+                                },
+                                {
+                                    "type": "object",
+                                    "properties": {
+                                        "data": {
+                                            "type": "array",
+                                            "items": {
+                                                "$ref": "#/definitions/dto.CityDTO"
+                                            }
+                                        }
+                                    }
+                                }
+                            ]
+                        }
+                    },
+                    "401": {
+                        "description": "Unauthorized",
+                        "schema": {
+                            "$ref": "#/definitions/dto.Response"
+                        }
+                    }
+                }
             },
             "post": {
                 "security": [
@@ -2408,7 +1843,6 @@ const docTemplate = `{
                         "BearerAuth": []
                     }
                 ],
-                "description": "Creates a new subcategory. This endpoint is intended for internal use and should be secured appropriately.",
                 "consumes": [
                     "application/json"
                 ],
@@ -2416,17 +1850,17 @@ const docTemplate = `{
                     "application/json"
                 ],
                 "tags": [
-                    "subcategories"
+                    "cities"
                 ],
-                "summary": "Create a new subcategory",
+                "summary": "Create a serviceable city",
                 "parameters": [
                     {
-                        "description": "Create Subcategory Request",
-                        "name": "subcategory",
+                        "description": "Create City Request",
+                        "name": "city",
                         "in": "body",
                         "required": true,
                         "schema": {
-                            "$ref": "#/definitions/v1.CreateSubcategoryRequest"
+                            "$ref": "#/definitions/v1.CreateCityRequest"
                         }
                     }
                 ],
@@ -2442,7 +1876,7 @@ const docTemplate = `{
                                     "type": "object",
                                     "properties": {
                                         "data": {
-                                            "$ref": "#/definitions/dto.SubCategory"
+                                            "$ref": "#/definitions/dto.CityItem"
                                         }
                                     }
                                 }
@@ -2451,42 +1885,6 @@ const docTemplate = `{
                     },
                     "400": {
                         "description": "Bad Request",
-                        "schema": {
-                            "allOf": [
-                                {
-                                    "$ref": "#/definitions/dto.Response"
-                                },
-                                {
-                                    "type": "object",
-                                    "properties": {
-                                        "data": {
-                                            "type": "string"
-                                        }
-                                    }
-                                }
-                            ]
-                        }
-                    },
-                    "401": {
-                        "description": "Unauthorized",
-                        "schema": {
-                            "allOf": [
-                                {
-                                    "$ref": "#/definitions/dto.Response"
-                                },
-                                {
-                                    "type": "object",
-                                    "properties": {
-                                        "data": {
-                                            "type": "string"
-                                        }
-                                    }
-                                }
-                            ]
-                        }
-                    },
-                    "403": {
-                        "description": "Forbidden",
                         "schema": {
                             "allOf": [
                                 {
@@ -2511,7 +1909,6 @@ const docTemplate = `{
                         "BearerAuth": []
                     }
                 ],
-                "description": "Deletes a subcategory. This endpoint is intended for internal use and should be secured appropriately.",
                 "consumes": [
                     "application/json"
                 ],
@@ -2519,77 +1916,23 @@ const docTemplate = `{
                     "application/json"
                 ],
                 "tags": [
-                    "subcategories"
+                    "cities"
                 ],
-                "summary": "Delete a subcategory",
+                "summary": "Delete a city",
                 "parameters": [
                     {
-                        "description": "Delete Subcategory Request",
-                        "name": "DeleteSubcategoryRequest",
+                        "description": "Delete City Request",
+                        "name": "DeleteCityRequest",
                         "in": "body",
                         "required": true,
                         "schema": {
-                            "$ref": "#/definitions/v1.DeleteSubcategoryRequest"
+                            "$ref": "#/definitions/v1.DeleteCityRequest"
                         }
                     }
                 ],
                 "responses": {
                     "200": {
                         "description": "OK",
-                        "schema": {
-                            "allOf": [
-                                {
-                                    "$ref": "#/definitions/dto.Response"
-                                },
-                                {
-                                    "type": "object",
-                                    "properties": {
-                                        "data": {
-                                            "type": "string"
-                                        }
-                                    }
-                                }
-                            ]
-                        }
-                    },
-                    "400": {
-                        "description": "Bad Request",
-                        "schema": {
-                            "allOf": [
-                                {
-                                    "$ref": "#/definitions/dto.Response"
-                                },
-                                {
-                                    "type": "object",
-                                    "properties": {
-                                        "data": {
-                                            "type": "string"
-                                        }
-                                    }
-                                }
-                            ]
-                        }
-                    },
-                    "401": {
-                        "description": "Unauthorized",
-                        "schema": {
-                            "allOf": [
-                                {
-                                    "$ref": "#/definitions/dto.Response"
-                                },
-                                {
-                                    "type": "object",
-                                    "properties": {
-                                        "data": {
-                                            "type": "string"
-                                        }
-                                    }
-                                }
-                            ]
-                        }
-                    },
-                    "403": {
-                        "description": "Forbidden",
                         "schema": {
                             "allOf": [
                                 {
@@ -2614,7 +1957,6 @@ const docTemplate = `{
                         "BearerAuth": []
                     }
                 ],
-                "description": "Updates an existing subcategory. This endpoint is intended for internal use and should be secured appropriately.",
                 "consumes": [
                     "application/json"
                 ],
@@ -2622,17 +1964,17 @@ const docTemplate = `{
                     "application/json"
                 ],
                 "tags": [
-                    "subcategories"
+                    "cities"
                 ],
-                "summary": "Update an existing subcategory (id supplied via form data)",
+                "summary": "Update a city",
                 "parameters": [
                     {
-                        "description": "Update Subcategory Request",
-                        "name": "subcategory",
+                        "description": "Update City Request",
+                        "name": "city",
                         "in": "body",
                         "required": true,
                         "schema": {
-                            "$ref": "#/definitions/v1.UpdateSubcategoryRequest"
+                            "$ref": "#/definitions/v1.UpdateCityRequest"
                         }
                     }
                 ],
@@ -2648,146 +1990,7 @@ const docTemplate = `{
                                     "type": "object",
                                     "properties": {
                                         "data": {
-                                            "$ref": "#/definitions/dto.SubCategory"
-                                        }
-                                    }
-                                }
-                            ]
-                        }
-                    },
-                    "400": {
-                        "description": "Bad Request",
-                        "schema": {
-                            "allOf": [
-                                {
-                                    "$ref": "#/definitions/dto.Response"
-                                },
-                                {
-                                    "type": "object",
-                                    "properties": {
-                                        "data": {
-                                            "type": "string"
-                                        }
-                                    }
-                                }
-                            ]
-                        }
-                    },
-                    "401": {
-                        "description": "Unauthorized",
-                        "schema": {
-                            "allOf": [
-                                {
-                                    "$ref": "#/definitions/dto.Response"
-                                },
-                                {
-                                    "type": "object",
-                                    "properties": {
-                                        "data": {
-                                            "type": "string"
-                                        }
-                                    }
-                                }
-                            ]
-                        }
-                    },
-                    "403": {
-                        "description": "Forbidden",
-                        "schema": {
-                            "allOf": [
-                                {
-                                    "$ref": "#/definitions/dto.Response"
-                                },
-                                {
-                                    "type": "object",
-                                    "properties": {
-                                        "data": {
-                                            "type": "string"
-                                        }
-                                    }
-                                }
-                            ]
-                        }
-                    }
-                }
-            }
-        },
-        "/v1/categories/{category_id}": {
-            "get": {
-                "security": [
-                    {
-                        "BearerAuth": []
-                    }
-                ],
-                "description": "Fetches a category by its unique identifier.",
-                "consumes": [
-                    "application/json"
-                ],
-                "produces": [
-                    "application/json"
-                ],
-                "tags": [
-                    "categories"
-                ],
-                "summary": "Get category by ID",
-                "parameters": [
-                    {
-                        "type": "string",
-                        "description": "Unique identifier for the category",
-                        "name": "category_id",
-                        "in": "path",
-                        "required": true
-                    }
-                ],
-                "responses": {
-                    "200": {
-                        "description": "OK",
-                        "schema": {
-                            "allOf": [
-                                {
-                                    "$ref": "#/definitions/dto.Response"
-                                },
-                                {
-                                    "type": "object",
-                                    "properties": {
-                                        "data": {
-                                            "$ref": "#/definitions/dto.Category"
-                                        }
-                                    }
-                                }
-                            ]
-                        }
-                    },
-                    "401": {
-                        "description": "Unauthorized",
-                        "schema": {
-                            "allOf": [
-                                {
-                                    "$ref": "#/definitions/dto.Response"
-                                },
-                                {
-                                    "type": "object",
-                                    "properties": {
-                                        "data": {
-                                            "type": "string"
-                                        }
-                                    }
-                                }
-                            ]
-                        }
-                    },
-                    "403": {
-                        "description": "Forbidden",
-                        "schema": {
-                            "allOf": [
-                                {
-                                    "$ref": "#/definitions/dto.Response"
-                                },
-                                {
-                                    "type": "object",
-                                    "properties": {
-                                        "data": {
-                                            "type": "string"
+                                            "$ref": "#/definitions/dto.CityItem"
                                         }
                                     }
                                 }
@@ -2815,55 +2018,39 @@ const docTemplate = `{
                 }
             }
         },
-        "/v1/categories/{category_id}/products": {
+        "/v1/cities/all": {
             "get": {
                 "security": [
                     {
                         "BearerAuth": []
                     }
                 ],
-                "description": "Fetches a paginated list of products under a specific category.",
-                "consumes": [
-                    "application/json"
-                ],
+                "description": "Paginated list of serviceable cities, including disabled.",
                 "produces": [
                     "application/json"
                 ],
                 "tags": [
-                    "categories"
+                    "cities"
                 ],
-                "summary": "Get products by category",
+                "summary": "List all cities (admin)",
                 "parameters": [
-                    {
-                        "type": "string",
-                        "description": "Unique identifier for the category",
-                        "name": "category_id",
-                        "in": "path",
-                        "required": true
-                    },
-                    {
-                        "type": "array",
-                        "items": {
-                            "type": "string"
-                        },
-                        "collectionFormat": "csv",
-                        "description": "Filter by delivery platforms (comma-separated)",
-                        "name": "platforms",
-                        "in": "query"
-                    },
                     {
                         "type": "integer",
                         "description": "Page number",
                         "name": "page",
-                        "in": "query",
-                        "required": true
+                        "in": "query"
                     },
                     {
                         "type": "integer",
-                        "description": "Number of items per page",
-                        "name": "limit",
-                        "in": "query",
-                        "required": true
+                        "description": "Items per page",
+                        "name": "page_size",
+                        "in": "query"
+                    },
+                    {
+                        "type": "string",
+                        "description": "Filter by name",
+                        "name": "search",
+                        "in": "query"
                     }
                 ],
                 "responses": {
@@ -2878,61 +2065,7 @@ const docTemplate = `{
                                     "type": "object",
                                     "properties": {
                                         "data": {
-                                            "$ref": "#/definitions/dto.ProductListingMobile"
-                                        }
-                                    }
-                                }
-                            ]
-                        }
-                    },
-                    "401": {
-                        "description": "Unauthorized",
-                        "schema": {
-                            "allOf": [
-                                {
-                                    "$ref": "#/definitions/dto.Response"
-                                },
-                                {
-                                    "type": "object",
-                                    "properties": {
-                                        "data": {
-                                            "type": "string"
-                                        }
-                                    }
-                                }
-                            ]
-                        }
-                    },
-                    "403": {
-                        "description": "Forbidden",
-                        "schema": {
-                            "allOf": [
-                                {
-                                    "$ref": "#/definitions/dto.Response"
-                                },
-                                {
-                                    "type": "object",
-                                    "properties": {
-                                        "data": {
-                                            "type": "string"
-                                        }
-                                    }
-                                }
-                            ]
-                        }
-                    },
-                    "404": {
-                        "description": "Not Found",
-                        "schema": {
-                            "allOf": [
-                                {
-                                    "$ref": "#/definitions/dto.Response"
-                                },
-                                {
-                                    "type": "object",
-                                    "properties": {
-                                        "data": {
-                                            "type": "string"
+                                            "$ref": "#/definitions/dto.Cities"
                                         }
                                     }
                                 }
@@ -2942,36 +2075,25 @@ const docTemplate = `{
                 }
             }
         },
-        "/v1/categories/{category_id}/subcategories/{subcategory_id}": {
+        "/v1/cities/{id}": {
             "get": {
                 "security": [
                     {
                         "BearerAuth": []
                     }
                 ],
-                "description": "Fetches a subcategory by its unique identifier.",
-                "consumes": [
-                    "application/json"
-                ],
                 "produces": [
                     "application/json"
                 ],
                 "tags": [
-                    "subcategories"
+                    "cities"
                 ],
-                "summary": "Get subcategory by ID",
+                "summary": "Get a city by ID (admin)",
                 "parameters": [
                     {
                         "type": "string",
-                        "description": "Unique identifier for the category",
-                        "name": "category_id",
-                        "in": "path",
-                        "required": true
-                    },
-                    {
-                        "type": "string",
-                        "description": "Unique identifier for the subcategory",
-                        "name": "subcategory_id",
+                        "description": "City ID",
+                        "name": "id",
                         "in": "path",
                         "required": true
                     }
@@ -2988,43 +2110,7 @@ const docTemplate = `{
                                     "type": "object",
                                     "properties": {
                                         "data": {
-                                            "$ref": "#/definitions/dto.SubCategory"
-                                        }
-                                    }
-                                }
-                            ]
-                        }
-                    },
-                    "401": {
-                        "description": "Unauthorized",
-                        "schema": {
-                            "allOf": [
-                                {
-                                    "$ref": "#/definitions/dto.Response"
-                                },
-                                {
-                                    "type": "object",
-                                    "properties": {
-                                        "data": {
-                                            "type": "string"
-                                        }
-                                    }
-                                }
-                            ]
-                        }
-                    },
-                    "403": {
-                        "description": "Forbidden",
-                        "schema": {
-                            "allOf": [
-                                {
-                                    "$ref": "#/definitions/dto.Response"
-                                },
-                                {
-                                    "type": "object",
-                                    "properties": {
-                                        "data": {
-                                            "type": "string"
+                                            "$ref": "#/definitions/dto.CityItem"
                                         }
                                     }
                                 }
@@ -3479,6 +2565,95 @@ const docTemplate = `{
                 }
             }
         },
+        "/v1/deals": {
+            "get": {
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
+                "description": "Products that have a discounted platform price (mrp \u003e price) in the user's city.",
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "consumer"
+                ],
+                "summary": "Top Deals",
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "allOf": [
+                                {
+                                    "$ref": "#/definitions/dto.Response"
+                                },
+                                {
+                                    "type": "object",
+                                    "properties": {
+                                        "data": {
+                                            "type": "array",
+                                            "items": {
+                                                "$ref": "#/definitions/dto.ProductCardDTO"
+                                            }
+                                        }
+                                    }
+                                }
+                            ]
+                        }
+                    }
+                }
+            }
+        },
+        "/v1/home": {
+            "get": {
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
+                "description": "Banners, top stores (platforms), trending categories and trending items for the user's city.",
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "consumer"
+                ],
+                "summary": "Home screen",
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "allOf": [
+                                {
+                                    "$ref": "#/definitions/dto.Response"
+                                },
+                                {
+                                    "type": "object",
+                                    "properties": {
+                                        "data": {
+                                            "$ref": "#/definitions/dto.HomeResponse"
+                                        }
+                                    }
+                                }
+                            ]
+                        }
+                    },
+                    "400": {
+                        "description": "Bad Request",
+                        "schema": {
+                            "$ref": "#/definitions/dto.Response"
+                        }
+                    },
+                    "401": {
+                        "description": "Unauthorized",
+                        "schema": {
+                            "$ref": "#/definitions/dto.Response"
+                        }
+                    }
+                }
+            }
+        },
         "/v1/inventory-management": {
             "get": {
                 "security": [
@@ -3486,31 +2661,31 @@ const docTemplate = `{
                         "BearerAuth": []
                     }
                 ],
-                "description": "Fetches the data needed to populate the inventory management dashboard, including headline stats and a paginated list of products.",
-                "consumes": [
-                    "application/json"
-                ],
                 "produces": [
                     "application/json"
                 ],
                 "tags": [
                     "inventory-management"
                 ],
-                "summary": "Get inventory management data",
+                "summary": "Inventory list",
                 "parameters": [
                     {
                         "type": "integer",
                         "description": "Page number",
                         "name": "page",
-                        "in": "query",
-                        "required": true
+                        "in": "query"
                     },
                     {
                         "type": "integer",
-                        "description": "Number of items per page",
-                        "name": "limit",
-                        "in": "query",
-                        "required": true
+                        "description": "Items per page",
+                        "name": "page_size",
+                        "in": "query"
+                    },
+                    {
+                        "type": "string",
+                        "description": "Filter by product name",
+                        "name": "search",
+                        "in": "query"
                     }
                 ],
                 "responses": {
@@ -3531,42 +2706,6 @@ const docTemplate = `{
                                 }
                             ]
                         }
-                    },
-                    "401": {
-                        "description": "Unauthorized",
-                        "schema": {
-                            "allOf": [
-                                {
-                                    "$ref": "#/definitions/dto.Response"
-                                },
-                                {
-                                    "type": "object",
-                                    "properties": {
-                                        "data": {
-                                            "type": "string"
-                                        }
-                                    }
-                                }
-                            ]
-                        }
-                    },
-                    "403": {
-                        "description": "Forbidden",
-                        "schema": {
-                            "allOf": [
-                                {
-                                    "$ref": "#/definitions/dto.Response"
-                                },
-                                {
-                                    "type": "object",
-                                    "properties": {
-                                        "data": {
-                                            "type": "string"
-                                        }
-                                    }
-                                }
-                            ]
-                        }
                     }
                 }
             },
@@ -3576,7 +2715,6 @@ const docTemplate = `{
                         "BearerAuth": []
                     }
                 ],
-                "description": "Creates a new inventory item in the system. This endpoint is intended for internal use and should be secured appropriately.",
                 "consumes": [
                     "application/json"
                 ],
@@ -3586,10 +2724,10 @@ const docTemplate = `{
                 "tags": [
                     "inventory-management"
                 ],
-                "summary": "Create a new inventory item",
+                "summary": "Create an inventory item (product)",
                 "parameters": [
                     {
-                        "description": "Create New Item Request",
+                        "description": "Create Item Request",
                         "name": "item",
                         "in": "body",
                         "required": true,
@@ -3599,8 +2737,8 @@ const docTemplate = `{
                     }
                 ],
                 "responses": {
-                    "200": {
-                        "description": "OK",
+                    "201": {
+                        "description": "Created",
                         "schema": {
                             "allOf": [
                                 {
@@ -3617,26 +2755,8 @@ const docTemplate = `{
                             ]
                         }
                     },
-                    "401": {
-                        "description": "Unauthorized",
-                        "schema": {
-                            "allOf": [
-                                {
-                                    "$ref": "#/definitions/dto.Response"
-                                },
-                                {
-                                    "type": "object",
-                                    "properties": {
-                                        "data": {
-                                            "type": "string"
-                                        }
-                                    }
-                                }
-                            ]
-                        }
-                    },
-                    "403": {
-                        "description": "Forbidden",
+                    "400": {
+                        "description": "Bad Request",
                         "schema": {
                             "allOf": [
                                 {
@@ -3661,7 +2781,6 @@ const docTemplate = `{
                         "BearerAuth": []
                     }
                 ],
-                "description": "Deletes an existing inventory item in the system. This endpoint is intended for internal use and should be secured appropriately.",
                 "consumes": [
                     "application/json"
                 ],
@@ -3671,7 +2790,7 @@ const docTemplate = `{
                 "tags": [
                     "inventory-management"
                 ],
-                "summary": "Delete an existing inventory item",
+                "summary": "Delete an inventory item",
                 "parameters": [
                     {
                         "description": "Delete Item Request",
@@ -3701,42 +2820,6 @@ const docTemplate = `{
                                 }
                             ]
                         }
-                    },
-                    "401": {
-                        "description": "Unauthorized",
-                        "schema": {
-                            "allOf": [
-                                {
-                                    "$ref": "#/definitions/dto.Response"
-                                },
-                                {
-                                    "type": "object",
-                                    "properties": {
-                                        "data": {
-                                            "type": "string"
-                                        }
-                                    }
-                                }
-                            ]
-                        }
-                    },
-                    "403": {
-                        "description": "Forbidden",
-                        "schema": {
-                            "allOf": [
-                                {
-                                    "$ref": "#/definitions/dto.Response"
-                                },
-                                {
-                                    "type": "object",
-                                    "properties": {
-                                        "data": {
-                                            "type": "string"
-                                        }
-                                    }
-                                }
-                            ]
-                        }
                     }
                 }
             },
@@ -3746,7 +2829,6 @@ const docTemplate = `{
                         "BearerAuth": []
                     }
                 ],
-                "description": "Updates an existing inventory item in the system. This endpoint is intended for internal use and should be secured appropriately.",
                 "consumes": [
                     "application/json"
                 ],
@@ -3756,7 +2838,7 @@ const docTemplate = `{
                 "tags": [
                     "inventory-management"
                 ],
-                "summary": "Update an existing inventory item",
+                "summary": "Update an inventory item",
                 "parameters": [
                     {
                         "description": "Update Item Request",
@@ -3771,514 +2853,6 @@ const docTemplate = `{
                 "responses": {
                     "200": {
                         "description": "OK",
-                        "schema": {
-                            "allOf": [
-                                {
-                                    "$ref": "#/definitions/dto.Response"
-                                },
-                                {
-                                    "type": "object",
-                                    "properties": {
-                                        "data": {
-                                            "$ref": "#/definitions/dto.ProductItem"
-                                        }
-                                    }
-                                }
-                            ]
-                        }
-                    },
-                    "401": {
-                        "description": "Unauthorized",
-                        "schema": {
-                            "allOf": [
-                                {
-                                    "$ref": "#/definitions/dto.Response"
-                                },
-                                {
-                                    "type": "object",
-                                    "properties": {
-                                        "data": {
-                                            "type": "string"
-                                        }
-                                    }
-                                }
-                            ]
-                        }
-                    },
-                    "403": {
-                        "description": "Forbidden",
-                        "schema": {
-                            "allOf": [
-                                {
-                                    "$ref": "#/definitions/dto.Response"
-                                },
-                                {
-                                    "type": "object",
-                                    "properties": {
-                                        "data": {
-                                            "type": "string"
-                                        }
-                                    }
-                                }
-                            ]
-                        }
-                    }
-                }
-            }
-        },
-        "/v1/inventory-management/stats": {
-            "get": {
-                "security": [
-                    {
-                        "BearerAuth": []
-                    }
-                ],
-                "description": "Fetches the headline stats for the inventory management dashboard, including total categories, products, brands, and tracked delivery platforms.",
-                "consumes": [
-                    "application/json"
-                ],
-                "produces": [
-                    "application/json"
-                ],
-                "tags": [
-                    "inventory-management"
-                ],
-                "summary": "Get inventory management stats",
-                "responses": {
-                    "200": {
-                        "description": "OK",
-                        "schema": {
-                            "allOf": [
-                                {
-                                    "$ref": "#/definitions/dto.Response"
-                                },
-                                {
-                                    "type": "object",
-                                    "properties": {
-                                        "data": {
-                                            "$ref": "#/definitions/dto.InventoryManagementsStats"
-                                        }
-                                    }
-                                }
-                            ]
-                        }
-                    },
-                    "401": {
-                        "description": "Unauthorized",
-                        "schema": {
-                            "allOf": [
-                                {
-                                    "$ref": "#/definitions/dto.Response"
-                                },
-                                {
-                                    "type": "object",
-                                    "properties": {
-                                        "data": {
-                                            "type": "string"
-                                        }
-                                    }
-                                }
-                            ]
-                        }
-                    },
-                    "403": {
-                        "description": "Forbidden",
-                        "schema": {
-                            "allOf": [
-                                {
-                                    "$ref": "#/definitions/dto.Response"
-                                },
-                                {
-                                    "type": "object",
-                                    "properties": {
-                                        "data": {
-                                            "type": "string"
-                                        }
-                                    }
-                                }
-                            ]
-                        }
-                    }
-                }
-            }
-        },
-        "/v1/inventory-management/variants": {
-            "post": {
-                "security": [
-                    {
-                        "BearerAuth": []
-                    }
-                ],
-                "description": "Creates a new variant for a specific product. This endpoint is intended for internal use and should be secured appropriately.",
-                "consumes": [
-                    "application/json"
-                ],
-                "produces": [
-                    "application/json"
-                ],
-                "tags": [
-                    "inventory-management"
-                ],
-                "summary": "Create a new variant for a product",
-                "parameters": [
-                    {
-                        "description": "Create Variant Request",
-                        "name": "CreateVariantRequest",
-                        "in": "body",
-                        "required": true,
-                        "schema": {
-                            "$ref": "#/definitions/v1.CreateVariantRequest"
-                        }
-                    }
-                ],
-                "responses": {
-                    "200": {
-                        "description": "OK",
-                        "schema": {
-                            "allOf": [
-                                {
-                                    "$ref": "#/definitions/dto.Response"
-                                },
-                                {
-                                    "type": "object",
-                                    "properties": {
-                                        "data": {
-                                            "$ref": "#/definitions/dto.ProductVariantItem"
-                                        }
-                                    }
-                                }
-                            ]
-                        }
-                    },
-                    "400": {
-                        "description": "Bad Request",
-                        "schema": {
-                            "allOf": [
-                                {
-                                    "$ref": "#/definitions/dto.Response"
-                                },
-                                {
-                                    "type": "object",
-                                    "properties": {
-                                        "data": {
-                                            "type": "string"
-                                        }
-                                    }
-                                }
-                            ]
-                        }
-                    },
-                    "401": {
-                        "description": "Unauthorized",
-                        "schema": {
-                            "allOf": [
-                                {
-                                    "$ref": "#/definitions/dto.Response"
-                                },
-                                {
-                                    "type": "object",
-                                    "properties": {
-                                        "data": {
-                                            "type": "string"
-                                        }
-                                    }
-                                }
-                            ]
-                        }
-                    },
-                    "403": {
-                        "description": "Forbidden",
-                        "schema": {
-                            "allOf": [
-                                {
-                                    "$ref": "#/definitions/dto.Response"
-                                },
-                                {
-                                    "type": "object",
-                                    "properties": {
-                                        "data": {
-                                            "type": "string"
-                                        }
-                                    }
-                                }
-                            ]
-                        }
-                    }
-                }
-            },
-            "delete": {
-                "security": [
-                    {
-                        "BearerAuth": []
-                    }
-                ],
-                "description": "Deletes an existing variant for a specific product. This endpoint is intended for internal use and should be secured appropriately.",
-                "consumes": [
-                    "application/json"
-                ],
-                "produces": [
-                    "application/json"
-                ],
-                "tags": [
-                    "inventory-management"
-                ],
-                "summary": "Delete an existing variant for a product",
-                "parameters": [
-                    {
-                        "description": "Delete Variant Request",
-                        "name": "DeleteVariantRequest",
-                        "in": "body",
-                        "required": true,
-                        "schema": {
-                            "$ref": "#/definitions/v1.DeleteVariantRequest"
-                        }
-                    }
-                ],
-                "responses": {
-                    "200": {
-                        "description": "OK",
-                        "schema": {
-                            "allOf": [
-                                {
-                                    "$ref": "#/definitions/dto.Response"
-                                },
-                                {
-                                    "type": "object",
-                                    "properties": {
-                                        "data": {
-                                            "type": "string"
-                                        }
-                                    }
-                                }
-                            ]
-                        }
-                    },
-                    "400": {
-                        "description": "Bad Request",
-                        "schema": {
-                            "allOf": [
-                                {
-                                    "$ref": "#/definitions/dto.Response"
-                                },
-                                {
-                                    "type": "object",
-                                    "properties": {
-                                        "data": {
-                                            "type": "string"
-                                        }
-                                    }
-                                }
-                            ]
-                        }
-                    },
-                    "401": {
-                        "description": "Unauthorized",
-                        "schema": {
-                            "allOf": [
-                                {
-                                    "$ref": "#/definitions/dto.Response"
-                                },
-                                {
-                                    "type": "object",
-                                    "properties": {
-                                        "data": {
-                                            "type": "string"
-                                        }
-                                    }
-                                }
-                            ]
-                        }
-                    },
-                    "403": {
-                        "description": "Forbidden",
-                        "schema": {
-                            "allOf": [
-                                {
-                                    "$ref": "#/definitions/dto.Response"
-                                },
-                                {
-                                    "type": "object",
-                                    "properties": {
-                                        "data": {
-                                            "type": "string"
-                                        }
-                                    }
-                                }
-                            ]
-                        }
-                    }
-                }
-            },
-            "patch": {
-                "security": [
-                    {
-                        "BearerAuth": []
-                    }
-                ],
-                "description": "Updates an existing variant for a specific product. This endpoint is intended for internal use and should be secured appropriately.",
-                "consumes": [
-                    "application/json"
-                ],
-                "produces": [
-                    "application/json"
-                ],
-                "tags": [
-                    "inventory-management"
-                ],
-                "summary": "Update an existing variant for a product",
-                "parameters": [
-                    {
-                        "description": "Update Variant Request",
-                        "name": "UpdateVariantRequest",
-                        "in": "body",
-                        "required": true,
-                        "schema": {
-                            "$ref": "#/definitions/v1.UpdateVariantRequest"
-                        }
-                    }
-                ],
-                "responses": {
-                    "200": {
-                        "description": "OK",
-                        "schema": {
-                            "allOf": [
-                                {
-                                    "$ref": "#/definitions/dto.Response"
-                                },
-                                {
-                                    "type": "object",
-                                    "properties": {
-                                        "data": {
-                                            "$ref": "#/definitions/dto.ProductVariantItem"
-                                        }
-                                    }
-                                }
-                            ]
-                        }
-                    },
-                    "400": {
-                        "description": "Bad Request",
-                        "schema": {
-                            "allOf": [
-                                {
-                                    "$ref": "#/definitions/dto.Response"
-                                },
-                                {
-                                    "type": "object",
-                                    "properties": {
-                                        "data": {
-                                            "type": "string"
-                                        }
-                                    }
-                                }
-                            ]
-                        }
-                    },
-                    "401": {
-                        "description": "Unauthorized",
-                        "schema": {
-                            "allOf": [
-                                {
-                                    "$ref": "#/definitions/dto.Response"
-                                },
-                                {
-                                    "type": "object",
-                                    "properties": {
-                                        "data": {
-                                            "type": "string"
-                                        }
-                                    }
-                                }
-                            ]
-                        }
-                    },
-                    "403": {
-                        "description": "Forbidden",
-                        "schema": {
-                            "allOf": [
-                                {
-                                    "$ref": "#/definitions/dto.Response"
-                                },
-                                {
-                                    "type": "object",
-                                    "properties": {
-                                        "data": {
-                                            "type": "string"
-                                        }
-                                    }
-                                }
-                            ]
-                        }
-                    }
-                }
-            }
-        },
-        "/v1/inventory-management/{product_id}": {
-            "get": {
-                "security": [
-                    {
-                        "BearerAuth": []
-                    }
-                ],
-                "description": "Fetches an inventory item by its unique identifier.",
-                "consumes": [
-                    "application/json"
-                ],
-                "produces": [
-                    "application/json"
-                ],
-                "tags": [
-                    "inventory-management"
-                ],
-                "summary": "Get inventory item by ID",
-                "parameters": [
-                    {
-                        "type": "string",
-                        "description": "Unique identifier for the inventory item",
-                        "name": "product_id",
-                        "in": "path",
-                        "required": true
-                    }
-                ],
-                "responses": {
-                    "200": {
-                        "description": "OK",
-                        "schema": {
-                            "allOf": [
-                                {
-                                    "$ref": "#/definitions/dto.Response"
-                                },
-                                {
-                                    "type": "object",
-                                    "properties": {
-                                        "data": {
-                                            "$ref": "#/definitions/dto.ProductItem"
-                                        }
-                                    }
-                                }
-                            ]
-                        }
-                    },
-                    "401": {
-                        "description": "Unauthorized",
-                        "schema": {
-                            "allOf": [
-                                {
-                                    "$ref": "#/definitions/dto.Response"
-                                },
-                                {
-                                    "type": "object",
-                                    "properties": {
-                                        "data": {
-                                            "type": "string"
-                                        }
-                                    }
-                                }
-                            ]
-                        }
-                    },
-                    "403": {
-                        "description": "Forbidden",
                         "schema": {
                             "allOf": [
                                 {
@@ -4316,31 +2890,41 @@ const docTemplate = `{
                 }
             }
         },
-        "/v1/inventory-management/{product_id}/variants": {
+        "/v1/inventory-management/link/search": {
             "get": {
                 "security": [
                     {
                         "BearerAuth": []
                     }
                 ],
-                "description": "Fetches a list of variants for a specific product. This endpoint is intended for internal use and should be secured appropriately.",
-                "consumes": [
-                    "application/json"
-                ],
+                "description": "Discovery step: groupsearch across platforms so the admin can confirm the right item per platform. Costs 1 credit per platform. Never called on a consumer request.",
                 "produces": [
                     "application/json"
                 ],
                 "tags": [
-                    "inventory-management"
+                    "linking"
                 ],
-                "summary": "List variants of a product",
+                "summary": "Search QuickCommerce candidates for linking",
                 "parameters": [
                     {
                         "type": "string",
-                        "description": "Unique identifier for the product",
-                        "name": "product_id",
-                        "in": "path",
+                        "description": "search term",
+                        "name": "q",
+                        "in": "query",
                         "required": true
+                    },
+                    {
+                        "type": "string",
+                        "description": "city ID (supplies the QC location anchor)",
+                        "name": "city",
+                        "in": "query",
+                        "required": true
+                    },
+                    {
+                        "type": "string",
+                        "description": "comma-separated platform codes to search, e.g. blinkit,zepto. Omit to search every enabled QC-mapped platform. Costs 1 credit per platform.",
+                        "name": "platforms",
+                        "in": "query"
                     }
                 ],
                 "responses": {
@@ -4355,33 +2939,15 @@ const docTemplate = `{
                                     "type": "object",
                                     "properties": {
                                         "data": {
-                                            "$ref": "#/definitions/dto.ProductVariantItems"
+                                            "$ref": "#/definitions/v1.LinkSearchResponse"
                                         }
                                     }
                                 }
                             ]
                         }
                     },
-                    "401": {
-                        "description": "Unauthorized",
-                        "schema": {
-                            "allOf": [
-                                {
-                                    "$ref": "#/definitions/dto.Response"
-                                },
-                                {
-                                    "type": "object",
-                                    "properties": {
-                                        "data": {
-                                            "type": "string"
-                                        }
-                                    }
-                                }
-                            ]
-                        }
-                    },
-                    "403": {
-                        "description": "Forbidden",
+                    "400": {
+                        "description": "Bad Request",
                         "schema": {
                             "allOf": [
                                 {
@@ -4401,14 +2967,119 @@ const docTemplate = `{
                 }
             }
         },
-        "/v1/inventory-management/{product_id}/variants/{variant_id}": {
+        "/v1/inventory-management/refresh": {
+            "post": {
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
+                "description": "Re-pulls live price+stock via GetItem for a variant or a whole product's variants in one city. Costs 1 credit per linked platform. One platform failing never fails the refresh.",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "linking"
+                ],
+                "summary": "Refresh live prices/stock from QuickCommerce",
+                "parameters": [
+                    {
+                        "description": "Refresh request (one of product_id / variant_id)",
+                        "name": "request",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/v1.RefreshRequest"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "allOf": [
+                                {
+                                    "$ref": "#/definitions/dto.Response"
+                                },
+                                {
+                                    "type": "object",
+                                    "properties": {
+                                        "data": {
+                                            "$ref": "#/definitions/service.RefreshResult"
+                                        }
+                                    }
+                                }
+                            ]
+                        }
+                    },
+                    "400": {
+                        "description": "Bad Request",
+                        "schema": {
+                            "allOf": [
+                                {
+                                    "$ref": "#/definitions/dto.Response"
+                                },
+                                {
+                                    "type": "object",
+                                    "properties": {
+                                        "data": {
+                                            "type": "string"
+                                        }
+                                    }
+                                }
+                            ]
+                        }
+                    }
+                }
+            }
+        },
+        "/v1/inventory-management/stats": {
             "get": {
                 "security": [
                     {
                         "BearerAuth": []
                     }
                 ],
-                "description": "Fetches the variants of an inventory item by its unique identifier.",
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "inventory-management"
+                ],
+                "summary": "Inventory headline stats",
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "allOf": [
+                                {
+                                    "$ref": "#/definitions/dto.Response"
+                                },
+                                {
+                                    "type": "object",
+                                    "properties": {
+                                        "data": {
+                                            "$ref": "#/definitions/dto.InventoryManagementsStats"
+                                        }
+                                    }
+                                }
+                            ]
+                        }
+                    }
+                }
+            }
+        },
+        "/v1/inventory-management/variants": {
+            "post": {
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
+                "description": "Creates a pack-size variant. Per-platform linking + price is set separately via the linking endpoints.",
                 "consumes": [
                     "application/json"
                 ],
@@ -4418,19 +3089,473 @@ const docTemplate = `{
                 "tags": [
                     "inventory-management"
                 ],
-                "summary": "Get inventory item variants by product ID",
+                "summary": "Create a variant (pack size)",
+                "parameters": [
+                    {
+                        "description": "Create Variant Request",
+                        "name": "CreateVariantRequest",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/v1.CreateVariantRequest"
+                        }
+                    }
+                ],
+                "responses": {
+                    "201": {
+                        "description": "Created",
+                        "schema": {
+                            "allOf": [
+                                {
+                                    "$ref": "#/definitions/dto.Response"
+                                },
+                                {
+                                    "type": "object",
+                                    "properties": {
+                                        "data": {
+                                            "$ref": "#/definitions/dto.ProductVariantItem"
+                                        }
+                                    }
+                                }
+                            ]
+                        }
+                    },
+                    "400": {
+                        "description": "Bad Request",
+                        "schema": {
+                            "allOf": [
+                                {
+                                    "$ref": "#/definitions/dto.Response"
+                                },
+                                {
+                                    "type": "object",
+                                    "properties": {
+                                        "data": {
+                                            "type": "string"
+                                        }
+                                    }
+                                }
+                            ]
+                        }
+                    }
+                }
+            },
+            "delete": {
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "inventory-management"
+                ],
+                "summary": "Delete a variant",
+                "parameters": [
+                    {
+                        "description": "Delete Variant Request",
+                        "name": "DeleteVariantRequest",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/v1.DeleteVariantRequest"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "allOf": [
+                                {
+                                    "$ref": "#/definitions/dto.Response"
+                                },
+                                {
+                                    "type": "object",
+                                    "properties": {
+                                        "data": {
+                                            "type": "string"
+                                        }
+                                    }
+                                }
+                            ]
+                        }
+                    }
+                }
+            },
+            "patch": {
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "inventory-management"
+                ],
+                "summary": "Update a variant",
+                "parameters": [
+                    {
+                        "description": "Update Variant Request",
+                        "name": "UpdateVariantRequest",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/v1.UpdateVariantRequest"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "allOf": [
+                                {
+                                    "$ref": "#/definitions/dto.Response"
+                                },
+                                {
+                                    "type": "object",
+                                    "properties": {
+                                        "data": {
+                                            "$ref": "#/definitions/dto.ProductVariantItem"
+                                        }
+                                    }
+                                }
+                            ]
+                        }
+                    },
+                    "404": {
+                        "description": "Not Found",
+                        "schema": {
+                            "allOf": [
+                                {
+                                    "$ref": "#/definitions/dto.Response"
+                                },
+                                {
+                                    "type": "object",
+                                    "properties": {
+                                        "data": {
+                                            "type": "string"
+                                        }
+                                    }
+                                }
+                            ]
+                        }
+                    }
+                }
+            }
+        },
+        "/v1/inventory-management/variants/manual-price": {
+            "post": {
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
+                "description": "Admin fallback: pin the link and write the price by hand. price = MRP, discounted_price = shown price.",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "linking"
+                ],
+                "summary": "Set a manual price (fallback when not on QuickCommerce)",
+                "parameters": [
+                    {
+                        "description": "Manual price request",
+                        "name": "request",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/v1.ManualPriceRequest"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "allOf": [
+                                {
+                                    "$ref": "#/definitions/dto.Response"
+                                },
+                                {
+                                    "type": "object",
+                                    "properties": {
+                                        "data": {
+                                            "type": "string"
+                                        }
+                                    }
+                                }
+                            ]
+                        }
+                    },
+                    "400": {
+                        "description": "Bad Request",
+                        "schema": {
+                            "allOf": [
+                                {
+                                    "$ref": "#/definitions/dto.Response"
+                                },
+                                {
+                                    "type": "object",
+                                    "properties": {
+                                        "data": {
+                                            "type": "string"
+                                        }
+                                    }
+                                }
+                            ]
+                        }
+                    }
+                }
+            }
+        },
+        "/v1/inventory-management/variants/{variant_id}/links": {
+            "post": {
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
+                "description": "Pins a (variant, platform) to the chosen QC item id and seeds its price/stock via GetItem. The link is city-independent; the price is stored per city.",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "linking"
+                ],
+                "summary": "Confirm a platform link for a variant",
                 "parameters": [
                     {
                         "type": "string",
-                        "description": "Unique identifier for the inventory item",
-                        "name": "product_id",
+                        "description": "Variant ID",
+                        "name": "variant_id",
+                        "in": "path",
+                        "required": true
+                    },
+                    {
+                        "description": "Confirm link request",
+                        "name": "request",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/v1.ConfirmLinkRequest"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "allOf": [
+                                {
+                                    "$ref": "#/definitions/dto.Response"
+                                },
+                                {
+                                    "type": "object",
+                                    "properties": {
+                                        "data": {
+                                            "type": "string"
+                                        }
+                                    }
+                                }
+                            ]
+                        }
+                    },
+                    "400": {
+                        "description": "Bad Request",
+                        "schema": {
+                            "allOf": [
+                                {
+                                    "$ref": "#/definitions/dto.Response"
+                                },
+                                {
+                                    "type": "object",
+                                    "properties": {
+                                        "data": {
+                                            "type": "string"
+                                        }
+                                    }
+                                }
+                            ]
+                        }
+                    }
+                }
+            }
+        },
+        "/v1/inventory-management/variants/{variant_id}/prices": {
+            "get": {
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
+                "description": "Joins links + platform_prices for a variant in a city — powers the wizard's Variations grid.",
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "linking"
+                ],
+                "summary": "Per-platform prices for a variant",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "Variant ID",
+                        "name": "variant_id",
                         "in": "path",
                         "required": true
                     },
                     {
                         "type": "string",
-                        "description": "Unique identifier for the variant",
-                        "name": "variant_id",
+                        "description": "City ID",
+                        "name": "city",
+                        "in": "query",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "allOf": [
+                                {
+                                    "$ref": "#/definitions/dto.Response"
+                                },
+                                {
+                                    "type": "object",
+                                    "properties": {
+                                        "data": {
+                                            "type": "array",
+                                            "items": {
+                                                "$ref": "#/definitions/v1.VariantPriceRow"
+                                            }
+                                        }
+                                    }
+                                }
+                            ]
+                        }
+                    },
+                    "400": {
+                        "description": "Bad Request",
+                        "schema": {
+                            "allOf": [
+                                {
+                                    "$ref": "#/definitions/dto.Response"
+                                },
+                                {
+                                    "type": "object",
+                                    "properties": {
+                                        "data": {
+                                            "type": "string"
+                                        }
+                                    }
+                                }
+                            ]
+                        }
+                    }
+                }
+            }
+        },
+        "/v1/inventory-management/{product_id}": {
+            "get": {
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "inventory-management"
+                ],
+                "summary": "Get inventory item",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "Product ID",
+                        "name": "product_id",
+                        "in": "path",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "allOf": [
+                                {
+                                    "$ref": "#/definitions/dto.Response"
+                                },
+                                {
+                                    "type": "object",
+                                    "properties": {
+                                        "data": {
+                                            "$ref": "#/definitions/dto.ProductItem"
+                                        }
+                                    }
+                                }
+                            ]
+                        }
+                    },
+                    "404": {
+                        "description": "Not Found",
+                        "schema": {
+                            "allOf": [
+                                {
+                                    "$ref": "#/definitions/dto.Response"
+                                },
+                                {
+                                    "type": "object",
+                                    "properties": {
+                                        "data": {
+                                            "type": "string"
+                                        }
+                                    }
+                                }
+                            ]
+                        }
+                    }
+                }
+            }
+        },
+        "/v1/inventory-management/{product_id}/variants": {
+            "get": {
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "inventory-management"
+                ],
+                "summary": "List a product's variants",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "Product ID",
+                        "name": "product_id",
                         "in": "path",
                         "required": true
                     }
@@ -4453,9 +3578,61 @@ const docTemplate = `{
                                 }
                             ]
                         }
+                    }
+                }
+            }
+        },
+        "/v1/inventory-management/{product_id}/variants/{variant_id}": {
+            "get": {
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "inventory-management"
+                ],
+                "summary": "Get a single variant",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "Product ID",
+                        "name": "product_id",
+                        "in": "path",
+                        "required": true
                     },
-                    "401": {
-                        "description": "Unauthorized",
+                    {
+                        "type": "string",
+                        "description": "Variant ID",
+                        "name": "variant_id",
+                        "in": "path",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "allOf": [
+                                {
+                                    "$ref": "#/definitions/dto.Response"
+                                },
+                                {
+                                    "type": "object",
+                                    "properties": {
+                                        "data": {
+                                            "$ref": "#/definitions/dto.ProductVariantItem"
+                                        }
+                                    }
+                                }
+                            ]
+                        }
+                    },
+                    "404": {
+                        "description": "Not Found",
                         "schema": {
                             "allOf": [
                                 {
@@ -4471,9 +3648,564 @@ const docTemplate = `{
                                 }
                             ]
                         }
+                    }
+                }
+            }
+        },
+        "/v1/me": {
+            "get": {
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "profile"
+                ],
+                "summary": "Get my profile",
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "allOf": [
+                                {
+                                    "$ref": "#/definitions/dto.Response"
+                                },
+                                {
+                                    "type": "object",
+                                    "properties": {
+                                        "data": {
+                                            "$ref": "#/definitions/dto.MeDTO"
+                                        }
+                                    }
+                                }
+                            ]
+                        }
+                    }
+                }
+            },
+            "patch": {
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "profile"
+                ],
+                "summary": "Update my profile",
+                "parameters": [
+                    {
+                        "description": "profile fields",
+                        "name": "request",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/v1.updateMeRequest"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "allOf": [
+                                {
+                                    "$ref": "#/definitions/dto.Response"
+                                },
+                                {
+                                    "type": "object",
+                                    "properties": {
+                                        "data": {
+                                            "$ref": "#/definitions/dto.MeDTO"
+                                        }
+                                    }
+                                }
+                            ]
+                        }
                     },
-                    "403": {
-                        "description": "Forbidden",
+                    "400": {
+                        "description": "Bad Request",
+                        "schema": {
+                            "$ref": "#/definitions/dto.Response"
+                        }
+                    }
+                }
+            }
+        },
+        "/v1/me/addresses": {
+            "get": {
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "profile"
+                ],
+                "summary": "List my delivery addresses",
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "allOf": [
+                                {
+                                    "$ref": "#/definitions/dto.Response"
+                                },
+                                {
+                                    "type": "object",
+                                    "properties": {
+                                        "data": {
+                                            "type": "array",
+                                            "items": {
+                                                "$ref": "#/definitions/dto.AddressDTO"
+                                            }
+                                        }
+                                    }
+                                }
+                            ]
+                        }
+                    }
+                }
+            },
+            "post": {
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
+                "description": "Saves an address; the pincode resolves to a serving city. Setting is_default updates the user's current city.",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "profile"
+                ],
+                "summary": "Add a delivery address",
+                "parameters": [
+                    {
+                        "description": "address",
+                        "name": "request",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/v1.addressRequest"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "allOf": [
+                                {
+                                    "$ref": "#/definitions/dto.Response"
+                                },
+                                {
+                                    "type": "object",
+                                    "properties": {
+                                        "data": {
+                                            "$ref": "#/definitions/dto.AddressDTO"
+                                        }
+                                    }
+                                }
+                            ]
+                        }
+                    },
+                    "400": {
+                        "description": "Bad Request",
+                        "schema": {
+                            "$ref": "#/definitions/dto.Response"
+                        }
+                    }
+                }
+            }
+        },
+        "/v1/me/addresses/{id}": {
+            "delete": {
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "profile"
+                ],
+                "summary": "Delete a delivery address",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "Address ID",
+                        "name": "id",
+                        "in": "path",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/dto.Response"
+                        }
+                    },
+                    "404": {
+                        "description": "Not Found",
+                        "schema": {
+                            "$ref": "#/definitions/dto.Response"
+                        }
+                    }
+                }
+            },
+            "patch": {
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "profile"
+                ],
+                "summary": "Update a delivery address",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "Address ID",
+                        "name": "id",
+                        "in": "path",
+                        "required": true
+                    },
+                    {
+                        "description": "address",
+                        "name": "request",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/v1.addressRequest"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "allOf": [
+                                {
+                                    "$ref": "#/definitions/dto.Response"
+                                },
+                                {
+                                    "type": "object",
+                                    "properties": {
+                                        "data": {
+                                            "$ref": "#/definitions/dto.AddressDTO"
+                                        }
+                                    }
+                                }
+                            ]
+                        }
+                    },
+                    "400": {
+                        "description": "Bad Request",
+                        "schema": {
+                            "$ref": "#/definitions/dto.Response"
+                        }
+                    },
+                    "404": {
+                        "description": "Not Found",
+                        "schema": {
+                            "$ref": "#/definitions/dto.Response"
+                        }
+                    }
+                }
+            }
+        },
+        "/v1/me/fcm-token": {
+            "post": {
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "profile"
+                ],
+                "summary": "Register a device push token",
+                "parameters": [
+                    {
+                        "description": "device token",
+                        "name": "request",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/v1.fcmTokenRequest"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/dto.Response"
+                        }
+                    },
+                    "400": {
+                        "description": "Bad Request",
+                        "schema": {
+                            "$ref": "#/definitions/dto.Response"
+                        }
+                    }
+                }
+            },
+            "delete": {
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "profile"
+                ],
+                "summary": "Remove a device push token",
+                "parameters": [
+                    {
+                        "description": "device token",
+                        "name": "request",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/v1.fcmDeleteRequest"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/dto.Response"
+                        }
+                    },
+                    "400": {
+                        "description": "Bad Request",
+                        "schema": {
+                            "$ref": "#/definitions/dto.Response"
+                        }
+                    }
+                }
+            }
+        },
+        "/v1/me/notification-preferences": {
+            "get": {
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "profile"
+                ],
+                "summary": "Get my notification preferences",
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "allOf": [
+                                {
+                                    "$ref": "#/definitions/dto.Response"
+                                },
+                                {
+                                    "type": "object",
+                                    "properties": {
+                                        "data": {
+                                            "$ref": "#/definitions/dto.NotificationPreferencesDTO"
+                                        }
+                                    }
+                                }
+                            ]
+                        }
+                    }
+                }
+            },
+            "put": {
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "profile"
+                ],
+                "summary": "Update my notification preferences",
+                "parameters": [
+                    {
+                        "description": "preferences",
+                        "name": "request",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/dto.NotificationPreferencesDTO"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "allOf": [
+                                {
+                                    "$ref": "#/definitions/dto.Response"
+                                },
+                                {
+                                    "type": "object",
+                                    "properties": {
+                                        "data": {
+                                            "$ref": "#/definitions/dto.NotificationPreferencesDTO"
+                                        }
+                                    }
+                                }
+                            ]
+                        }
+                    },
+                    "400": {
+                        "description": "Bad Request",
+                        "schema": {
+                            "$ref": "#/definitions/dto.Response"
+                        }
+                    }
+                }
+            }
+        },
+        "/v1/platforms": {
+            "get": {
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
+                "description": "Enabled delivery platforms — powers the linking picker's platform checkboxes. Only those with searchable=true can be queried on QuickCommerce.",
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "linking"
+                ],
+                "summary": "List enabled platforms",
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "allOf": [
+                                {
+                                    "$ref": "#/definitions/dto.Response"
+                                },
+                                {
+                                    "type": "object",
+                                    "properties": {
+                                        "data": {
+                                            "type": "array",
+                                            "items": {
+                                                "$ref": "#/definitions/v1.PlatformOption"
+                                            }
+                                        }
+                                    }
+                                }
+                            ]
+                        }
+                    }
+                }
+            },
+            "post": {
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
+                "description": "qc_name is the platform's name on QuickCommerce (e.g. \"BlinkIt\", \"Zepto\", \"Swiggy\"). Leave it blank and the platform exists but cannot be searched or linked.",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "platforms"
+                ],
+                "summary": "Create a platform",
+                "parameters": [
+                    {
+                        "description": "Create Platform Request",
+                        "name": "platform",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/v1.CreatePlatformRequest"
+                        }
+                    }
+                ],
+                "responses": {
+                    "201": {
+                        "description": "Created",
+                        "schema": {
+                            "allOf": [
+                                {
+                                    "$ref": "#/definitions/dto.Response"
+                                },
+                                {
+                                    "type": "object",
+                                    "properties": {
+                                        "data": {
+                                            "$ref": "#/definitions/dto.PlatformItem"
+                                        }
+                                    }
+                                }
+                            ]
+                        }
+                    },
+                    "400": {
+                        "description": "Bad Request",
                         "schema": {
                             "allOf": [
                                 {
@@ -4484,6 +4216,223 @@ const docTemplate = `{
                                     "properties": {
                                         "data": {
                                             "type": "string"
+                                        }
+                                    }
+                                }
+                            ]
+                        }
+                    }
+                }
+            },
+            "delete": {
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "platforms"
+                ],
+                "summary": "Delete a platform",
+                "parameters": [
+                    {
+                        "description": "Delete Platform Request",
+                        "name": "DeletePlatformRequest",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/v1.DeletePlatformRequest"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "allOf": [
+                                {
+                                    "$ref": "#/definitions/dto.Response"
+                                },
+                                {
+                                    "type": "object",
+                                    "properties": {
+                                        "data": {
+                                            "type": "string"
+                                        }
+                                    }
+                                }
+                            ]
+                        }
+                    }
+                }
+            },
+            "patch": {
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
+                "description": "Set qc_name to make a platform searchable on QuickCommerce; clear it (send \"-\") to make it unsearchable.",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "platforms"
+                ],
+                "summary": "Update a platform",
+                "parameters": [
+                    {
+                        "description": "Update Platform Request",
+                        "name": "platform",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/v1.UpdatePlatformRequest"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "allOf": [
+                                {
+                                    "$ref": "#/definitions/dto.Response"
+                                },
+                                {
+                                    "type": "object",
+                                    "properties": {
+                                        "data": {
+                                            "$ref": "#/definitions/dto.PlatformItem"
+                                        }
+                                    }
+                                }
+                            ]
+                        }
+                    },
+                    "404": {
+                        "description": "Not Found",
+                        "schema": {
+                            "allOf": [
+                                {
+                                    "$ref": "#/definitions/dto.Response"
+                                },
+                                {
+                                    "type": "object",
+                                    "properties": {
+                                        "data": {
+                                            "type": "string"
+                                        }
+                                    }
+                                }
+                            ]
+                        }
+                    }
+                }
+            }
+        },
+        "/v1/platforms/all": {
+            "get": {
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
+                "description": "Every platform including disabled ones. searchable=true means the platform has a QuickCommerce mapping (qc_name) and can be searched/linked.",
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "platforms"
+                ],
+                "summary": "List all platforms (admin)",
+                "parameters": [
+                    {
+                        "type": "integer",
+                        "description": "Page number",
+                        "name": "page",
+                        "in": "query"
+                    },
+                    {
+                        "type": "integer",
+                        "description": "Items per page",
+                        "name": "page_size",
+                        "in": "query"
+                    },
+                    {
+                        "type": "string",
+                        "description": "Filter by name or code",
+                        "name": "search",
+                        "in": "query"
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "allOf": [
+                                {
+                                    "$ref": "#/definitions/dto.Response"
+                                },
+                                {
+                                    "type": "object",
+                                    "properties": {
+                                        "data": {
+                                            "$ref": "#/definitions/dto.Platforms"
+                                        }
+                                    }
+                                }
+                            ]
+                        }
+                    }
+                }
+            }
+        },
+        "/v1/platforms/{platform_id}": {
+            "get": {
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "platforms"
+                ],
+                "summary": "Get a platform by ID",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "Platform ID",
+                        "name": "platform_id",
+                        "in": "path",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "allOf": [
+                                {
+                                    "$ref": "#/definitions/dto.Response"
+                                },
+                                {
+                                    "type": "object",
+                                    "properties": {
+                                        "data": {
+                                            "$ref": "#/definitions/dto.PlatformItem"
                                         }
                                     }
                                 }
@@ -4616,29 +4565,26 @@ const docTemplate = `{
                 }
             }
         },
-        "/v1/products/{product_id}": {
+        "/v1/products/{id}": {
             "get": {
                 "security": [
                     {
                         "BearerAuth": []
                     }
                 ],
-                "description": "Fetches an inventory item by its unique identifier.",
-                "consumes": [
-                    "application/json"
-                ],
+                "description": "Variants with per-platform prices, average price, unit price, and similar products.",
                 "produces": [
                     "application/json"
                 ],
                 "tags": [
-                    "products"
+                    "consumer"
                 ],
-                "summary": "Get inventory item",
+                "summary": "Product detail (PDP)",
                 "parameters": [
                     {
                         "type": "string",
-                        "description": "Unique identifier for the product",
-                        "name": "product_id",
+                        "description": "Product ID",
+                        "name": "id",
                         "in": "path",
                         "required": true
                     }
@@ -4655,15 +4601,61 @@ const docTemplate = `{
                                     "type": "object",
                                     "properties": {
                                         "data": {
-                                            "$ref": "#/definitions/dto.ProductItem"
+                                            "$ref": "#/definitions/dto.ProductDetailDTO"
                                         }
                                     }
                                 }
                             ]
                         }
                     },
-                    "401": {
-                        "description": "Unauthorized",
+                    "404": {
+                        "description": "Not Found",
+                        "schema": {
+                            "$ref": "#/definitions/dto.Response"
+                        }
+                    }
+                }
+            }
+        },
+        "/v1/search": {
+            "get": {
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
+                "description": "Full-text search over the Groceric catalog (min 2 chars). Never hits the platform APIs.",
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "consumer"
+                ],
+                "summary": "Search products (curated catalog)",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "search term (min 2 chars)",
+                        "name": "q",
+                        "in": "query",
+                        "required": true
+                    },
+                    {
+                        "type": "integer",
+                        "description": "page number (default 1)",
+                        "name": "page",
+                        "in": "query"
+                    },
+                    {
+                        "type": "integer",
+                        "description": "page size, max 100 (default 20)",
+                        "name": "page_size",
+                        "in": "query"
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
                         "schema": {
                             "allOf": [
                                 {
@@ -4673,29 +4665,17 @@ const docTemplate = `{
                                     "type": "object",
                                     "properties": {
                                         "data": {
-                                            "type": "string"
+                                            "$ref": "#/definitions/dto.ProductCardListDTO"
                                         }
                                     }
                                 }
                             ]
                         }
                     },
-                    "403": {
-                        "description": "Forbidden",
+                    "400": {
+                        "description": "Bad Request",
                         "schema": {
-                            "allOf": [
-                                {
-                                    "$ref": "#/definitions/dto.Response"
-                                },
-                                {
-                                    "type": "object",
-                                    "properties": {
-                                        "data": {
-                                            "type": "string"
-                                        }
-                                    }
-                                }
-                            ]
+                            "$ref": "#/definitions/dto.Response"
                         }
                     }
                 }
@@ -4853,6 +4833,311 @@ const docTemplate = `{
                 }
             }
         },
+        "/v1/subcategories": {
+            "get": {
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "subcategories"
+                ],
+                "summary": "Get subcategories",
+                "parameters": [
+                    {
+                        "type": "integer",
+                        "description": "Page number",
+                        "name": "page",
+                        "in": "query"
+                    },
+                    {
+                        "type": "integer",
+                        "description": "Items per page",
+                        "name": "page_size",
+                        "in": "query"
+                    },
+                    {
+                        "type": "string",
+                        "description": "Filter by parent category",
+                        "name": "category_id",
+                        "in": "query"
+                    },
+                    {
+                        "type": "string",
+                        "description": "Filter by name",
+                        "name": "search",
+                        "in": "query"
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "allOf": [
+                                {
+                                    "$ref": "#/definitions/dto.Response"
+                                },
+                                {
+                                    "type": "object",
+                                    "properties": {
+                                        "data": {
+                                            "$ref": "#/definitions/dto.SubCategories"
+                                        }
+                                    }
+                                }
+                            ]
+                        }
+                    }
+                }
+            },
+            "post": {
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "subcategories"
+                ],
+                "summary": "Create a subcategory",
+                "parameters": [
+                    {
+                        "description": "Create Subcategory Request",
+                        "name": "subcategory",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/v1.CreateSubcategoryRequest"
+                        }
+                    }
+                ],
+                "responses": {
+                    "201": {
+                        "description": "Created",
+                        "schema": {
+                            "allOf": [
+                                {
+                                    "$ref": "#/definitions/dto.Response"
+                                },
+                                {
+                                    "type": "object",
+                                    "properties": {
+                                        "data": {
+                                            "$ref": "#/definitions/dto.SubCategory"
+                                        }
+                                    }
+                                }
+                            ]
+                        }
+                    },
+                    "400": {
+                        "description": "Bad Request",
+                        "schema": {
+                            "allOf": [
+                                {
+                                    "$ref": "#/definitions/dto.Response"
+                                },
+                                {
+                                    "type": "object",
+                                    "properties": {
+                                        "data": {
+                                            "type": "string"
+                                        }
+                                    }
+                                }
+                            ]
+                        }
+                    }
+                }
+            },
+            "delete": {
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "subcategories"
+                ],
+                "summary": "Delete a subcategory",
+                "parameters": [
+                    {
+                        "description": "Delete Subcategory Request",
+                        "name": "DeleteSubcategoryRequest",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/v1.DeleteSubcategoryRequest"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "allOf": [
+                                {
+                                    "$ref": "#/definitions/dto.Response"
+                                },
+                                {
+                                    "type": "object",
+                                    "properties": {
+                                        "data": {
+                                            "type": "string"
+                                        }
+                                    }
+                                }
+                            ]
+                        }
+                    }
+                }
+            },
+            "patch": {
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "subcategories"
+                ],
+                "summary": "Update a subcategory",
+                "parameters": [
+                    {
+                        "description": "Update Subcategory Request",
+                        "name": "subcategory",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/v1.UpdateSubcategoryRequest"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "allOf": [
+                                {
+                                    "$ref": "#/definitions/dto.Response"
+                                },
+                                {
+                                    "type": "object",
+                                    "properties": {
+                                        "data": {
+                                            "$ref": "#/definitions/dto.SubCategory"
+                                        }
+                                    }
+                                }
+                            ]
+                        }
+                    },
+                    "404": {
+                        "description": "Not Found",
+                        "schema": {
+                            "allOf": [
+                                {
+                                    "$ref": "#/definitions/dto.Response"
+                                },
+                                {
+                                    "type": "object",
+                                    "properties": {
+                                        "data": {
+                                            "type": "string"
+                                        }
+                                    }
+                                }
+                            ]
+                        }
+                    }
+                }
+            }
+        },
+        "/v1/subcategories/{subcategory_id}": {
+            "get": {
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "subcategories"
+                ],
+                "summary": "Get subcategory by ID",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "Subcategory ID",
+                        "name": "subcategory_id",
+                        "in": "path",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "allOf": [
+                                {
+                                    "$ref": "#/definitions/dto.Response"
+                                },
+                                {
+                                    "type": "object",
+                                    "properties": {
+                                        "data": {
+                                            "$ref": "#/definitions/dto.SubCategory"
+                                        }
+                                    }
+                                }
+                            ]
+                        }
+                    },
+                    "404": {
+                        "description": "Not Found",
+                        "schema": {
+                            "allOf": [
+                                {
+                                    "$ref": "#/definitions/dto.Response"
+                                },
+                                {
+                                    "type": "object",
+                                    "properties": {
+                                        "data": {
+                                            "type": "string"
+                                        }
+                                    }
+                                }
+                            ]
+                        }
+                    }
+                }
+            }
+        },
         "/v1/top-deals": {
             "get": {
                 "security": [
@@ -4971,7 +5256,7 @@ const docTemplate = `{
                     },
                     {
                         "type": "string",
-                        "description": "filter by status: active | disabled",
+                        "description": "filter by status: active | disabled | banned",
                         "name": "status",
                         "in": "query"
                     },
@@ -5024,7 +5309,7 @@ const docTemplate = `{
         },
         "/v1/users/ban": {
             "post": {
-                "description": "Bans a user by their unique identifier. This action is irreversible and will prevent the user from accessing the system.",
+                "description": "Bans a user by their unique identifier. This action is irreversible and will prevent the user from accessing the system. Sets status to \"banned\".",
                 "consumes": [
                     "application/json"
                 ],
@@ -5070,6 +5355,12 @@ const docTemplate = `{
                         "schema": {
                             "$ref": "#/definitions/dto.Response"
                         }
+                    },
+                    "404": {
+                        "description": "User not found",
+                        "schema": {
+                            "$ref": "#/definitions/dto.Response"
+                        }
                     }
                 }
             }
@@ -5081,7 +5372,41 @@ const docTemplate = `{
                         "BearerAuth": []
                     }
                 ],
-                "description": "Fetches a wishlist by its unique identifier.",
+                "description": "Same per-platform available/not-available shape as the cart.",
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "consumer"
+                ],
+                "summary": "Get wishlist with per-platform breakdown",
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "allOf": [
+                                {
+                                    "$ref": "#/definitions/dto.Response"
+                                },
+                                {
+                                    "type": "object",
+                                    "properties": {
+                                        "data": {
+                                            "$ref": "#/definitions/dto.CartResponse"
+                                        }
+                                    }
+                                }
+                            ]
+                        }
+                    }
+                }
+            },
+            "post": {
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
                 "consumes": [
                     "application/json"
                 ],
@@ -5089,14 +5414,67 @@ const docTemplate = `{
                     "application/json"
                 ],
                 "tags": [
-                    "wishlist"
+                    "consumer"
                 ],
-                "summary": "Get wishlist",
+                "summary": "Add a variant to the wishlist",
+                "parameters": [
+                    {
+                        "description": "variant",
+                        "name": "request",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/v1.wishlistRequest"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "allOf": [
+                                {
+                                    "$ref": "#/definitions/dto.Response"
+                                },
+                                {
+                                    "type": "object",
+                                    "properties": {
+                                        "data": {
+                                            "$ref": "#/definitions/dto.CartResponse"
+                                        }
+                                    }
+                                }
+                            ]
+                        }
+                    },
+                    "400": {
+                        "description": "Bad Request",
+                        "schema": {
+                            "$ref": "#/definitions/dto.Response"
+                        }
+                    }
+                }
+            }
+        },
+        "/v1/wishlist/{variantId}": {
+            "delete": {
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "consumer"
+                ],
+                "summary": "Remove a variant from the wishlist",
                 "parameters": [
                     {
                         "type": "string",
-                        "description": "Unique identifier for the wishlist",
-                        "name": "wishlist_id",
+                        "description": "Variant ID",
+                        "name": "variantId",
                         "in": "path",
                         "required": true
                     }
@@ -5113,249 +5491,7 @@ const docTemplate = `{
                                     "type": "object",
                                     "properties": {
                                         "data": {
-                                            "$ref": "#/definitions/dto.WishlistMobile"
-                                        }
-                                    }
-                                }
-                            ]
-                        }
-                    },
-                    "401": {
-                        "description": "Unauthorized",
-                        "schema": {
-                            "allOf": [
-                                {
-                                    "$ref": "#/definitions/dto.Response"
-                                },
-                                {
-                                    "type": "object",
-                                    "properties": {
-                                        "data": {
-                                            "type": "string"
-                                        }
-                                    }
-                                }
-                            ]
-                        }
-                    },
-                    "403": {
-                        "description": "Forbidden",
-                        "schema": {
-                            "allOf": [
-                                {
-                                    "$ref": "#/definitions/dto.Response"
-                                },
-                                {
-                                    "type": "object",
-                                    "properties": {
-                                        "data": {
-                                            "type": "string"
-                                        }
-                                    }
-                                }
-                            ]
-                        }
-                    }
-                }
-            },
-            "post": {
-                "security": [
-                    {
-                        "BearerAuth": []
-                    }
-                ],
-                "description": "Adds an item to the user's wishlist or updates its quantity.",
-                "consumes": [
-                    "application/json"
-                ],
-                "produces": [
-                    "application/json"
-                ],
-                "tags": [
-                    "wishlist"
-                ],
-                "summary": "Add or update item in wishlist",
-                "parameters": [
-                    {
-                        "description": "Request payload containing product ID and quantity",
-                        "name": "request",
-                        "in": "body",
-                        "required": true,
-                        "schema": {
-                            "$ref": "#/definitions/v1.AddToWishlistRequest"
-                        }
-                    }
-                ],
-                "responses": {
-                    "200": {
-                        "description": "OK",
-                        "schema": {
-                            "allOf": [
-                                {
-                                    "$ref": "#/definitions/dto.Response"
-                                },
-                                {
-                                    "type": "object",
-                                    "properties": {
-                                        "data": {
-                                            "$ref": "#/definitions/dto.WishlistMobile"
-                                        }
-                                    }
-                                }
-                            ]
-                        }
-                    },
-                    "400": {
-                        "description": "Bad Request",
-                        "schema": {
-                            "allOf": [
-                                {
-                                    "$ref": "#/definitions/dto.Response"
-                                },
-                                {
-                                    "type": "object",
-                                    "properties": {
-                                        "data": {
-                                            "type": "string"
-                                        }
-                                    }
-                                }
-                            ]
-                        }
-                    },
-                    "401": {
-                        "description": "Unauthorized",
-                        "schema": {
-                            "allOf": [
-                                {
-                                    "$ref": "#/definitions/dto.Response"
-                                },
-                                {
-                                    "type": "object",
-                                    "properties": {
-                                        "data": {
-                                            "type": "string"
-                                        }
-                                    }
-                                }
-                            ]
-                        }
-                    },
-                    "403": {
-                        "description": "Forbidden",
-                        "schema": {
-                            "allOf": [
-                                {
-                                    "$ref": "#/definitions/dto.Response"
-                                },
-                                {
-                                    "type": "object",
-                                    "properties": {
-                                        "data": {
-                                            "type": "string"
-                                        }
-                                    }
-                                }
-                            ]
-                        }
-                    }
-                }
-            },
-            "delete": {
-                "security": [
-                    {
-                        "BearerAuth": []
-                    }
-                ],
-                "description": "Removes an item from the user's cart.",
-                "consumes": [
-                    "application/json"
-                ],
-                "produces": [
-                    "application/json"
-                ],
-                "tags": [
-                    "cart"
-                ],
-                "summary": "Remove item from cart",
-                "parameters": [
-                    {
-                        "description": "Request payload containing product ID",
-                        "name": "request",
-                        "in": "body",
-                        "required": true,
-                        "schema": {
-                            "$ref": "#/definitions/v1.RemoveFromCartRequest"
-                        }
-                    }
-                ],
-                "responses": {
-                    "200": {
-                        "description": "OK",
-                        "schema": {
-                            "allOf": [
-                                {
-                                    "$ref": "#/definitions/dto.Response"
-                                },
-                                {
-                                    "type": "object",
-                                    "properties": {
-                                        "data": {
-                                            "$ref": "#/definitions/dto.WishlistMobile"
-                                        }
-                                    }
-                                }
-                            ]
-                        }
-                    },
-                    "400": {
-                        "description": "Bad Request",
-                        "schema": {
-                            "allOf": [
-                                {
-                                    "$ref": "#/definitions/dto.Response"
-                                },
-                                {
-                                    "type": "object",
-                                    "properties": {
-                                        "data": {
-                                            "type": "string"
-                                        }
-                                    }
-                                }
-                            ]
-                        }
-                    },
-                    "401": {
-                        "description": "Unauthorized",
-                        "schema": {
-                            "allOf": [
-                                {
-                                    "$ref": "#/definitions/dto.Response"
-                                },
-                                {
-                                    "type": "object",
-                                    "properties": {
-                                        "data": {
-                                            "type": "string"
-                                        }
-                                    }
-                                }
-                            ]
-                        }
-                    },
-                    "403": {
-                        "description": "Forbidden",
-                        "schema": {
-                            "allOf": [
-                                {
-                                    "$ref": "#/definitions/dto.Response"
-                                },
-                                {
-                                    "type": "object",
-                                    "properties": {
-                                        "data": {
-                                            "type": "string"
+                                            "$ref": "#/definitions/dto.CartResponse"
                                         }
                                     }
                                 }
@@ -5397,6 +5533,45 @@ const docTemplate = `{
                 }
             }
         },
+        "dto.AddressDTO": {
+            "type": "object",
+            "properties": {
+                "city_id": {
+                    "type": "string"
+                },
+                "city_name": {
+                    "type": "string"
+                },
+                "id": {
+                    "type": "string"
+                },
+                "is_default": {
+                    "type": "boolean"
+                },
+                "label": {
+                    "type": "string"
+                },
+                "lat": {
+                    "type": "number"
+                },
+                "line1": {
+                    "type": "string"
+                },
+                "line2": {
+                    "type": "string"
+                },
+                "lng": {
+                    "type": "number"
+                },
+                "pincode": {
+                    "type": "string"
+                },
+                "serviceable": {
+                    "description": "true if the pincode resolved to a serving city",
+                    "type": "boolean"
+                }
+            }
+        },
         "dto.AddressResponse": {
             "description": "Response payload containing details of a delivery address.",
             "type": "object",
@@ -5414,6 +5589,23 @@ const docTemplate = `{
                     "type": "string"
                 },
                 "pincode": {
+                    "type": "string"
+                }
+            }
+        },
+        "dto.BannerCardDTO": {
+            "type": "object",
+            "properties": {
+                "image_url": {
+                    "type": "string"
+                },
+                "target_id": {
+                    "type": "string"
+                },
+                "target_type": {
+                    "type": "string"
+                },
+                "target_url": {
                     "type": "string"
                 }
             }
@@ -5439,11 +5631,19 @@ const docTemplate = `{
                     "type": "string"
                 },
                 "is_active": {
-                    "description": "Whether the banner is currently enabled",
+                    "description": "Manual on/off switch. Can only turn a banner OFF — it never forces one\nlive outside its date window.",
+                    "type": "boolean"
+                },
+                "is_live": {
+                    "description": "Derived, read-only: whether the banner is actually showing right now\n(is_active AND inside the date window). This is what the grid should display.",
                     "type": "boolean"
                 },
                 "start_date": {
                     "description": "Date the banner becomes visible, RFC3339",
+                    "type": "string"
+                },
+                "title": {
+                    "description": "Admin-facing name, so banners are distinguishable in the grid",
                     "type": "string"
                 }
             }
@@ -5560,63 +5760,45 @@ const docTemplate = `{
                 }
             }
         },
-        "dto.CartItem": {
-            "description": "A single product line item within a user's cart.",
+        "dto.CartLineDTO": {
             "type": "object",
             "properties": {
                 "average_price": {
-                    "description": "Average price across tracked delivery platforms, formatted for display",
+                    "$ref": "#/definitions/dto.MoneyDTO"
+                },
+                "item_id": {
                     "type": "string"
                 },
-                "image_url": {
-                    "description": "URL of the product's display image",
-                    "type": "string"
-                },
-                "product_id": {
-                    "description": "Unique identifier for the product",
+                "pack_label": {
                     "type": "string"
                 },
                 "product_name": {
-                    "description": "Display name of the product",
                     "type": "string"
                 },
                 "quantity": {
-                    "description": "Number of units of this product in the cart",
                     "type": "integer"
                 },
-                "volume_formatted": {
-                    "description": "Human-readable volume/weight of the product, e.g. \"500 gm\"",
+                "variant_id": {
                     "type": "string"
                 }
             }
         },
-        "dto.CartMobile": {
-            "description": "Mobile cart response, split into available and unavailable items.",
+        "dto.CartResponse": {
             "type": "object",
             "properties": {
-                "available": {
-                    "description": "Cart items that are currently in stock",
-                    "type": "array",
-                    "items": {
-                        "$ref": "#/definitions/dto.CartItem"
-                    }
-                },
-                "eta": {
-                    "description": "Estimated delivery time for the cart, e.g. \"10 mins\"",
+                "cart_id": {
                     "type": "string"
                 },
-                "platforms": {
-                    "description": "Delivery platforms considered when pricing the cart",
+                "items": {
                     "type": "array",
                     "items": {
-                        "$ref": "#/definitions/dto.PlatformSearchResult"
+                        "$ref": "#/definitions/dto.CartLineDTO"
                     }
                 },
-                "unavailable": {
-                    "description": "Cart items that are currently out of stock",
+                "platforms": {
                     "type": "array",
                     "items": {
-                        "$ref": "#/definitions/dto.CartItem"
+                        "$ref": "#/definitions/dto.PlatformBreakdownDTO"
                     }
                 }
             }
@@ -5680,6 +5862,23 @@ const docTemplate = `{
                 }
             }
         },
+        "dto.CategoryCardDTO": {
+            "type": "object",
+            "properties": {
+                "id": {
+                    "type": "string"
+                },
+                "image_url": {
+                    "type": "string"
+                },
+                "name": {
+                    "type": "string"
+                },
+                "slug": {
+                    "type": "string"
+                }
+            }
+        },
         "dto.CategoryData": {
             "description": "Data Transfer Object for a Category entity.",
             "type": "object",
@@ -5688,6 +5887,83 @@ const docTemplate = `{
                     "type": "string"
                 },
                 "category_name": {
+                    "type": "string"
+                }
+            }
+        },
+        "dto.Cities": {
+            "description": "Paginated list of cities.",
+            "type": "object",
+            "properties": {
+                "cities": {
+                    "description": "Page of cities",
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/dto.CityItem"
+                    }
+                },
+                "meta": {
+                    "description": "Pagination metadata",
+                    "allOf": [
+                        {
+                            "$ref": "#/definitions/query.Meta"
+                        }
+                    ]
+                }
+            }
+        },
+        "dto.CityDTO": {
+            "type": "object",
+            "properties": {
+                "city_id": {
+                    "type": "string"
+                },
+                "name": {
+                    "type": "string"
+                },
+                "slug": {
+                    "type": "string"
+                }
+            }
+        },
+        "dto.CityItem": {
+            "description": "A serviceable city. The lat/lng + default_pincode are the location",
+            "type": "object",
+            "properties": {
+                "city_id": {
+                    "description": "Unique identifier for the city",
+                    "type": "string"
+                },
+                "default_pincode": {
+                    "description": "Pincode used as the default QuickCommerce location anchor",
+                    "type": "string"
+                },
+                "display_order": {
+                    "description": "Sort order in pickers",
+                    "type": "integer"
+                },
+                "enabled": {
+                    "description": "Whether the city is serviceable",
+                    "type": "boolean"
+                },
+                "lat": {
+                    "description": "Latitude of the city's QuickCommerce location anchor",
+                    "type": "number"
+                },
+                "lng": {
+                    "description": "Longitude of the city's QuickCommerce location anchor",
+                    "type": "number"
+                },
+                "name": {
+                    "description": "Display name of the city",
+                    "type": "string"
+                },
+                "slug": {
+                    "description": "URL-safe name",
+                    "type": "string"
+                },
+                "state": {
+                    "description": "State the city sits in",
                     "type": "string"
                 }
             }
@@ -5820,6 +6096,35 @@ const docTemplate = `{
                 }
             }
         },
+        "dto.HomeResponse": {
+            "type": "object",
+            "properties": {
+                "banners": {
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/dto.BannerCardDTO"
+                    }
+                },
+                "categories": {
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/dto.CategoryCardDTO"
+                    }
+                },
+                "top_stores": {
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/dto.PlatformDTO"
+                    }
+                },
+                "trending_items": {
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/dto.ProductCardDTO"
+                    }
+                }
+            }
+        },
         "dto.InventoryManagements": {
             "description": "Paginated inventory management product list.",
             "type": "object",
@@ -5861,6 +6166,10 @@ const docTemplate = `{
                     "description": "Display name of the product",
                     "type": "string"
                 },
+                "product_sub_category": {
+                    "description": "Name of the sub-category the product belongs to (\"\" if none)",
+                    "type": "string"
+                },
                 "status": {
                     "description": "Status of the product",
                     "type": "string",
@@ -5872,6 +6181,10 @@ const docTemplate = `{
                 "stock_count": {
                     "description": "Units currently in stock across all variants",
                     "type": "integer"
+                },
+                "subcategory_id": {
+                    "description": "Unique identifier of the sub-category (\"\" if none)",
+                    "type": "string"
                 },
                 "top_item": {
                     "description": "Whether the product is flagged as a top/featured item",
@@ -5942,6 +6255,29 @@ const docTemplate = `{
                 }
             }
         },
+        "dto.MeDTO": {
+            "type": "object",
+            "properties": {
+                "current_city_id": {
+                    "type": "string"
+                },
+                "current_city_name": {
+                    "type": "string"
+                },
+                "email": {
+                    "type": "string"
+                },
+                "id": {
+                    "type": "string"
+                },
+                "name": {
+                    "type": "string"
+                },
+                "phone": {
+                    "type": "string"
+                }
+            }
+        },
         "dto.MobileLoginRequest": {
             "description": "Request payload submitted to the mobile app's phone-based login endpoint.",
             "type": "object",
@@ -5952,6 +6288,17 @@ const docTemplate = `{
                 "phone_number": {
                     "description": "Phone number to send the login OTP to, in E.164 format",
                     "type": "string"
+                }
+            }
+        },
+        "dto.MoneyDTO": {
+            "type": "object",
+            "properties": {
+                "display": {
+                    "type": "string"
+                },
+                "paise": {
+                    "type": "integer"
                 }
             }
         },
@@ -6009,6 +6356,121 @@ const docTemplate = `{
                 }
             }
         },
+        "dto.NotificationPreferencesDTO": {
+            "type": "object",
+            "properties": {
+                "order_updates": {
+                    "type": "boolean"
+                },
+                "price_alerts": {
+                    "type": "boolean"
+                },
+                "promotions": {
+                    "type": "boolean"
+                }
+            }
+        },
+        "dto.PlatformBreakdownDTO": {
+            "type": "object",
+            "properties": {
+                "available_item_ids": {
+                    "type": "array",
+                    "items": {
+                        "type": "string"
+                    }
+                },
+                "available_total": {
+                    "$ref": "#/definitions/dto.MoneyDTO"
+                },
+                "delivery_eta_minutes": {
+                    "type": "integer"
+                },
+                "is_cheapest": {
+                    "type": "boolean"
+                },
+                "item_total": {
+                    "$ref": "#/definitions/dto.MoneyDTO"
+                },
+                "logo_url": {
+                    "type": "string"
+                },
+                "platform_code": {
+                    "type": "string"
+                },
+                "platform_name": {
+                    "type": "string"
+                },
+                "unavailable_item_ids": {
+                    "type": "array",
+                    "items": {
+                        "type": "string"
+                    }
+                }
+            }
+        },
+        "dto.PlatformDTO": {
+            "type": "object",
+            "properties": {
+                "code": {
+                    "type": "string"
+                },
+                "delivery_eta_text": {
+                    "type": "string"
+                },
+                "logo_url": {
+                    "type": "string"
+                },
+                "name": {
+                    "type": "string"
+                }
+            }
+        },
+        "dto.PlatformItem": {
+            "description": "A delivery platform (Blinkit, Zepto, ...). qc_name maps it onto",
+            "type": "object",
+            "properties": {
+                "code": {
+                    "description": "Short code used in requests, e.g. \"blinkit\"",
+                    "type": "string"
+                },
+                "created_at": {
+                    "description": "Creation timestamp, RFC3339",
+                    "type": "string"
+                },
+                "delivery_eta_text": {
+                    "description": "Fallback delivery ETA copy, e.g. \"10 Mins\"",
+                    "type": "string"
+                },
+                "display_name": {
+                    "description": "Display name, e.g. \"Blinkit\"",
+                    "type": "string"
+                },
+                "display_order": {
+                    "description": "Sort order in pickers",
+                    "type": "integer"
+                },
+                "enabled": {
+                    "description": "Whether the platform is enabled",
+                    "type": "boolean"
+                },
+                "logo_url": {
+                    "description": "URL of the platform's logo",
+                    "type": "string"
+                },
+                "platform_id": {
+                    "description": "Unique identifier for the platform",
+                    "type": "string"
+                },
+                "qc_name": {
+                    "description": "The platform's name on QuickCommerce, e.g. \"BlinkIt\". Empty = not mapped.",
+                    "type": "string"
+                },
+                "searchable": {
+                    "description": "True when qc_name is set, i.e. the platform can be searched/linked.",
+                    "type": "boolean"
+                }
+            }
+        },
         "dto.PlatformPrice": {
             "description": "Live price of a product across tracked delivery platforms.",
             "type": "object",
@@ -6027,6 +6489,32 @@ const docTemplate = `{
                 }
             }
         },
+        "dto.PlatformPriceChipDTO": {
+            "type": "object",
+            "properties": {
+                "available": {
+                    "type": "boolean"
+                },
+                "deep_link": {
+                    "type": "string"
+                },
+                "logo_url": {
+                    "type": "string"
+                },
+                "mrp": {
+                    "$ref": "#/definitions/dto.MoneyDTO"
+                },
+                "platform_code": {
+                    "type": "string"
+                },
+                "platform_name": {
+                    "type": "string"
+                },
+                "price": {
+                    "$ref": "#/definitions/dto.MoneyDTO"
+                }
+            }
+        },
         "dto.PlatformSearchResult": {
             "description": "A delivery platform considered when searching or listing products.",
             "type": "object",
@@ -6042,6 +6530,27 @@ const docTemplate = `{
                 "platform_name": {
                     "description": "Display name of the delivery platform",
                     "type": "string"
+                }
+            }
+        },
+        "dto.Platforms": {
+            "description": "Paginated list of platforms.",
+            "type": "object",
+            "properties": {
+                "meta": {
+                    "description": "Pagination metadata",
+                    "allOf": [
+                        {
+                            "$ref": "#/definitions/query.Meta"
+                        }
+                    ]
+                },
+                "platforms": {
+                    "description": "Page of platforms",
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/dto.PlatformItem"
+                    }
                 }
             }
         },
@@ -6067,21 +6576,40 @@ const docTemplate = `{
                 }
             }
         },
-        "dto.Pricing": {
-            "description": "Price and stock details for a product variant.",
+        "dto.ProductCardDTO": {
             "type": "object",
             "properties": {
-                "discounted_price": {
-                    "description": "Price after discount, equal to Price when no discount applies",
-                    "type": "number"
+                "brand_name": {
+                    "type": "string"
                 },
-                "price": {
-                    "description": "List price",
-                    "type": "number"
+                "default_variant_id": {
+                    "type": "string"
                 },
-                "stock": {
-                    "description": "Units currently in stock",
-                    "type": "integer"
+                "image_url": {
+                    "type": "string"
+                },
+                "name": {
+                    "type": "string"
+                },
+                "product_id": {
+                    "type": "string"
+                },
+                "starting_price": {
+                    "$ref": "#/definitions/dto.MoneyDTO"
+                }
+            }
+        },
+        "dto.ProductCardListDTO": {
+            "type": "object",
+            "properties": {
+                "items": {
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/dto.ProductCardDTO"
+                    }
+                },
+                "meta": {
+                    "$ref": "#/definitions/query.Meta"
                 }
             }
         },
@@ -6099,10 +6627,56 @@ const docTemplate = `{
                 }
             }
         },
+        "dto.ProductDetailDTO": {
+            "type": "object",
+            "properties": {
+                "brand_name": {
+                    "type": "string"
+                },
+                "category_id": {
+                    "type": "string"
+                },
+                "description": {
+                    "type": "string"
+                },
+                "images": {
+                    "type": "array",
+                    "items": {
+                        "type": "string"
+                    }
+                },
+                "name": {
+                    "type": "string"
+                },
+                "product_id": {
+                    "type": "string"
+                },
+                "similar": {
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/dto.ProductCardDTO"
+                    }
+                },
+                "variants": {
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/dto.VariantDetailDTO"
+                    }
+                }
+            }
+        },
         "dto.ProductItem": {
             "description": "A single product row as shown in product listings.",
             "type": "object",
             "properties": {
+                "brand_id": {
+                    "description": "Flat brand id, echoing the write shape",
+                    "type": "string"
+                },
+                "category_id": {
+                    "description": "Flat category id, echoing the write shape (same value as product_category.product_category_id)",
+                    "type": "string"
+                },
                 "created_at": {
                     "description": "Creation timestamp, RFC3339",
                     "type": "string"
@@ -6143,6 +6717,14 @@ const docTemplate = `{
                     "description": "Display name of the product",
                     "type": "string"
                 },
+                "product_sub_category": {
+                    "description": "Sub-category the product belongs to (zero-valued if none)",
+                    "allOf": [
+                        {
+                            "$ref": "#/definitions/dto.ProductSubCategory"
+                        }
+                    ]
+                },
                 "status": {
                     "description": "Status of the product",
                     "type": "string",
@@ -6150,64 +6732,10 @@ const docTemplate = `{
                         "active",
                         "disabled"
                     ]
-                }
-            }
-        },
-        "dto.ProductListingItem": {
-            "description": "A single product row within a product listing.",
-            "type": "object",
-            "properties": {
-                "average_price": {
-                    "description": "Average price across tracked delivery platforms, formatted for display",
+                },
+                "subcategory_id": {
+                    "description": "Flat sub-category id, echoing the write shape",
                     "type": "string"
-                },
-                "brand_name": {
-                    "description": "Display name of the product's brand",
-                    "type": "string"
-                },
-                "cart_count": {
-                    "description": "Number of times the product has been added to a cart",
-                    "type": "integer"
-                },
-                "image_url": {
-                    "description": "URL of the product's display image",
-                    "type": "string"
-                },
-                "product_id": {
-                    "description": "Unique identifier for the product",
-                    "type": "string"
-                },
-                "product_name": {
-                    "description": "Display name of the product",
-                    "type": "string"
-                }
-            }
-        },
-        "dto.ProductListingMobile": {
-            "description": "Envelope for the mobile app's product listing endpoint.",
-            "type": "object",
-            "properties": {
-                "meta": {
-                    "description": "Pagination metadata",
-                    "allOf": [
-                        {
-                            "$ref": "#/definitions/query.Meta"
-                        }
-                    ]
-                },
-                "platforms": {
-                    "description": "Delivery platforms considered when listing the products",
-                    "type": "array",
-                    "items": {
-                        "$ref": "#/definitions/dto.PlatformSearchResult"
-                    }
-                },
-                "results": {
-                    "description": "Page of listed products",
-                    "type": "array",
-                    "items": {
-                        "$ref": "#/definitions/dto.ProductListingItem"
-                    }
                 }
             }
         },
@@ -6237,18 +6765,24 @@ const docTemplate = `{
                 }
             }
         },
+        "dto.ProductSubCategory": {
+            "description": "Subcategory a product belongs to.",
+            "type": "object",
+            "properties": {
+                "product_sub_category_id": {
+                    "description": "Unique identifier for the subcategory",
+                    "type": "string"
+                },
+                "product_sub_category_name": {
+                    "description": "Display name of the subcategory",
+                    "type": "string"
+                }
+            }
+        },
         "dto.ProductVariantItem": {
             "description": "A single sellable variant of a product (e.g. a specific pack size).",
             "type": "object",
             "properties": {
-                "pricing": {
-                    "description": "Price and stock for this variant",
-                    "allOf": [
-                        {
-                            "$ref": "#/definitions/dto.Pricing"
-                        }
-                    ]
-                },
                 "product_id": {
                     "description": "Parent product's identifier",
                     "type": "string"
@@ -6326,64 +6860,6 @@ const docTemplate = `{
                 }
             }
         },
-        "dto.ResultItem": {
-            "description": "A single product row within search results.",
-            "type": "object",
-            "properties": {
-                "brand_name": {
-                    "description": "Display name of the product's brand",
-                    "type": "string"
-                },
-                "cart_count": {
-                    "description": "Number of times the product has been added to a cart",
-                    "type": "integer"
-                },
-                "image_url": {
-                    "description": "URL of the product's display image",
-                    "type": "string"
-                },
-                "item_id": {
-                    "description": "Unique identifier for the product",
-                    "type": "string"
-                },
-                "item_name": {
-                    "description": "Display name of the product",
-                    "type": "string"
-                },
-                "lowest_price": {
-                    "description": "Lowest price for the product across tracked delivery platforms",
-                    "type": "number"
-                }
-            }
-        },
-        "dto.SearchResultMobile": {
-            "description": "Envelope for the mobile app's product search endpoint.",
-            "type": "object",
-            "properties": {
-                "meta": {
-                    "description": "Pagination metadata",
-                    "allOf": [
-                        {
-                            "$ref": "#/definitions/query.Meta"
-                        }
-                    ]
-                },
-                "platforms": {
-                    "description": "Delivery platforms considered when searching the products",
-                    "type": "array",
-                    "items": {
-                        "$ref": "#/definitions/dto.PlatformSearchResult"
-                    }
-                },
-                "results": {
-                    "description": "Page of matching products",
-                    "type": "array",
-                    "items": {
-                        "$ref": "#/definitions/dto.ResultItem"
-                    }
-                }
-            }
-        },
         "dto.StatsItem": {
             "description": "A single dashboard metric with its month-over-month change.",
             "type": "object",
@@ -6430,6 +6906,10 @@ const docTemplate = `{
                     "description": "Identifier of the parent category",
                     "type": "string"
                 },
+                "category_name": {
+                    "description": "Display name of the parent category",
+                    "type": "string"
+                },
                 "created_at": {
                     "description": "Creation timestamp, RFC3339",
                     "type": "string"
@@ -6450,12 +6930,12 @@ const docTemplate = `{
                         "disabled"
                     ]
                 },
-                "sub_category_id": {
-                    "description": "Unique identifier for the subcategory",
-                    "type": "string"
-                },
                 "sub_category_name": {
                     "description": "Display name of the subcategory",
+                    "type": "string"
+                },
+                "subcategory_id": {
+                    "description": "Unique identifier for the subcategory",
                     "type": "string"
                 }
             }
@@ -6795,60 +7275,28 @@ const docTemplate = `{
                 }
             }
         },
-        "dto.WishlistItem": {
-            "description": "A single product line item within a user's wishlist.",
+        "dto.VariantDetailDTO": {
             "type": "object",
             "properties": {
                 "average_price": {
-                    "description": "Average price across tracked delivery platforms, formatted for display",
+                    "$ref": "#/definitions/dto.MoneyDTO"
+                },
+                "pack_label": {
+                    "description": "\"500 gm\"",
                     "type": "string"
                 },
-                "image_url": {
-                    "description": "URL of the product's display image",
-                    "type": "string"
-                },
-                "product_id": {
-                    "description": "Unique identifier for the product",
-                    "type": "string"
-                },
-                "product_name": {
-                    "description": "Display name of the product",
-                    "type": "string"
-                },
-                "quantity": {
-                    "description": "Number of units of this product",
-                    "type": "integer"
-                },
-                "volume_formatted": {
-                    "description": "Human-readable volume/weight of the product, e.g. \"500 gm\"",
-                    "type": "string"
-                }
-            }
-        },
-        "dto.WishlistMobile": {
-            "description": "Mobile wishlist response, split into available and unavailable items.",
-            "type": "object",
-            "properties": {
-                "available": {
-                    "description": "Wishlist items that are currently in stock",
+                "platform_prices": {
                     "type": "array",
                     "items": {
-                        "$ref": "#/definitions/dto.WishlistItem"
+                        "$ref": "#/definitions/dto.PlatformPriceChipDTO"
                     }
                 },
-                "platforms": {
-                    "description": "Delivery platforms considered when pricing the wishlist",
-                    "type": "array",
-                    "items": {
-                        "$ref": "#/definitions/dto.PlatformSearchResult"
-                    }
+                "unit_price": {
+                    "description": "\"₹72/100gm\"",
+                    "type": "string"
                 },
-                "unavailable": {
-                    "description": "Wishlist items that are currently out of stock",
-                    "type": "array",
-                    "items": {
-                        "$ref": "#/definitions/dto.WishlistItem"
-                    }
+                "variant_id": {
+                    "type": "string"
                 }
             }
         },
@@ -6869,32 +7317,63 @@ const docTemplate = `{
                 }
             }
         },
-        "v1.AddToCartRequest": {
+        "service.Candidate": {
             "type": "object",
-            "required": [
-                "product_id",
-                "quantity"
-            ],
             "properties": {
-                "product_id": {
+                "available": {
+                    "type": "boolean"
+                },
+                "brand": {
+                    "type": "string"
+                },
+                "deeplink": {
+                    "type": "string"
+                },
+                "inventory": {
+                    "type": "integer"
+                },
+                "is_combo": {
+                    "type": "boolean"
+                },
+                "is_multipack": {
+                    "type": "boolean"
+                },
+                "mrp_paise": {
+                    "type": "integer"
+                },
+                "multipack": {
+                    "type": "integer"
+                },
+                "name": {
+                    "type": "string"
+                },
+                "out_of_stock": {
+                    "type": "boolean"
+                },
+                "price_paise": {
+                    "type": "integer"
+                },
+                "qc_item_id": {
                     "type": "string"
                 },
                 "quantity": {
-                    "type": "integer"
+                    "type": "string"
+                },
+                "stock_label": {
+                    "type": "string"
                 }
             }
         },
-        "v1.AddToWishlistRequest": {
+        "service.RefreshResult": {
             "type": "object",
-            "required": [
-                "product_id",
-                "quantity"
-            ],
             "properties": {
-                "product_id": {
-                    "type": "string"
+                "credits_remaining": {
+                    "type": "integer"
                 },
-                "quantity": {
+                "failed": {
+                    "type": "integer"
+                },
+                "refreshed": {
                     "type": "integer"
                 }
             }
@@ -6910,12 +7389,33 @@ const docTemplate = `{
                 }
             }
         },
+        "v1.ConfirmLinkRequest": {
+            "type": "object",
+            "required": [
+                "city_id",
+                "platform_code",
+                "qc_item_id"
+            ],
+            "properties": {
+                "city_id": {
+                    "type": "string"
+                },
+                "deep_link": {
+                    "type": "string"
+                },
+                "platform_code": {
+                    "type": "string"
+                },
+                "qc_item_id": {
+                    "type": "string"
+                }
+            }
+        },
         "v1.CreateBannerRequest": {
             "type": "object",
             "required": [
-                "end_date",
                 "image_url",
-                "start_date"
+                "title"
             ],
             "properties": {
                 "end_date": {
@@ -6925,10 +7425,12 @@ const docTemplate = `{
                     "type": "string"
                 },
                 "is_active": {
-                    "type": "boolean",
-                    "default": true
+                    "type": "boolean"
                 },
                 "start_date": {
+                    "type": "string"
+                },
+                "title": {
                     "type": "string"
                 }
             }
@@ -6938,7 +7440,6 @@ const docTemplate = `{
             "required": [
                 "brand_name",
                 "image_url",
-                "is_top_brand",
                 "status"
             ],
             "properties": {
@@ -6965,7 +7466,6 @@ const docTemplate = `{
             "required": [
                 "category_name",
                 "image_url",
-                "is_top_category",
                 "status"
             ],
             "properties": {
@@ -6987,14 +7487,44 @@ const docTemplate = `{
                 }
             }
         },
+        "v1.CreateCityRequest": {
+            "type": "object",
+            "required": [
+                "default_pincode",
+                "lat",
+                "lng",
+                "name"
+            ],
+            "properties": {
+                "default_pincode": {
+                    "type": "string"
+                },
+                "display_order": {
+                    "type": "integer"
+                },
+                "enabled": {
+                    "type": "boolean"
+                },
+                "lat": {
+                    "type": "number"
+                },
+                "lng": {
+                    "type": "number"
+                },
+                "name": {
+                    "type": "string"
+                },
+                "state": {
+                    "type": "string"
+                }
+            }
+        },
         "v1.CreateNewItemRequest": {
             "type": "object",
             "required": [
                 "brand_id",
                 "category_id",
                 "image_url",
-                "is_top_item",
-                "product_description",
                 "product_name",
                 "status"
             ],
@@ -7023,6 +7553,39 @@ const docTemplate = `{
                         "active",
                         "disabled"
                     ]
+                },
+                "subcategory_id": {
+                    "type": "string"
+                }
+            }
+        },
+        "v1.CreatePlatformRequest": {
+            "type": "object",
+            "required": [
+                "code",
+                "display_name"
+            ],
+            "properties": {
+                "code": {
+                    "type": "string"
+                },
+                "delivery_eta_text": {
+                    "type": "string"
+                },
+                "display_name": {
+                    "type": "string"
+                },
+                "display_order": {
+                    "type": "integer"
+                },
+                "enabled": {
+                    "type": "boolean"
+                },
+                "logo_url": {
+                    "type": "string"
+                },
+                "qc_name": {
+                    "type": "string"
                 }
             }
         },
@@ -7031,7 +7594,6 @@ const docTemplate = `{
             "required": [
                 "category_id",
                 "image_url",
-                "is_top_sub_category",
                 "status",
                 "sub_category_name"
             ],
@@ -7060,17 +7622,12 @@ const docTemplate = `{
         "v1.CreateVariantRequest": {
             "type": "object",
             "required": [
-                "custom_product_variant_id",
-                "price",
                 "product_id",
                 "volume"
             ],
             "properties": {
                 "custom_product_variant_id": {
                     "type": "string"
-                },
-                "price": {
-                    "$ref": "#/definitions/dto.Pricing"
                 },
                 "product_id": {
                     "type": "string"
@@ -7098,7 +7655,6 @@ const docTemplate = `{
             ],
             "properties": {
                 "brand_id": {
-                    "description": "Unique identifier for the brand",
                     "type": "string"
                 }
             }
@@ -7114,6 +7670,17 @@ const docTemplate = `{
                 }
             }
         },
+        "v1.DeleteCityRequest": {
+            "type": "object",
+            "required": [
+                "city_id"
+            ],
+            "properties": {
+                "city_id": {
+                    "type": "string"
+                }
+            }
+        },
         "v1.DeleteItemRequest": {
             "type": "object",
             "required": [
@@ -7125,13 +7692,24 @@ const docTemplate = `{
                 }
             }
         },
+        "v1.DeletePlatformRequest": {
+            "type": "object",
+            "required": [
+                "platform_id"
+            ],
+            "properties": {
+                "platform_id": {
+                    "type": "string"
+                }
+            }
+        },
         "v1.DeleteSubcategoryRequest": {
             "type": "object",
             "required": [
-                "sub_category_id"
+                "subcategory_id"
             ],
             "properties": {
-                "sub_category_id": {
+                "subcategory_id": {
                     "type": "string"
                 }
             }
@@ -7156,6 +7734,23 @@ const docTemplate = `{
                 "email": {
                     "type": "string",
                     "maxLength": 255
+                }
+            }
+        },
+        "v1.LinkSearchResponse": {
+            "type": "object",
+            "properties": {
+                "credits_remaining": {
+                    "type": "integer"
+                },
+                "results": {
+                    "type": "object",
+                    "additionalProperties": {
+                        "type": "array",
+                        "items": {
+                            "$ref": "#/definitions/service.Candidate"
+                        }
+                    }
                 }
             }
         },
@@ -7185,6 +7780,39 @@ const docTemplate = `{
                 }
             }
         },
+        "v1.ManualPriceRequest": {
+            "type": "object",
+            "required": [
+                "city_id",
+                "mrp_paise",
+                "platform_code",
+                "price_paise",
+                "variant_id"
+            ],
+            "properties": {
+                "city_id": {
+                    "type": "string"
+                },
+                "deep_link": {
+                    "type": "string"
+                },
+                "mrp_paise": {
+                    "type": "integer"
+                },
+                "platform_code": {
+                    "type": "string"
+                },
+                "platform_sku": {
+                    "type": "string"
+                },
+                "price_paise": {
+                    "type": "integer"
+                },
+                "variant_id": {
+                    "type": "string"
+                }
+            }
+        },
         "v1.MobileRegisterRequest": {
             "type": "object",
             "required": [
@@ -7193,6 +7821,29 @@ const docTemplate = `{
             "properties": {
                 "phone_number": {
                     "type": "string"
+                }
+            }
+        },
+        "v1.PlatformOption": {
+            "type": "object",
+            "properties": {
+                "code": {
+                    "type": "string"
+                },
+                "display_name": {
+                    "type": "string"
+                },
+                "logo_url": {
+                    "type": "string"
+                },
+                "platform_id": {
+                    "type": "string"
+                },
+                "qc_name": {
+                    "type": "string"
+                },
+                "searchable": {
+                    "type": "boolean"
                 }
             }
         },
@@ -7211,6 +7862,23 @@ const docTemplate = `{
                     "type": "string"
                 },
                 "folder": {
+                    "type": "string"
+                }
+            }
+        },
+        "v1.RefreshRequest": {
+            "type": "object",
+            "required": [
+                "city_id"
+            ],
+            "properties": {
+                "city_id": {
+                    "type": "string"
+                },
+                "product_id": {
+                    "type": "string"
+                },
+                "variant_id": {
                     "type": "string"
                 }
             }
@@ -7241,17 +7909,6 @@ const docTemplate = `{
                     "type": "string"
                 },
                 "password": {
-                    "type": "string"
-                }
-            }
-        },
-        "v1.RemoveFromCartRequest": {
-            "type": "object",
-            "required": [
-                "product_id"
-            ],
-            "properties": {
-                "product_id": {
                     "type": "string"
                 }
             }
@@ -7292,6 +7949,9 @@ const docTemplate = `{
                     "type": "boolean"
                 },
                 "start_date": {
+                    "type": "string"
+                },
+                "title": {
                     "type": "string"
                 }
             }
@@ -7350,6 +8010,38 @@ const docTemplate = `{
                 }
             }
         },
+        "v1.UpdateCityRequest": {
+            "type": "object",
+            "required": [
+                "city_id"
+            ],
+            "properties": {
+                "city_id": {
+                    "type": "string"
+                },
+                "default_pincode": {
+                    "type": "string"
+                },
+                "display_order": {
+                    "type": "integer"
+                },
+                "enabled": {
+                    "type": "boolean"
+                },
+                "lat": {
+                    "type": "number"
+                },
+                "lng": {
+                    "type": "number"
+                },
+                "name": {
+                    "type": "string"
+                },
+                "state": {
+                    "type": "string"
+                }
+            }
+        },
         "v1.UpdateItemRequest": {
             "type": "object",
             "required": [
@@ -7383,13 +8075,48 @@ const docTemplate = `{
                         "active",
                         "disabled"
                     ]
+                },
+                "subcategory_id": {
+                    "type": "string"
+                }
+            }
+        },
+        "v1.UpdatePlatformRequest": {
+            "type": "object",
+            "required": [
+                "platform_id"
+            ],
+            "properties": {
+                "code": {
+                    "type": "string"
+                },
+                "delivery_eta_text": {
+                    "type": "string"
+                },
+                "display_name": {
+                    "type": "string"
+                },
+                "display_order": {
+                    "type": "integer"
+                },
+                "enabled": {
+                    "type": "boolean"
+                },
+                "logo_url": {
+                    "type": "string"
+                },
+                "platform_id": {
+                    "type": "string"
+                },
+                "qc_name": {
+                    "type": "string"
                 }
             }
         },
         "v1.UpdateSubcategoryRequest": {
             "type": "object",
             "required": [
-                "sub_category_id"
+                "subcategory_id"
             ],
             "properties": {
                 "category_id": {
@@ -7408,10 +8135,10 @@ const docTemplate = `{
                         "disabled"
                     ]
                 },
-                "sub_category_id": {
+                "sub_category_name": {
                     "type": "string"
                 },
-                "sub_category_name": {
+                "subcategory_id": {
                     "type": "string"
                 }
             }
@@ -7425,17 +8152,51 @@ const docTemplate = `{
                 "custom_product_variant_id": {
                     "type": "string"
                 },
-                "price": {
-                    "$ref": "#/definitions/dto.Pricing"
-                },
-                "product_id": {
-                    "type": "string"
-                },
                 "product_variant_id": {
                     "type": "string"
                 },
                 "volume": {
                     "$ref": "#/definitions/dto.ProductVariantUnit"
+                }
+            }
+        },
+        "v1.VariantPriceRow": {
+            "type": "object",
+            "properties": {
+                "available": {
+                    "type": "boolean"
+                },
+                "deep_link": {
+                    "type": "string"
+                },
+                "inventory": {
+                    "type": "integer"
+                },
+                "last_updated_at": {
+                    "type": "string"
+                },
+                "mrp_paise": {
+                    "description": "MRP in paise. 0 when the platform reports no MRP.",
+                    "type": "integer"
+                },
+                "platform_code": {
+                    "type": "string"
+                },
+                "platform_id": {
+                    "type": "string"
+                },
+                "platform_name": {
+                    "type": "string"
+                },
+                "platform_sku": {
+                    "type": "string"
+                },
+                "price_paise": {
+                    "description": "Selling price in paise. 3800 = ₹38.00",
+                    "type": "integer"
+                },
+                "source": {
+                    "type": "string"
                 }
             }
         },
@@ -7450,6 +8211,108 @@ const docTemplate = `{
                     "type": "string"
                 },
                 "phone_number": {
+                    "type": "string"
+                }
+            }
+        },
+        "v1.addCartItemRequest": {
+            "type": "object",
+            "required": [
+                "variant_id"
+            ],
+            "properties": {
+                "quantity": {
+                    "type": "integer"
+                },
+                "variant_id": {
+                    "type": "string"
+                }
+            }
+        },
+        "v1.addressRequest": {
+            "type": "object",
+            "required": [
+                "line1",
+                "pincode"
+            ],
+            "properties": {
+                "is_default": {
+                    "type": "boolean"
+                },
+                "label": {
+                    "type": "string"
+                },
+                "lat": {
+                    "type": "number"
+                },
+                "line1": {
+                    "type": "string"
+                },
+                "line2": {
+                    "type": "string"
+                },
+                "lng": {
+                    "type": "number"
+                },
+                "pincode": {
+                    "type": "string"
+                }
+            }
+        },
+        "v1.fcmDeleteRequest": {
+            "type": "object",
+            "required": [
+                "token"
+            ],
+            "properties": {
+                "token": {
+                    "type": "string"
+                }
+            }
+        },
+        "v1.fcmTokenRequest": {
+            "type": "object",
+            "required": [
+                "token"
+            ],
+            "properties": {
+                "platform": {
+                    "type": "string"
+                },
+                "token": {
+                    "type": "string"
+                }
+            }
+        },
+        "v1.quantityRequest": {
+            "type": "object",
+            "required": [
+                "quantity"
+            ],
+            "properties": {
+                "quantity": {
+                    "type": "integer"
+                }
+            }
+        },
+        "v1.updateMeRequest": {
+            "type": "object",
+            "required": [
+                "name"
+            ],
+            "properties": {
+                "name": {
+                    "type": "string"
+                }
+            }
+        },
+        "v1.wishlistRequest": {
+            "type": "object",
+            "required": [
+                "variant_id"
+            ],
+            "properties": {
+                "variant_id": {
                     "type": "string"
                 }
             }

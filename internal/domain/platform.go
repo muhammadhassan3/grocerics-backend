@@ -6,10 +6,11 @@ type Platform struct {
 	BaseModel
 	Code             string  `gorm:"not null" json:"code"`
 	DisplayName      string  `gorm:"not null" json:"display_name"`
+	QCName           *string `json:"qc_name,omitempty"`
 	LogoURL          *string `json:"logo_url,omitempty"`
 	DeepLinkTemplate *string `json:"deep_link_template,omitempty"`
 	DeliveryETAText  *string `json:"delivery_eta_text,omitempty"` // default ETA fallback; real ETA is per-pincode (platform_delivery_etas)
-	Enabled          bool    `gorm:"not null;default:true" json:"enabled"`
+	Enabled          bool    `gorm:"not null" json:"enabled"`
 	DisplayOrder     int     `gorm:"not null;default:0" json:"display_order"`
 	Timestamps
 	SoftDelete
@@ -33,7 +34,7 @@ type PlatformDeliveryETA struct {
 	PlatformID    string    `gorm:"type:uuid;not null" json:"platform_id"`
 	Pincode       string    `gorm:"not null" json:"pincode"`
 	ETAMinutes    *int      `json:"eta_minutes,omitempty"`
-	Serviceable   bool      `gorm:"not null;default:true" json:"serviceable"` // platform may not deliver to this pincode at all
+	Serviceable   bool      `gorm:"not null" json:"serviceable"` // platform may not deliver to this pincode at all
 	LastUpdatedAt time.Time `gorm:"not null;autoUpdateTime" json:"last_updated_at"`
 	CreatedAt     time.Time `gorm:"autoCreateTime" json:"created_at"`
 }

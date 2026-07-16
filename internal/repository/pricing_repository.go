@@ -22,7 +22,7 @@ func (r *PlatformPriceRepository) Upsert(p *domain.PlatformPrice) error {
 	err := r.db.WithContext(context.Background()).
 		Clauses(clause.OnConflict{
 			Columns:   []clause.Column{{Name: "variant_id"}, {Name: "platform_id"}, {Name: "city_id"}},
-			DoUpdates: clause.AssignmentColumns([]string{"price_paise", "mrp_paise", "available", "source", "last_updated_at"}),
+			DoUpdates: clause.AssignmentColumns([]string{"price_paise", "mrp_paise", "available", "inventory", "source", "last_updated_at"}),
 		}).Create(p).Error
 	if err != nil {
 		return util.ParseDatabaseError(err, "idx_platform_prices_")

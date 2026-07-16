@@ -16,12 +16,14 @@ var mockPlatformOffset = map[string]int64{
 	"flipkart": -500, "jiomart": 1500, "amazon_now": 2000,
 }
 
+func intPtr(v int) *int { return &v }
+
 func mockProduct(platform, id, name, brand, qty string, basePaise int64) Product {
 	price := basePaise + mockPlatformOffset[platform]
 	return Product{
 		ID: id, Name: name, Brand: brand, Available: true,
-		PricePaise: price, MRPPaise: price + 5000, Quantity: qty,
-		Rating: 4.2, Inventory: 25,
+		PricePaise: price, MRPPaise: price + 5000, Quantity: qty, Multipack: 1,
+		Rating: 4.2, Inventory: intPtr(25),
 		Images:   []string{"https://picsum.photos/seed/" + id + "/200"},
 		DeepLink: "https://" + platform + ".example/item/" + id,
 	}
@@ -41,7 +43,7 @@ func (m *mockClient) Search(_ context.Context, query string, _ Location, platfor
 
 func (m *mockClient) GetItem(_ context.Context, itemID, platform string, _ Location) (*ItemDetail, error) {
 	price := int64(30000) + mockPlatformOffset[platform]
-	return &ItemDetail{ID: itemID, PricePaise: price, MRPPaise: price + 5000, Available: true, Stock: 25}, nil
+	return &ItemDetail{ID: itemID, Name: "Mock Item", Quantity: "1 pc", PricePaise: price, MRPPaise: price + 5000, Available: true, Inventory: intPtr(25)}, nil
 }
 
 func (m *mockClient) ETA(_ context.Context, platform string, _ Location) (*ETAResult, error) {

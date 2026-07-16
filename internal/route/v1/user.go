@@ -12,6 +12,7 @@ import (
 	"grocerics-backend/internal/middleware"
 	"grocerics-backend/internal/query"
 	"grocerics-backend/internal/repository"
+	"grocerics-backend/internal/util"
 
 	"github.com/gin-gonic/gin"
 	"github.com/google/uuid"
@@ -28,7 +29,7 @@ func RegisterUserRoutes(r *gin.Engine, jwt *auth.JWTService, users *repository.U
 	g.GET("", listUsers(users))
 	adminGroup := g.Group("")
 	adminGroup.Use(middleware.RequireRole(domain.RoleAdmin))
-	adminGroup.POST("/ban", BanUser())
+	adminGroup.POST("/ban", BanUser(users))
 }
 
 // @Summary List Users
@@ -40,7 +41,7 @@ func RegisterUserRoutes(r *gin.Engine, jwt *auth.JWTService, users *repository.U
 // @Param page_size query int false "page size, max 100 (default 20)"
 // @Param sort query string false "sort column: created_at | name | email | role (default created_at)"
 // @Param order query string false "asc | desc (default desc)"
-// @Param status query string false "filter by status: active | disabled"
+// @Param status query string false "filter by status: active | disabled | banned"
 // @Param search query string false "search by name or email (max 128 chars)"
 // @Success 200 {object} dto.Response{data=dto.UserListResponseDTO} "Users list"
 // @Failure 400 {object} dto.Response "Bad request"
@@ -79,7 +80,7 @@ type BanUserRequest struct {
 }
 
 // @Summary Ban User
-// @Description Bans a user by their unique identifier. This action is irreversible and will prevent the user from accessing the system.
+// @Description Bans a user by their unique identifier. This action is irreversible and will prevent the user from accessing the system. Sets status to "banned".
 // @Tags Users
 // @Accept json
 // @Produce json
@@ -88,14 +89,25 @@ type BanUserRequest struct {
 // @Failure 400 {object} dto.Response "Bad request"
 // @Failure 401 {object} dto.Response "Unauthorized"
 // @Failure 403 {object} dto.Response "Forbidden"
+// @Failure 404 {object} dto.Response "User not found"
 // @Router /v1/users/ban [post]
-func BanUser() gin.HandlerFunc {
+func BanUser(repo *repository.UserRepository) gin.HandlerFunc {
 	return func(c *gin.Context) {
-		c.JSON(200, dto.Response{
-			Data:    nil,
-			Message: "User banned successfully",
-			Status:  "success",
-		})
+		var req BanUserRequest
+		if err := c.ShouldBindJSON(&req); err != nil {
+			c.Error(errs.BadRequest("VALIDATION", util.ParseValidationError(err).Error()))
+			return
+		}
+		affected, err := repo.SetStatus(req.UserID, domain.UserStatusBanned)
+		if err != nil {
+			c.Error(err)
+			return
+		}
+		if affected == 0 {
+			c.Error(errs.NotFound("USER_NOT_FOUND", "user not found"))
+			return
+		}
+		c.JSON(200, dto.Response{Status: "success", Message: "User banned successfully"})
 	}
 }
 

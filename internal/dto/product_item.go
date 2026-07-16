@@ -55,10 +55,16 @@ type ProductItem struct {
 	ProductDescription string `json:"product_description"`
 	// Category the product belongs to
 	ProductCategory ProductCategory `json:"product_category"`
-	// Subcategory the product belongs to
+	// Sub-category the product belongs to (zero-valued if none)
 	ProductSubCategory ProductSubCategory `json:"product_sub_category"`
 	// Brand the product belongs to
 	ProductBrand Brand `json:"product_brand"`
+	// Flat category id, echoing the write shape (same value as product_category.product_category_id)
+	CategoryID string `json:"category_id"`
+	// Flat sub-category id, echoing the write shape
+	SubcategoryID string `json:"subcategory_id"`
+	// Flat brand id, echoing the write shape
+	BrandID string `json:"brand_id"`
 	// Whether the product is flagged as a top/featured item
 	IsTopItem bool `json:"is_top_item"`
 	// Status of the product

@@ -1,97 +1,189 @@
 package v1
 
 import (
+	"time"
+
 	"grocerics-backend/internal/auth"
 	"grocerics-backend/internal/domain"
 	"grocerics-backend/internal/dto"
+	"grocerics-backend/internal/errs"
 	"grocerics-backend/internal/middleware"
+	"grocerics-backend/internal/query"
 	"grocerics-backend/internal/repository"
+	"grocerics-backend/internal/util"
 
 	"github.com/gin-gonic/gin"
 )
 
-func RegisterInventoryManagementRoutes(jwt *auth.JWTService, users *repository.UserRepository, r *gin.Engine) {
-	group := r.Group("/v1")
-	group.Use(middleware.AuthMiddleware(jwt, users))
-	group.Use(middleware.RequireRole(domain.RoleAdmin))
-	group.GET("/inventory-management", getInventoryManagements())
-	group.GET("/inventory-management/:product_id", getInventoryItemByID())
-	group.GET("/inventory-management/stats", getInventoryManagementStats())
-	group.POST("/inventory-management", CreateNewItem())
-	group.PATCH("/inventory-management", UpdateItem())
-	group.DELETE("/inventory-management", DeleteItem())
-	group.GET("/inventory-management/:product_id/variants", ListVariants())
-	group.GET("/inventory-management/:product_id/variants/:variant_id", getInventoryItemVariantsByID())
-	group.POST("/inventory-management/variants", CreateVariant())
-	group.PATCH("/inventory-management/variants", UpdateVariant())
-	group.DELETE("/inventory-management/variants", DeleteVariant())
+type InventoryDeps struct {
+	JWT           *auth.JWTService
+	Users         *repository.UserRepository
+	Products      *repository.ProductRepository
+	Variants      *repository.ProductVariantRepository
+	Categories    *repository.CategoryRepository
+	Subcategories *repository.SubcategoryRepository
+	Brands        *repository.BrandRepository
 }
 
-// @Swagger:route GET /v1/inventory-management inventory-management getInventoryManagements
-// @Summary Get inventory management data
-// @Description Fetches the data needed to populate the inventory management dashboard, including headline stats and a paginated list of products.
+func RegisterInventoryManagementRoutes(r *gin.Engine, d InventoryDeps) {
+	group := r.Group("/v1")
+	group.Use(middleware.AuthMiddleware(d.JWT, d.Users))
+	group.Use(middleware.RequireRole(domain.RoleAdmin))
+
+	group.GET("/inventory-management", listInventory(d))
+	group.GET("/inventory-management/stats", inventoryStats(d))
+	group.GET("/inventory-management/:product_id", getInventoryItem(d))
+	group.POST("/inventory-management", createItem(d))
+	group.PATCH("/inventory-management", updateItem(d))
+	group.DELETE("/inventory-management", deleteItem(d))
+
+	group.GET("/inventory-management/:product_id/variants", listVariants(d))
+	group.GET("/inventory-management/:product_id/variants/:variant_id", getVariant(d))
+	group.POST("/inventory-management/variants", createVariant(d))
+	group.PATCH("/inventory-management/variants", updateVariant(d))
+	group.DELETE("/inventory-management/variants", deleteVariant(d))
+}
+
+func toVariantItemDTO(v domain.ProductVariant) dto.ProductVariantItem {
+	return dto.ProductVariantItem{
+		ProductID:        v.ProductID,
+		ProductVariantID: v.ID,
+		VariantCustomID:  util.Deref(v.CustomVariantID),
+		ProductVolume:    dto.ProductVariantUnit{Value: int(v.VolumeValue), Unit: string(v.VolumeUnit)},
+	}
+}
+
+// @Summary Inventory list
 // @Tags inventory-management
-// @Accept json
 // @Produce json
-// @Param page query int true "Page number"
-// @Param limit query int true "Number of items per page"
+// @Param page query int false "Page number"
+// @Param page_size query int false "Items per page"
+// @Param search query string false "Filter by product name"
 // @Success 200 {object} dto.Response{data=dto.InventoryManagements}
-// @Failure 401 {object} dto.Response{data=string}
-// @Failure 403 {object} dto.Response{data=string}
 // @Security BearerAuth
 // @Router /v1/inventory-management [get]
-func getInventoryManagements() gin.HandlerFunc {
+func listInventory(d InventoryDeps) gin.HandlerFunc {
 	return func(c *gin.Context) {
-		_ = c.Param("page")
-		_ = c.Param("limit")
-		c.JSON(200, dto.Response{
-			Data:    dto.InventoryManagements{},
-			Message: "Inventory management data fetched successfully",
-			Status:  "success",
-		})
+		p := query.PageFromContext(c)
+		items, total, err := d.Products.ListAdmin(p, c.Query("search"))
+		if err != nil {
+			c.Error(err)
+			return
+		}
+		ids := make([]string, len(items))
+		catIDs := make([]string, 0, len(items))
+		subIDs := make([]string, 0, len(items))
+		for i, it := range items {
+			ids[i] = it.ID
+			catIDs = append(catIDs, it.CategoryID)
+			if it.SubcategoryID != nil {
+				subIDs = append(subIDs, *it.SubcategoryID)
+			}
+		}
+		catNames, err := d.Categories.NamesByIDs(catIDs)
+		if err != nil {
+			c.Error(err)
+			return
+		}
+		subNames, err := d.Subcategories.NamesByIDs(subIDs)
+		if err != nil {
+			c.Error(err)
+			return
+		}
+		varCounts, err := d.Products.CountVariants(ids)
+		if err != nil {
+			c.Error(err)
+			return
+		}
+		out := make([]dto.InventoryManagementsItem, len(items))
+		for i, it := range items {
+			subID := util.Deref(it.SubcategoryID)
+			out[i] = dto.InventoryManagementsItem{
+				ProductID:          it.ID,
+				ProductName:        it.Name,
+				ImageURL:           util.Deref(it.ImageURL),
+				ProductCategory:    catNames[it.CategoryID],
+				ProductSubCategory: subNames[subID],
+				SubcategoryID:      subID,
+				TotalVariants:      varCounts[it.ID],
+				Status:             string(it.Status),
+				TopItem:            it.IsTopItem,
+				StockCount:         0, // QC-owned; filled by refresh (Slice C)
+			}
+		}
+		ok(c, dto.InventoryManagements{Meta: query.BuildMeta(total, p), Products: out})
 	}
 }
 
-// @Swagger:route GET /v1/inventory-management/stats inventory-management getInventoryManagementStats
-// @Summary Get inventory management stats
-// @Description Fetches the headline stats for the inventory management dashboard, including total categories, products, brands, and tracked delivery platforms.
+// @Summary Inventory headline stats
 // @Tags inventory-management
-// @Accept json
 // @Produce json
 // @Success 200 {object} dto.Response{data=dto.InventoryManagementsStats}
-// @Failure 401 {object} dto.Response{data=string}
-// @Failure 403 {object} dto.Response{data=string}
 // @Security BearerAuth
 // @Router /v1/inventory-management/stats [get]
-func getInventoryManagementStats() gin.HandlerFunc {
+func inventoryStats(d InventoryDeps) gin.HandlerFunc {
 	return func(c *gin.Context) {
-		c.JSON(200, dto.Response{
-			Data:    dto.InventoryManagementsStats{},
-			Message: "Inventory management stats fetched successfully",
-			Status:  "success",
+		s, err := d.Products.Stats()
+		if err != nil {
+			c.Error(err)
+			return
+		}
+		ok(c, dto.InventoryManagementsStats{
+			TotalCategories: dto.StatsItem{Value: int(s.Categories)},
+			TotalProducts:   dto.StatsItem{Value: int(s.Products)},
+			TotalBrands:     dto.StatsItem{Value: int(s.Brands)},
+			Platforms:       dto.StatsItem{Value: int(s.Platforms)},
 		})
 	}
 }
 
-// @Swagger:route GET /v1/inventory-management/:product_id inventory-management getInventoryItemByID
-// @Summary Get inventory item by ID
-// @Description Fetches an inventory item by its unique identifier.
+// @Summary Get inventory item
 // @Tags inventory-management
-// @Accept json
 // @Produce json
-// @Param product_id path string true "Unique identifier for the inventory item"
+// @Param product_id path string true "Product ID"
 // @Success 200 {object} dto.Response{data=dto.ProductItem}
-// @Failure 401 {object} dto.Response{data=string}
-// @Failure 403 {object} dto.Response{data=string}
 // @Failure 404 {object} dto.Response{data=string}
 // @Security BearerAuth
 // @Router /v1/inventory-management/{product_id} [get]
-func getInventoryItemByID() gin.HandlerFunc {
+func getInventoryItem(d InventoryDeps) gin.HandlerFunc {
 	return func(c *gin.Context) {
-		c.JSON(200, dto.Response{
-			Data:    dto.ProductItem{},
-			Message: "Inventory item fetched successfully",
-			Status:  "success",
+		prod, err := d.Products.FindByID(c.Param("product_id"))
+		if err != nil {
+			c.Error(err)
+			return
+		}
+		if prod == nil {
+			c.Error(errs.NotFound("PRODUCT_NOT_FOUND", "product not found"))
+			return
+		}
+		catNames, _ := d.Categories.NamesByIDs([]string{prod.CategoryID})
+		var brandName string
+		if prod.BrandID != nil {
+			if bm, _ := d.Brands.FindByIDs([]string{*prod.BrandID}); bm != nil {
+				brandName = bm[*prod.BrandID].Name
+			}
+		}
+		subID := util.Deref(prod.SubcategoryID)
+		var subName string
+		if subID != "" {
+			if sn, _ := d.Subcategories.NamesByIDs([]string{subID}); sn != nil {
+				subName = sn[subID]
+			}
+		}
+		ok(c, dto.ProductItem{
+			ProductID:          prod.ID,
+			ImageURL:           util.Deref(prod.ImageURL),
+			ProductName:        prod.Name,
+			ProductDescription: util.Deref(prod.Description),
+			ProductCategory:    dto.ProductCategory{ProductCategoryID: prod.CategoryID, ProductCategoryName: catNames[prod.CategoryID]},
+			ProductSubCategory: dto.ProductSubCategory{ProductSubCategoryID: subID, ProductSubCategoryName: subName},
+			ProductBrand:       dto.Brand{ProductBrandID: util.Deref(prod.BrandID), ProductBrandName: brandName},
+			CategoryID:         prod.CategoryID,
+			SubcategoryID:      subID,
+			BrandID:            util.Deref(prod.BrandID),
+			IsTopItem:          prod.IsTopItem,
+			Status:             string(prod.Status),
+			CreatedAt:          prod.CreatedAt.Format(time.RFC3339),
 		})
 	}
 }
@@ -99,33 +191,45 @@ func getInventoryItemByID() gin.HandlerFunc {
 type CreateNewItemRequest struct {
 	ImageURL           string `json:"image_url" binding:"required"`
 	ProductName        string `json:"product_name" binding:"required"`
-	ProductDescription string `json:"product_description" binding:"required"`
+	ProductDescription string `json:"product_description"`
 	BrandID            string `json:"brand_id" binding:"required"`
 	CategoryID         string `json:"category_id" binding:"required"`
-	SubCategoryID      string `json:"sub_category_id" binding:"required"`
-	IsTopItem          bool   `json:"is_top_item" binding:"required"`
+	SubcategoryID      string `json:"subcategory_id"`
+	IsTopItem          bool   `json:"is_top_item"`
 	Status             string `json:"status" binding:"required,oneof=active disabled"`
 }
 
-// @Swagger:route POST /v1/inventory-management inventory-management createNewItem
-// @Summary Create a new inventory item
-// @Description Creates a new inventory item in the system. This endpoint is intended for internal use and should be secured appropriately.
+// @Summary Create an inventory item (product)
 // @Tags inventory-management
-// @Accept application/json
+// @Accept json
 // @Produce json
-// @Param item body CreateNewItemRequest true "Create New Item Request"
-// @Success 200 {object} dto.Response{data=dto.ProductItem}
-// @Failure 401 {object} dto.Response{data=string}
-// @Failure 403 {object} dto.Response{data=string}
+// @Param item body CreateNewItemRequest true "Create Item Request"
+// @Success 201 {object} dto.Response{data=dto.ProductItem}
+// @Failure 400 {object} dto.Response{data=string}
 // @Security BearerAuth
 // @Router /v1/inventory-management [post]
-func CreateNewItem() gin.HandlerFunc {
+func createItem(d InventoryDeps) gin.HandlerFunc {
 	return func(c *gin.Context) {
-		c.JSON(200, dto.Response{
-			Data:    dto.ProductItem{},
-			Message: "New item created successfully",
-			Status:  "success",
+		var req CreateNewItemRequest
+		if err := c.ShouldBindJSON(&req); err != nil {
+			c.Error(errs.BadRequest("VALIDATION", util.ParseValidationError(err).Error()))
+			return
+		}
+		created, err := d.Products.Create(&domain.Product{
+			CategoryID:    req.CategoryID,
+			SubcategoryID: util.PtrIfSet(req.SubcategoryID),
+			BrandID:       util.PtrIfSet(req.BrandID),
+			Name:          req.ProductName,
+			Description:   util.PtrIfSet(req.ProductDescription),
+			ImageURL:      util.PtrIfSet(req.ImageURL),
+			IsTopItem:     req.IsTopItem,
+			Status:        domain.Status(req.Status),
 		})
+		if err != nil {
+			c.Error(err)
+			return
+		}
+		c.JSON(201, dto.Response{Status: "success", Data: gin.H{"product_id": created.ID}, Message: "Product created successfully"})
 	}
 }
 
@@ -136,30 +240,62 @@ type UpdateItemRequest struct {
 	ProductDescription string `json:"product_description"`
 	BrandID            string `json:"brand_id"`
 	CategoryID         string `json:"category_id"`
-	SubCategoryID      string `json:"sub_category_id"`
+	SubcategoryID      string `json:"subcategory_id"`
 	IsTopItem          *bool  `json:"is_top_item"`
 	Status             string `json:"status" binding:"omitempty,oneof=active disabled"`
 }
 
-// @Swagger:route PATCH /v1/inventory-management inventory-management updateItem
-// @Summary Update an existing inventory item
-// @Description Updates an existing inventory item in the system. This endpoint is intended for internal use and should be secured appropriately.
+// @Summary Update an inventory item
 // @Tags inventory-management
-// @Accept application/json
+// @Accept json
 // @Produce json
 // @Param item body UpdateItemRequest true "Update Item Request"
-// @Success 200 {object} dto.Response{data=dto.ProductItem}
-// @Failure 401 {object} dto.Response{data=string}
-// @Failure 403 {object} dto.Response{data=string}
+// @Success 200 {object} dto.Response{data=string}
+// @Failure 404 {object} dto.Response{data=string}
 // @Security BearerAuth
 // @Router /v1/inventory-management [patch]
-func UpdateItem() gin.HandlerFunc {
+func updateItem(d InventoryDeps) gin.HandlerFunc {
 	return func(c *gin.Context) {
-		c.JSON(200, dto.Response{
-			Data:    dto.ProductItem{},
-			Message: "Item updated successfully",
-			Status:  "success",
-		})
+		var req UpdateItemRequest
+		if err := c.ShouldBindJSON(&req); err != nil {
+			c.Error(errs.BadRequest("VALIDATION", util.ParseValidationError(err).Error()))
+			return
+		}
+		fields := map[string]any{}
+		if req.ImageURL != "" {
+			fields["image_url"] = req.ImageURL
+		}
+		if req.ProductName != "" {
+			fields["name"] = req.ProductName
+		}
+		if req.ProductDescription != "" {
+			fields["description"] = req.ProductDescription
+		}
+		if req.BrandID != "" {
+			fields["brand_id"] = req.BrandID
+		}
+		if req.CategoryID != "" {
+			fields["category_id"] = req.CategoryID
+		}
+		if req.SubcategoryID != "" {
+			fields["subcategory_id"] = req.SubcategoryID
+		}
+		if req.IsTopItem != nil {
+			fields["is_top_item"] = *req.IsTopItem
+		}
+		if req.Status != "" {
+			fields["status"] = req.Status
+		}
+		updated, err := d.Products.Update(req.ProductID, fields)
+		if err != nil {
+			c.Error(err)
+			return
+		}
+		if updated == nil {
+			c.Error(errs.NotFound("PRODUCT_NOT_FOUND", "product not found"))
+			return
+		}
+		c.JSON(200, dto.Response{Status: "success", Message: "Product updated successfully"})
 	}
 }
 
@@ -167,153 +303,154 @@ type DeleteItemRequest struct {
 	ProductID string `json:"product_id" binding:"required"`
 }
 
-// @Swagger:route DELETE /v1/inventory-management inventory-management deleteItem
-// @Summary Delete an existing inventory item
-// @Description Deletes an existing inventory item in the system. This endpoint is intended for internal use and should be secured appropriately.
+// @Summary Delete an inventory item
 // @Tags inventory-management
 // @Accept json
 // @Produce json
 // @Param DeleteItemRequest body DeleteItemRequest true "Delete Item Request"
 // @Success 200 {object} dto.Response{data=string}
-// @Failure 401 {object} dto.Response{data=string}
-// @Failure 403 {object} dto.Response{data=string}
 // @Security BearerAuth
 // @Router /v1/inventory-management [delete]
-func DeleteItem() gin.HandlerFunc {
+func deleteItem(d InventoryDeps) gin.HandlerFunc {
 	return func(c *gin.Context) {
-		c.JSON(200, dto.Response{
-			Data:    nil,
-			Message: "Item deleted successfully",
-			Status:  "success",
-		})
+		var req DeleteItemRequest
+		if err := c.ShouldBindJSON(&req); err != nil {
+			c.Error(errs.BadRequest("VALIDATION", util.ParseValidationError(err).Error()))
+			return
+		}
+		if err := d.Products.SoftDelete(req.ProductID, auth.MustUser(c).ID); err != nil {
+			c.Error(err)
+			return
+		}
+		c.JSON(200, dto.Response{Status: "success", Message: "Product deleted successfully"})
 	}
 }
 
-// @Swagger:route GET /v1/inventory-management/:product_id/variants inventory-management listVariants
-// @Summary List variants of a product
-// @Description Fetches a list of variants for a specific product. This endpoint is intended for internal use and should be secured appropriately.
+// @Summary List a product's variants
 // @Tags inventory-management
-// @Accept json
 // @Produce json
-// @Param product_id path string true "Unique identifier for the product"
+// @Param product_id path string true "Product ID"
 // @Success 200 {object} dto.Response{data=dto.ProductVariantItems}
-// @Failure 401 {object} dto.Response{data=string}
-// @Failure 403 {object} dto.Response{data=string}
 // @Security BearerAuth
 // @Router /v1/inventory-management/{product_id}/variants [get]
-func ListVariants() gin.HandlerFunc {
+func listVariants(d InventoryDeps) gin.HandlerFunc {
 	return func(c *gin.Context) {
-		_ = c.Param("product_id")
-		c.JSON(200, dto.Response{
-			Data:    dto.ProductVariantItems{},
-			Message: "Variants listed successfully",
-			Status:  "success",
-		})
+		vs, err := d.Variants.ListByProduct(c.Param("product_id"))
+		if err != nil {
+			c.Error(err)
+			return
+		}
+		out := make([]dto.ProductVariantItem, len(vs))
+		for i, v := range vs {
+			out[i] = toVariantItemDTO(v)
+		}
+		ok(c, dto.ProductVariantItems{Variants: out})
 	}
 }
 
-// @Swagger:route GET /v1/inventory-management/:product_id/variants/:variant_id inventory-management getInventoryItemVariantsByID
-// @Summary Get inventory item variants by product ID
-// @Description Fetches the variants of an inventory item by its unique identifier.
+// @Summary Get a single variant
 // @Tags inventory-management
-// @Accept json
 // @Produce json
-// @Param product_id path string true "Unique identifier for the inventory item"
-// @Param variant_id path string true "Unique identifier for the variant"
-// @Success 200 {object} dto.Response{data=dto.ProductVariantItems}
-// @Failure 401 {object} dto.Response{data=string}
-// @Failure 403 {object} dto.Response{data=string}
+// @Param product_id path string true "Product ID"
+// @Param variant_id path string true "Variant ID"
+// @Success 200 {object} dto.Response{data=dto.ProductVariantItem}
 // @Failure 404 {object} dto.Response{data=string}
 // @Security BearerAuth
 // @Router /v1/inventory-management/{product_id}/variants/{variant_id} [get]
-func getInventoryItemVariantsByID() gin.HandlerFunc {
+func getVariant(d InventoryDeps) gin.HandlerFunc {
 	return func(c *gin.Context) {
-		c.JSON(200, dto.Response{
-			Data:    dto.ProductVariantItems{},
-			Message: "Inventory item variants fetched successfully",
-			Status:  "success",
-		})
+		v, err := d.Variants.FindByID(c.Param("variant_id"))
+		if err != nil {
+			c.Error(err)
+			return
+		}
+		if v == nil {
+			c.Error(errs.NotFound("VARIANT_NOT_FOUND", "variant not found"))
+			return
+		}
+		ok(c, toVariantItemDTO(*v))
 	}
 }
 
 type CreateVariantRequest struct {
 	ProductID              string                 `json:"product_id" binding:"required"`
 	Volume                 dto.ProductVariantUnit `json:"volume" binding:"required"`
-	Price                  dto.Pricing            `json:"price" binding:"required"`
-	CustomProductVariantID string                 `json:"custom_product_variant_id" binding:"required"`
+	CustomProductVariantID string                 `json:"custom_product_variant_id"`
 }
 
-// @Swagger:route POST /v1/inventory-management/variants inventory-management createVariant
-// @Summary Create a new variant for a product
-// @Description Creates a new variant for a specific product. This endpoint is intended for internal use and should be secured appropriately.
+// @Summary Create a variant (pack size)
+// @Description Creates a pack-size variant. Per-platform linking + price is set separately via the linking endpoints.
 // @Tags inventory-management
 // @Accept json
 // @Produce json
 // @Param CreateVariantRequest body CreateVariantRequest true "Create Variant Request"
-// @Success 200 {object} dto.Response{data=dto.ProductVariantItem}
+// @Success 201 {object} dto.Response{data=dto.ProductVariantItem}
 // @Failure 400 {object} dto.Response{data=string}
-// @Failure 401 {object} dto.Response{data=string}
-// @Failure 403 {object} dto.Response{data=string}
 // @Security BearerAuth
 // @Router /v1/inventory-management/variants [post]
-func CreateVariant() gin.HandlerFunc {
+func createVariant(d InventoryDeps) gin.HandlerFunc {
 	return func(c *gin.Context) {
 		var req CreateVariantRequest
 		if err := c.ShouldBindJSON(&req); err != nil {
-			c.JSON(400, dto.Response{
-				Data:    nil,
-				Message: err.Error(),
-				Status:  "error",
-			})
+			c.Error(errs.BadRequest("VALIDATION", util.ParseValidationError(err).Error()))
 			return
 		}
-
-		c.JSON(200, dto.Response{
-			Data:    dto.ProductVariantItem{},
-			Message: "Variant created successfully",
-			Status:  "success",
+		created, err := d.Variants.Create(&domain.ProductVariant{
+			ProductID:       req.ProductID,
+			VolumeValue:     float64(req.Volume.Value),
+			VolumeUnit:      domain.VolumeUnit(req.Volume.Unit),
+			CustomVariantID: util.PtrIfSet(req.CustomProductVariantID),
 		})
+		if err != nil {
+			c.Error(err)
+			return
+		}
+		c.JSON(201, dto.Response{Status: "success", Data: toVariantItemDTO(*created), Message: "Variant created successfully"})
 	}
 }
 
 type UpdateVariantRequest struct {
 	ProductVariantID       string                 `json:"product_variant_id" binding:"required"`
-	ProductID              string                 `json:"product_id"`
 	Volume                 dto.ProductVariantUnit `json:"volume"`
-	Price                  dto.Pricing            `json:"price"`
 	CustomProductVariantID string                 `json:"custom_product_variant_id"`
 }
 
-// @Swagger:route PATCH /v1/inventory-management/variants inventory-management updateVariant
-// @Summary Update an existing variant for a product
-// @Description Updates an existing variant for a specific product. This endpoint is intended for internal use and should be secured appropriately.
+// @Summary Update a variant
 // @Tags inventory-management
 // @Accept json
 // @Produce json
 // @Param UpdateVariantRequest body UpdateVariantRequest true "Update Variant Request"
 // @Success 200 {object} dto.Response{data=dto.ProductVariantItem}
-// @Failure 400 {object} dto.Response{data=string}
-// @Failure 401 {object} dto.Response{data=string}
-// @Failure 403 {object} dto.Response{data=string}
+// @Failure 404 {object} dto.Response{data=string}
 // @Security BearerAuth
 // @Router /v1/inventory-management/variants [patch]
-func UpdateVariant() gin.HandlerFunc {
+func updateVariant(d InventoryDeps) gin.HandlerFunc {
 	return func(c *gin.Context) {
 		var req UpdateVariantRequest
 		if err := c.ShouldBindJSON(&req); err != nil {
-			c.JSON(400, dto.Response{
-				Data:    nil,
-				Message: err.Error(),
-				Status:  "error",
-			})
+			c.Error(errs.BadRequest("VALIDATION", util.ParseValidationError(err).Error()))
 			return
 		}
-
-		c.JSON(200, dto.Response{
-			Data:    dto.ProductVariantItem{},
-			Message: "Variant updated successfully",
-			Status:  "success",
-		})
+		fields := map[string]any{}
+		if req.Volume.Value != 0 {
+			fields["volume_value"] = float64(req.Volume.Value)
+		}
+		if req.Volume.Unit != "" {
+			fields["volume_unit"] = req.Volume.Unit
+		}
+		if req.CustomProductVariantID != "" {
+			fields["custom_variant_id"] = req.CustomProductVariantID
+		}
+		updated, err := d.Variants.Update(req.ProductVariantID, fields)
+		if err != nil {
+			c.Error(err)
+			return
+		}
+		if updated == nil {
+			c.Error(errs.NotFound("VARIANT_NOT_FOUND", "variant not found"))
+			return
+		}
+		ok(c, toVariantItemDTO(*updated))
 	}
 }
 
@@ -321,29 +458,25 @@ type DeleteVariantRequest struct {
 	ProductVariantID string `json:"product_variant_id" binding:"required"`
 }
 
-// @Swagger:route DELETE /v1/inventory-management/variants inventory-management deleteVariant
-// @Summary Delete an existing variant for a product
-// @Description Deletes an existing variant for a specific product. This endpoint is intended for internal use and should be secured appropriately.
+// @Summary Delete a variant
 // @Tags inventory-management
 // @Accept json
 // @Produce json
 // @Param DeleteVariantRequest body DeleteVariantRequest true "Delete Variant Request"
 // @Success 200 {object} dto.Response{data=string}
-// @Failure 400 {object} dto.Response{data=string}
-// @Failure 401 {object} dto.Response{data=string}
-// @Failure 403 {object} dto.Response{data=string}
 // @Security BearerAuth
 // @Router /v1/inventory-management/variants [delete]
-func DeleteVariant() gin.HandlerFunc {
+func deleteVariant(d InventoryDeps) gin.HandlerFunc {
 	return func(c *gin.Context) {
 		var req DeleteVariantRequest
 		if err := c.ShouldBindJSON(&req); err != nil {
-			c.JSON(400, dto.Response{
-				Data:    nil,
-				Message: err.Error(),
-				Status:  "error",
-			})
+			c.Error(errs.BadRequest("VALIDATION", util.ParseValidationError(err).Error()))
 			return
 		}
+		if err := d.Variants.SoftDelete(req.ProductVariantID, auth.MustUser(c).ID); err != nil {
+			c.Error(err)
+			return
+		}
+		c.JSON(200, dto.Response{Status: "success", Message: "Variant deleted successfully"})
 	}
 }

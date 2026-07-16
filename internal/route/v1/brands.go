@@ -1,72 +1,110 @@
 package v1
 
 import (
+	"time"
+
 	"grocerics-backend/internal/auth"
 	"grocerics-backend/internal/domain"
 	"grocerics-backend/internal/dto"
+	"grocerics-backend/internal/errs"
 	"grocerics-backend/internal/middleware"
+	"grocerics-backend/internal/query"
 	"grocerics-backend/internal/repository"
+	"grocerics-backend/internal/util"
 
 	"github.com/gin-gonic/gin"
 )
 
-func RegisterBrandsRoutes(jwt *auth.JWTService, users *repository.UserRepository, r *gin.Engine) {
-	group := r.Group("/v1")
-	group.Use(middleware.AuthMiddleware(jwt, users))
-	group.GET("/brands", getBrands())
-	group.GET("/brands/:brand_id", getBrandByID())
-	adminGroup := group.Group("")
-	adminGroup.Use(middleware.RequireRole(domain.RoleAdmin))
-	adminGroup.POST("/brands", CreateNewBrand())
-	adminGroup.PATCH("/brands", UpdateBrand())
-	adminGroup.DELETE("/brands", DeleteBrand())
+type BrandDeps struct {
+	JWT    *auth.JWTService
+	Users  *repository.UserRepository
+	Brands *repository.BrandRepository
 }
 
-// @Swagger:route GET /v1/brands brands getBrands
-// @Summary Get brands
-// @Description Fetches a paginated list of brands.
-// @Tags brands
-// @Accept json
-// @Produce json
-// @Param page query int true "Page number"
-// @Param limit query int true "Number of items per page"
-// @Success 200 {object} dto.Response{data=dto.BrandList}
-// @Failure 401 {object} dto.Response{data=string}
-// @Failure 403 {object} dto.Response{data=string}
-// @Security BearerAuth
-// @Router /v1/brands [get]
-func getBrands() gin.HandlerFunc {
-	return func(c *gin.Context) {
-		_ = c.Param("page")
-		_ = c.Param("limit")
-		c.JSON(200, dto.Response{
-			Message: "Brands fetched successfully",
-			Status:  "success",
-			Data:    dto.BrandList{},
-		})
+func RegisterBrandsRoutes(r *gin.Engine, d BrandDeps) {
+	group := r.Group("/v1")
+	group.Use(middleware.AuthMiddleware(d.JWT, d.Users))
+	group.GET("/brands", listBrands(d))
+	group.GET("/brands/:brand_id", getBrandByID(d))
+
+	admin := group.Group("")
+	admin.Use(middleware.RequireRole(domain.RoleAdmin))
+	admin.POST("/brands", createBrand(d))
+	admin.PATCH("/brands", updateBrand(d))
+	admin.DELETE("/brands", deleteBrand(d))
+}
+
+func toBrandDTO(b domain.Brand, productCount int) dto.BrandItem {
+	return dto.BrandItem{
+		BrandID:      b.ID,
+		BrandName:    b.Name,
+		ImageURL:     util.Deref(b.ImageURL),
+		Status:       string(b.Status),
+		IsTopBrand:   b.IsTopBrand,
+		ProductCount: productCount,
+		CreatedAt:    b.CreatedAt.Format(time.RFC3339),
 	}
 }
 
-// @Swagger:route GET /v1/brands/{brand_id} brands getBrandByID
-// @Summary Get brand by ID
-// @Description Fetches a brand by its unique identifier.
+// @Summary Get brands
 // @Tags brands
-// @Accept json
 // @Produce json
-// @Param brand_id path string true "Unique identifier for the brand"
+// @Param page query int false "Page number"
+// @Param page_size query int false "Items per page"
+// @Param search query string false "Filter by name"
+// @Success 200 {object} dto.Response{data=dto.BrandList}
+// @Security BearerAuth
+// @Router /v1/brands [get]
+func listBrands(d BrandDeps) gin.HandlerFunc {
+	return func(c *gin.Context) {
+		p := query.PageFromContext(c)
+		items, total, err := d.Brands.ListAdmin(p, c.Query("search"))
+		if err != nil {
+			c.Error(err)
+			return
+		}
+		ids := make([]string, len(items))
+		for i, it := range items {
+			ids[i] = it.ID
+		}
+		counts, err := d.Brands.CountProducts(ids)
+		if err != nil {
+			c.Error(err)
+			return
+		}
+		out := make([]dto.BrandItem, len(items))
+		for i, it := range items {
+			out[i] = toBrandDTO(it, counts[it.ID])
+		}
+		ok(c, dto.BrandList{Meta: query.BuildMeta(total, p), Brands: out})
+	}
+}
+
+// @Summary Get brand by ID
+// @Tags brands
+// @Produce json
+// @Param brand_id path string true "Brand ID"
 // @Success 200 {object} dto.Response{data=dto.BrandItem}
-// @Failure 401 {object} dto.Response{data=string}
-// @Failure 403 {object} dto.Response{data=string}
 // @Failure 404 {object} dto.Response{data=string}
 // @Security BearerAuth
 // @Router /v1/brands/{brand_id} [get]
-func getBrandByID() gin.HandlerFunc {
+func getBrandByID(d BrandDeps) gin.HandlerFunc {
 	return func(c *gin.Context) {
-		c.JSON(200, dto.Response{
-			Message: "Brand fetched successfully",
-			Status:  "success",
-			Data:    dto.BrandItem{},
-		})
+		b, err := d.Brands.FindByID(c.Param("brand_id"))
+		if err != nil {
+			c.Error(err)
+			return
+		}
+		if b == nil {
+			c.Error(errs.NotFound("BRAND_NOT_FOUND", "brand not found"))
+			return
+		}
+		counts, err := d.Brands.CountProducts([]string{b.ID})
+		if err != nil {
+			c.Error(err)
+			return
+		}
+		ok(c, toBrandDTO(*b, counts[b.ID]))
 	}
 }
 
@@ -74,29 +112,38 @@ type CreateBrandRequest struct {
 	BrandName  string `json:"brand_name" binding:"required"`
 	ImageURL   string `json:"image_url" binding:"required"`
 	Status     string `json:"status" binding:"required,oneof=active disabled"`
-	IsTopBrand bool   `json:"is_top_brand" binding:"required"`
+	IsTopBrand bool   `json:"is_top_brand"`
 }
 
-// @Swagger:route POST /v1/brands brands createBrand
-// @Summary Create a new brand
-// @Description Creates a new brand. This endpoint is intended for internal use and should be secured appropriately.
+// @Summary Create a brand
 // @Tags brands
-// @Accept application/json
+// @Accept json
 // @Produce json
 // @Param brand body CreateBrandRequest true "Create Brand Request"
 // @Success 201 {object} dto.Response{data=dto.BrandItem}
 // @Failure 400 {object} dto.Response{data=string}
-// @Failure 401 {object} dto.Response{data=string}
-// @Failure 403 {object} dto.Response{data=string}
 // @Security BearerAuth
 // @Router /v1/brands [post]
-func CreateNewBrand() gin.HandlerFunc {
+func createBrand(d BrandDeps) gin.HandlerFunc {
 	return func(c *gin.Context) {
-		c.JSON(201, dto.Response{
-			Message: "Brand created successfully",
-			Status:  "success",
-			Data:    dto.BrandItem{},
+		var req CreateBrandRequest
+		if err := c.ShouldBindJSON(&req); err != nil {
+			c.Error(errs.BadRequest("VALIDATION", util.ParseValidationError(err).Error()))
+			return
+		}
+		slug := util.Slugify(req.BrandName)
+		created, err := d.Brands.Create(&domain.Brand{
+			Name:       req.BrandName,
+			Slug:       util.PtrIfSet(slug),
+			ImageURL:   util.PtrIfSet(req.ImageURL),
+			Status:     domain.Status(req.Status),
+			IsTopBrand: req.IsTopBrand,
 		})
+		if err != nil {
+			c.Error(err)
+			return
+		}
+		c.JSON(201, dto.Response{Status: "success", Data: toBrandDTO(*created, 0), Message: "Brand created successfully"})
 	}
 }
 
@@ -108,63 +155,72 @@ type UpdateBrandRequest struct {
 	IsTopBrand *bool  `json:"is_top_brand"`
 }
 
-// @Swagger:route PATCH /v1/brands brands updateBrand
-// @Summary Update an existing brand
-// @Description Updates an existing brand. This endpoint is intended for internal use and should be secured appropriately.
+// @Summary Update a brand
 // @Tags brands
-// @Accept application/json
+// @Accept json
 // @Produce json
 // @Param brand body UpdateBrandRequest true "Update Brand Request"
 // @Success 200 {object} dto.Response{data=dto.BrandItem}
-// @Failure 400 {object} dto.Response{data=string}
-// @Failure 401 {object} dto.Response{data=string}
-// @Failure 403 {object} dto.Response{data=string}
+// @Failure 404 {object} dto.Response{data=string}
 // @Security BearerAuth
 // @Router /v1/brands [patch]
-func UpdateBrand() gin.HandlerFunc {
+func updateBrand(d BrandDeps) gin.HandlerFunc {
 	return func(c *gin.Context) {
-		c.JSON(200, dto.Response{
-			Message: "Brand updated successfully",
-			Status:  "success",
-			Data:    dto.BrandItem{},
-		})
+		var req UpdateBrandRequest
+		if err := c.ShouldBindJSON(&req); err != nil {
+			c.Error(errs.BadRequest("VALIDATION", util.ParseValidationError(err).Error()))
+			return
+		}
+		fields := map[string]any{}
+		if req.BrandName != "" {
+			fields["name"] = req.BrandName
+			fields["slug"] = util.Slugify(req.BrandName)
+		}
+		if req.ImageURL != "" {
+			fields["image_url"] = req.ImageURL
+		}
+		if req.Status != "" {
+			fields["status"] = req.Status
+		}
+		if req.IsTopBrand != nil {
+			fields["is_top_brand"] = *req.IsTopBrand
+		}
+		updated, err := d.Brands.Update(req.BrandID, fields)
+		if err != nil {
+			c.Error(err)
+			return
+		}
+		if updated == nil {
+			c.Error(errs.NotFound("BRAND_NOT_FOUND", "brand not found"))
+			return
+		}
+		ok(c, toBrandDTO(*updated, 0))
 	}
 }
 
 type DeleteBrandRequest struct {
-	// Unique identifier for the brand
 	BrandID string `json:"brand_id" binding:"required"`
 }
 
-// @Swagger:route DELETE /v1/brands brands deleteBrand
 // @Summary Delete a brand
-// @Description Deletes a brand. This endpoint is intended for internal use and should be secured appropriately.
 // @Tags brands
 // @Accept json
 // @Produce json
-// @Param DeleteBrandRequest body DeleteBrandRequest true "Unique identifier for the brand"
+// @Param DeleteBrandRequest body DeleteBrandRequest true "Delete Brand Request"
 // @Success 200 {object} dto.Response{data=string}
-// @Failure 400 {object} dto.Response{data=string}
-// @Failure 401 {object} dto.Response{data=string}
-// @Failure 403 {object} dto.Response{data=string}
 // @Security BearerAuth
 // @Router /v1/brands [delete]
-func DeleteBrand() gin.HandlerFunc {
+func deleteBrand(d BrandDeps) gin.HandlerFunc {
 	return func(c *gin.Context) {
 		var req DeleteBrandRequest
 		if err := c.ShouldBindJSON(&req); err != nil {
-			c.JSON(400, dto.Response{
-				Message: "Invalid request payload",
-				Status:  "error",
-				Data:    err.Error(),
-			})
+			c.Error(errs.BadRequest("VALIDATION", util.ParseValidationError(err).Error()))
 			return
 		}
-
-		c.JSON(200, dto.Response{
-			Message: "Brand deleted successfully",
-			Status:  "success",
-			Data:    nil,
-		})
+		if err := d.Brands.SoftDelete(req.BrandID, auth.MustUser(c).ID); err != nil {
+			c.Error(err)
+			return
+		}
+		c.JSON(200, dto.Response{Status: "success", Message: "Brand deleted successfully"})
 	}
 }

@@ -126,19 +126,65 @@ func (a *App) buildRouter() *gin.Engine {
 
 	v1.RegisterAuthRoutes(r, a.AuthService, a.JWTService, a.UserRepo)
 	v1.RegisterUserRoutes(r, a.JWTService, a.UserRepo)
-	v1.RegisterBannerRoutes(a.JWTService, a.UserRepo, r)
-
 	v1.RegisterDashboardRoutes(a.JWTService, a.UserRepo, r)
-	v1.RegisterInventoryManagementRoutes(a.JWTService, a.UserRepo, r)
-	v1.RegisterBrandsRoutes(a.JWTService, a.UserRepo, r)
-	v1.RegisterCategoryRoutes(a.JWTService, a.UserRepo, r)
-	v1.RegisterSubcategoryRoutes(a.JWTService, a.UserRepo, r)
+	v1.RegisterInventoryManagementRoutes(r, v1.InventoryDeps{
+		JWT:           a.JWTService,
+		Users:         a.UserRepo,
+		Products:      repository.NewProductRepository(a.DB),
+		Variants:      repository.NewProductVariantRepository(a.DB),
+		Categories:    repository.NewCategoryRepository(a.DB),
+		Subcategories: repository.NewSubcategoryRepository(a.DB),
+		Brands:        repository.NewBrandRepository(a.DB),
+	})
+
+	v1.RegisterPlatformRoutes(r, v1.PlatformDeps{
+		JWT:       a.JWTService,
+		Users:     a.UserRepo,
+		Platforms: repository.NewPlatformRepository(a.DB),
+	})
+
+	pricingService := service.NewPricingService(a.DB)
+	v1.RegisterLinkingRoutes(r, v1.LinkingDeps{
+		JWT:            a.JWTService,
+		Users:          a.UserRepo,
+		Platforms:      repository.NewPlatformRepository(a.DB),
+		Links:          repository.NewProductPlatformLinkRepository(a.DB),
+		PlatformPrices: repository.NewPlatformPriceRepository(a.DB),
+		Linking:        service.NewLinkingService(a.DB, a.QC, pricingService),
+		Pricing:        pricingService,
+	})
+
+	v1.RegisterCategoryRoutes(r, v1.CategoryDeps{
+		JWT:        a.JWTService,
+		Users:      a.UserRepo,
+		Categories: repository.NewCategoryRepository(a.DB),
+	})
+	v1.RegisterSubcategoryRoutes(r, v1.SubcategoryDeps{
+		JWT:           a.JWTService,
+		Users:         a.UserRepo,
+		Subcategories: repository.NewSubcategoryRepository(a.DB),
+		Categories:    repository.NewCategoryRepository(a.DB),
+	})
+	v1.RegisterBrandsRoutes(r, v1.BrandDeps{
+		JWT:    a.JWTService,
+		Users:  a.UserRepo,
+		Brands: repository.NewBrandRepository(a.DB),
+	})
+	v1.RegisterBannerRoutes(r, v1.BannerDeps{
+		JWT:     a.JWTService,
+		Users:   a.UserRepo,
+		Banners: repository.NewBannerRepository(a.DB),
+	})
+	v1.RegisterCityRoutes(r, v1.CityDeps{
+		JWT:    a.JWTService,
+		Users:  a.UserRepo,
+		Cities: repository.NewCityRepository(a.DB),
+	})
 	v1.RegisterPresignedURLRoutes(r, a.JWTService, a.UserRepo)
+	// Mobile-contract stub routes. cart/wishlist/product-detail were dropped in
+	// the master merge — consumer.go implements those for real on the same paths.
 	v1.RegisterAddressRoutes(r)
-	v1.RegisterProductRoutes(r)
 	v1.RegisterTopDealsRoutes(r)
-	v1.RegiterCartRoutes(r)
-	v1.RegiterWishlistRoutes(r)
 	v1.RegisterSettingsRoutes(r)
 
 	v1.RegisterConsumerRoutes(r, v1.ConsumerDeps{
