@@ -22,6 +22,23 @@ func adminUpdateFields[T any](db *gorm.DB, id string, fields map[string]any, idx
 	return util.ParseDatabaseError(err, idx)
 }
 
+func adminReorder[T any](db *gorm.DB, ids []string, idx string) error {
+	if len(ids) == 0 {
+		return nil
+	}
+	err := db.WithContext(context.Background()).Transaction(func(tx *gorm.DB) error {
+		var zero T
+		for i, id := range ids {
+			if err := tx.Model(&zero).Where("id = ? AND deleted_at IS NULL", id).
+				Update("display_order", i).Error; err != nil {
+				return err
+			}
+		}
+		return nil
+	})
+	return util.ParseDatabaseError(err, idx)
+}
+
 func adminSoftDelete[T any](db *gorm.DB, id, adminID, idx string) error {
 	fields := map[string]any{"deleted_at": gorm.Expr("now()")}
 	if adminID != "" {
@@ -76,6 +93,10 @@ func (r *CategoryRepository) SoftDelete(id, adminID string) error {
 	return adminSoftDelete[domain.Category](r.db, id, adminID, "idx_categories_")
 }
 
+func (r *CategoryRepository) Reorder(ids []string) error {
+	return adminReorder[domain.Category](r.db, ids, "idx_categories_")
+}
+
 func (r *CategoryRepository) ListAdmin(p query.Page, search string) ([]domain.Category, int64, error) {
 	ctx := context.Background()
 	q := gorm.G[domain.Category](r.db).Where("deleted_at IS NULL")
@@ -113,6 +134,10 @@ func (r *SubcategoryRepository) Update(id string, fields map[string]any) (*domai
 
 func (r *SubcategoryRepository) SoftDelete(id, adminID string) error {
 	return adminSoftDelete[domain.Subcategory](r.db, id, adminID, "idx_subcategories_")
+}
+
+func (r *SubcategoryRepository) Reorder(ids []string) error {
+	return adminReorder[domain.Subcategory](r.db, ids, "idx_subcategories_")
 }
 
 func (r *SubcategoryRepository) FindByID(id string) (*domain.Subcategory, error) {
@@ -179,6 +204,10 @@ func (r *BrandRepository) SoftDelete(id, adminID string) error {
 	return adminSoftDelete[domain.Brand](r.db, id, adminID, "idx_brands_")
 }
 
+func (r *BrandRepository) Reorder(ids []string) error {
+	return adminReorder[domain.Brand](r.db, ids, "idx_brands_")
+}
+
 func (r *BrandRepository) FindByID(id string) (*domain.Brand, error) {
 	ctx := context.Background()
 	data, err := gorm.G[domain.Brand](r.db).Where("id = ? AND deleted_at IS NULL", id).First(ctx)
@@ -201,7 +230,7 @@ func (r *BrandRepository) ListAdmin(p query.Page, search string) ([]domain.Brand
 	if err != nil {
 		return nil, 0, util.ParseDatabaseError(err, "idx_brands_")
 	}
-	items, err := q.Order("name").Limit(p.Limit()).Offset(p.Offset()).Find(ctx)
+	items, err := q.Order("display_order, name").Limit(p.Limit()).Offset(p.Offset()).Find(ctx)
 	if err != nil {
 		return nil, 0, util.ParseDatabaseError(err, "idx_brands_")
 	}
@@ -249,7 +278,7 @@ func (r *BannerRepository) ListAdmin(p query.Page) ([]domain.Banner, int64, erro
 	if err != nil {
 		return nil, 0, util.ParseDatabaseError(err, "idx_banners_")
 	}
-	items, err := q.Order("display_order, created_at DESC").Limit(p.Limit()).Offset(p.Offset()).Find(ctx)
+	items, err := q.Order("created_at DESC").Limit(p.Limit()).Offset(p.Offset()).Find(ctx)
 	if err != nil {
 		return nil, 0, util.ParseDatabaseError(err, "idx_banners_")
 	}
@@ -284,7 +313,7 @@ func (r *CityRepository) ListAdmin(p query.Page, search string) ([]domain.City, 
 	if err != nil {
 		return nil, 0, util.ParseDatabaseError(err, "idx_cities_")
 	}
-	items, err := q.Order("display_order, name").Limit(p.Limit()).Offset(p.Offset()).Find(ctx)
+	items, err := q.Order("name").Limit(p.Limit()).Offset(p.Offset()).Find(ctx)
 	if err != nil {
 		return nil, 0, util.ParseDatabaseError(err, "idx_cities_")
 	}

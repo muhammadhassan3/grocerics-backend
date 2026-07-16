@@ -11,8 +11,7 @@ type Banner struct {
 	TargetURL    *string          `json:"target_url,omitempty"`
 	StartDate    *time.Time       `json:"start_date,omitempty"`
 	EndDate      *time.Time       `json:"end_date,omitempty"`
-	IsActive     bool             `gorm:"not null" json:"is_active"`
-	DisplayOrder int              `gorm:"not null;default:0" json:"display_order"`
+	IsActive  bool `gorm:"not null" json:"is_active"`
 	Timestamps
 	SoftDelete
 }

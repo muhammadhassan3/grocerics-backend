@@ -31,8 +31,9 @@ type Brand struct {
 	Name       string  `gorm:"not null" json:"name"`
 	Slug       *string `json:"slug,omitempty"`
 	ImageURL   *string `json:"image_url,omitempty"`
-	IsTopBrand bool    `gorm:"not null;default:false" json:"is_top_brand"`
-	Status     Status  `gorm:"type:varchar;not null;default:'active'" json:"status"`
+	IsTopBrand   bool   `gorm:"not null;default:false" json:"is_top_brand"`
+	Status       Status `gorm:"type:varchar;not null;default:'active'" json:"status"`
+	DisplayOrder int    `gorm:"not null;default:0" json:"display_order"`
 	Timestamps
 	SoftDelete
 }

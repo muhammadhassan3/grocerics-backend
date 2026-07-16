@@ -22,6 +22,8 @@ type SubCategory struct {
 	Status string `json:"status" enums:"active,disabled"`
 	// Whether the subcategory is flagged as a top/featured subcategory
 	IsTopSubCategory bool `json:"is_top_sub_category"`
+	// Curated sort order (lower shows first in the app)
+	DisplayOrder int `json:"display_order"`
 	// Identifier of the parent category
 	CategoryID string `json:"category_id"`
 	// Display name of the parent category

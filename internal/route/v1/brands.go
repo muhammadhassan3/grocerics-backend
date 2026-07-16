@@ -31,7 +31,32 @@ func RegisterBrandsRoutes(r *gin.Engine, d BrandDeps) {
 	admin.Use(middleware.RequireRole(domain.RoleAdmin))
 	admin.POST("/brands", createBrand(d))
 	admin.PATCH("/brands", updateBrand(d))
+	admin.PATCH("/brands/reorder", reorderBrands(d))
 	admin.DELETE("/brands", deleteBrand(d))
+}
+
+// @Summary Reorder brands
+// @Description Sets display_order from the given order (drag-to-reorder). Send the ids in the desired order.
+// @Tags brands
+// @Accept json
+// @Produce json
+// @Param request body ReorderRequest true "Ordered brand IDs"
+// @Success 200 {object} dto.Response{data=string}
+// @Security BearerAuth
+// @Router /v1/brands/reorder [patch]
+func reorderBrands(d BrandDeps) gin.HandlerFunc {
+	return func(c *gin.Context) {
+		var req ReorderRequest
+		if err := c.ShouldBindJSON(&req); err != nil {
+			c.Error(errs.BadRequest("VALIDATION", util.ParseValidationError(err).Error()))
+			return
+		}
+		if err := d.Brands.Reorder(req.IDs); err != nil {
+			c.Error(err)
+			return
+		}
+		c.JSON(200, dto.Response{Status: "success", Message: "Brands reordered"})
+	}
 }
 
 func toBrandDTO(b domain.Brand, productCount int) dto.BrandItem {
@@ -41,6 +66,7 @@ func toBrandDTO(b domain.Brand, productCount int) dto.BrandItem {
 		ImageURL:     util.Deref(b.ImageURL),
 		Status:       string(b.Status),
 		IsTopBrand:   b.IsTopBrand,
+		DisplayOrder: b.DisplayOrder,
 		ProductCount: productCount,
 		CreatedAt:    b.CreatedAt.Format(time.RFC3339),
 	}
@@ -109,8 +135,8 @@ func getBrandByID(d BrandDeps) gin.HandlerFunc {
 }
 
 type CreateBrandRequest struct {
-	BrandName  string `json:"brand_name" binding:"required"`
-	ImageURL   string `json:"image_url" binding:"required"`
+	BrandName    string `json:"brand_name" binding:"required"`
+	ImageURL     string `json:"image_url" binding:"required"`
 	Status     string `json:"status" binding:"required,oneof=active disabled"`
 	IsTopBrand bool   `json:"is_top_brand"`
 }
@@ -135,7 +161,7 @@ func createBrand(d BrandDeps) gin.HandlerFunc {
 		created, err := d.Brands.Create(&domain.Brand{
 			Name:       req.BrandName,
 			Slug:       util.PtrIfSet(slug),
-			ImageURL:   util.PtrIfSet(req.ImageURL),
+			ImageURL:     util.PtrIfSet(req.ImageURL),
 			Status:     domain.Status(req.Status),
 			IsTopBrand: req.IsTopBrand,
 		})
@@ -148,9 +174,9 @@ func createBrand(d BrandDeps) gin.HandlerFunc {
 }
 
 type UpdateBrandRequest struct {
-	BrandID    string `json:"brand_id" binding:"required"`
-	BrandName  string `json:"brand_name"`
-	ImageURL   string `json:"image_url"`
+	BrandID      string `json:"brand_id" binding:"required"`
+	BrandName    string `json:"brand_name"`
+	ImageURL     string `json:"image_url"`
 	Status     string `json:"status" binding:"omitempty,oneof=active disabled"`
 	IsTopBrand *bool  `json:"is_top_brand"`
 }

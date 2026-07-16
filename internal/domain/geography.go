@@ -9,7 +9,6 @@ type City struct {
 	Lng            *float64 `json:"lng,omitempty"`
 	DefaultPincode *string  `json:"default_pincode,omitempty"`
 	Enabled        bool     `gorm:"not null" json:"enabled"`
-	DisplayOrder   int      `gorm:"not null;default:0" json:"display_order"`
 	Timestamps
 	SoftDelete
 }

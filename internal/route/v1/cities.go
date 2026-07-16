@@ -29,7 +29,6 @@ func toCityDTO(c domain.City) dto.CityItem {
 		Lng:            c.Lng,
 		DefaultPincode: util.Deref(c.DefaultPincode),
 		Enabled:        c.Enabled,
-		DisplayOrder:   c.DisplayOrder,
 	}
 }
 
@@ -102,7 +101,6 @@ type CreateCityRequest struct {
 	Lng            *float64 `json:"lng" binding:"required"`
 	DefaultPincode string   `json:"default_pincode" binding:"required"`
 	Enabled        *bool    `json:"enabled"`
-	DisplayOrder   int      `json:"display_order"`
 }
 
 // @Summary Create a serviceable city
@@ -133,7 +131,6 @@ func createCity(d CityDeps) gin.HandlerFunc {
 			Lng:            req.Lng,
 			DefaultPincode: util.PtrIfSet(req.DefaultPincode),
 			Enabled:        enabled,
-			DisplayOrder:   req.DisplayOrder,
 		})
 		if err != nil {
 			c.Error(err)
@@ -151,7 +148,6 @@ type UpdateCityRequest struct {
 	Lng            *float64 `json:"lng"`
 	DefaultPincode string   `json:"default_pincode"`
 	Enabled        *bool    `json:"enabled"`
-	DisplayOrder   *int     `json:"display_order"`
 }
 
 // @Summary Update a city
@@ -189,9 +185,6 @@ func updateCity(d CityDeps) gin.HandlerFunc {
 		}
 		if req.Enabled != nil {
 			fields["enabled"] = *req.Enabled
-		}
-		if req.DisplayOrder != nil {
-			fields["display_order"] = *req.DisplayOrder
 		}
 		updated, err := d.Cities.Update(req.CityID, fields)
 		if err != nil {

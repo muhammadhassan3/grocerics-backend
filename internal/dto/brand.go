@@ -22,6 +22,8 @@ type BrandItem struct {
 	Status string `json:"status" enums:"active,disabled"`
 	// Whether the brand is flagged as a top/featured brand
 	IsTopBrand bool `json:"is_top_brand"`
+	// Curated sort order (lower shows first in the app)
+	DisplayOrder int `json:"display_order"`
 	// Number of products under this brand
 	ProductCount int `json:"product_count"`
 	// Creation timestamp, RFC3339

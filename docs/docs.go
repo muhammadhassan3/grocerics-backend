@@ -1129,6 +1129,57 @@ const docTemplate = `{
                 }
             }
         },
+        "/v1/brands/reorder": {
+            "patch": {
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
+                "description": "Sets display_order from the given order (drag-to-reorder). Send the ids in the desired order.",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "brands"
+                ],
+                "summary": "Reorder brands",
+                "parameters": [
+                    {
+                        "description": "Ordered brand IDs",
+                        "name": "request",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/v1.ReorderRequest"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "allOf": [
+                                {
+                                    "$ref": "#/definitions/dto.Response"
+                                },
+                                {
+                                    "type": "object",
+                                    "properties": {
+                                        "data": {
+                                            "type": "string"
+                                        }
+                                    }
+                                }
+                            ]
+                        }
+                    }
+                }
+            }
+        },
         "/v1/brands/{brand_id}": {
             "get": {
                 "security": [
@@ -1665,6 +1716,57 @@ const docTemplate = `{
                 }
             }
         },
+        "/v1/categories/reorder": {
+            "patch": {
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
+                "description": "Sets display_order from the given order (drag-to-reorder). Send every id in the desired order.",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "categories"
+                ],
+                "summary": "Reorder categories",
+                "parameters": [
+                    {
+                        "description": "Ordered category IDs",
+                        "name": "request",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/v1.ReorderRequest"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "allOf": [
+                                {
+                                    "$ref": "#/definitions/dto.Response"
+                                },
+                                {
+                                    "type": "object",
+                                    "properties": {
+                                        "data": {
+                                            "type": "string"
+                                        }
+                                    }
+                                }
+                            ]
+                        }
+                    }
+                }
+            }
+        },
         "/v1/categories/{id}": {
             "get": {
                 "security": [
@@ -2146,9 +2248,6 @@ const docTemplate = `{
                     }
                 ],
                 "description": "Fetches the data needed to populate the admin dashboard, including headline stats, daily active users, and monthly active users.",
-                "consumes": [
-                    "application/json"
-                ],
                 "produces": [
                     "application/json"
                 ],
@@ -2221,10 +2320,7 @@ const docTemplate = `{
                         "BearerAuth": []
                     }
                 ],
-                "description": "Fetches the live price comparison data for products across different delivery platforms.",
-                "consumes": [
-                    "application/json"
-                ],
+                "description": "Per-product prices across every active platform for the default (first enabled) city.",
                 "produces": [
                     "application/json"
                 ],
@@ -2237,15 +2333,19 @@ const docTemplate = `{
                         "type": "integer",
                         "description": "Page number",
                         "name": "page",
-                        "in": "query",
-                        "required": true
+                        "in": "query"
                     },
                     {
                         "type": "integer",
-                        "description": "Number of items per page",
-                        "name": "limit",
-                        "in": "query",
-                        "required": true
+                        "description": "Items per page",
+                        "name": "page_size",
+                        "in": "query"
+                    },
+                    {
+                        "type": "string",
+                        "description": "Filter by product name",
+                        "name": "q",
+                        "in": "query"
                     }
                 ],
                 "responses": {
@@ -2313,10 +2413,7 @@ const docTemplate = `{
                         "BearerAuth": []
                     }
                 ],
-                "description": "Fetches the data needed to populate the mobile dashboard, including headline stats and daily active users.",
-                "consumes": [
-                    "application/json"
-                ],
+                "description": "STUB — out of scope for the admin dashboard slice; overlaps /v1/home.",
                 "produces": [
                     "application/json"
                 ],
@@ -2342,42 +2439,6 @@ const docTemplate = `{
                                 }
                             ]
                         }
-                    },
-                    "401": {
-                        "description": "Unauthorized",
-                        "schema": {
-                            "allOf": [
-                                {
-                                    "$ref": "#/definitions/dto.Response"
-                                },
-                                {
-                                    "type": "object",
-                                    "properties": {
-                                        "data": {
-                                            "type": "string"
-                                        }
-                                    }
-                                }
-                            ]
-                        }
-                    },
-                    "403": {
-                        "description": "Forbidden",
-                        "schema": {
-                            "allOf": [
-                                {
-                                    "$ref": "#/definitions/dto.Response"
-                                },
-                                {
-                                    "type": "object",
-                                    "properties": {
-                                        "data": {
-                                            "type": "string"
-                                        }
-                                    }
-                                }
-                            ]
-                        }
                     }
                 }
             }
@@ -2390,9 +2451,6 @@ const docTemplate = `{
                     }
                 ],
                 "description": "Fetches the headline stat cards for the admin dashboard: total users, average basket size, and total searches.",
-                "consumes": [
-                    "application/json"
-                ],
                 "produces": [
                     "application/json"
                 ],
@@ -2409,10 +2467,9 @@ const docTemplate = `{
                         ],
                         "type": "string",
                         "default": "daily",
-                        "description": "Interval for stats aggregation (e.g., daily, weekly, monthly)",
+                        "description": "Accepted but currently inert — the response always carries a month-over-month diff",
                         "name": "interval",
-                        "in": "query",
-                        "required": true
+                        "in": "query"
                     }
                 ],
                 "responses": {
@@ -2480,10 +2537,7 @@ const docTemplate = `{
                         "BearerAuth": []
                     }
                 ],
-                "description": "Fetches the top searched products data for the admin dashboard.",
-                "consumes": [
-                    "application/json"
-                ],
+                "description": "Products ranked by how often they were the top search result.",
                 "produces": [
                     "application/json"
                 ],
@@ -2496,15 +2550,13 @@ const docTemplate = `{
                         "type": "integer",
                         "description": "Page number",
                         "name": "page",
-                        "in": "query",
-                        "required": true
+                        "in": "query"
                     },
                     {
                         "type": "integer",
-                        "description": "Number of items per page",
-                        "name": "limit",
-                        "in": "query",
-                        "required": true
+                        "description": "Items per page",
+                        "name": "page_size",
+                        "in": "query"
                     }
                 ],
                 "responses": {
@@ -3036,6 +3088,57 @@ const docTemplate = `{
                 }
             }
         },
+        "/v1/inventory-management/reorder": {
+            "patch": {
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
+                "description": "Sets display_order from the given order (drag-to-reorder). Send product ids in the desired order.",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "inventory-management"
+                ],
+                "summary": "Reorder products",
+                "parameters": [
+                    {
+                        "description": "Ordered product IDs",
+                        "name": "request",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/v1.ReorderRequest"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "allOf": [
+                                {
+                                    "$ref": "#/definitions/dto.Response"
+                                },
+                                {
+                                    "type": "object",
+                                    "properties": {
+                                        "data": {
+                                            "type": "string"
+                                        }
+                                    }
+                                }
+                            ]
+                        }
+                    }
+                }
+            }
+        },
         "/v1/inventory-management/stats": {
             "get": {
                 "security": [
@@ -3305,6 +3408,57 @@ const docTemplate = `{
                     },
                     "400": {
                         "description": "Bad Request",
+                        "schema": {
+                            "allOf": [
+                                {
+                                    "$ref": "#/definitions/dto.Response"
+                                },
+                                {
+                                    "type": "object",
+                                    "properties": {
+                                        "data": {
+                                            "type": "string"
+                                        }
+                                    }
+                                }
+                            ]
+                        }
+                    }
+                }
+            }
+        },
+        "/v1/inventory-management/variants/reorder": {
+            "patch": {
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
+                "description": "Sets display_order from the given order (drag-to-reorder). Send variant ids in the desired order.",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "inventory-management"
+                ],
+                "summary": "Reorder a product's variants",
+                "parameters": [
+                    {
+                        "description": "Ordered variant IDs",
+                        "name": "request",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/v1.ReorderRequest"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
                         "schema": {
                             "allOf": [
                                 {
@@ -4397,6 +4551,57 @@ const docTemplate = `{
                 }
             }
         },
+        "/v1/platforms/reorder": {
+            "patch": {
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
+                "description": "Sets display_order from the given order (drag-to-reorder). Send the ids in the desired order.",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "platforms"
+                ],
+                "summary": "Reorder platforms",
+                "parameters": [
+                    {
+                        "description": "Ordered platform IDs",
+                        "name": "request",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/v1.ReorderRequest"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "allOf": [
+                                {
+                                    "$ref": "#/definitions/dto.Response"
+                                },
+                                {
+                                    "type": "object",
+                                    "properties": {
+                                        "data": {
+                                            "type": "string"
+                                        }
+                                    }
+                                }
+                            ]
+                        }
+                    }
+                }
+            }
+        },
         "/v1/platforms/{platform_id}": {
             "get": {
                 "security": [
@@ -5075,6 +5280,57 @@ const docTemplate = `{
                 }
             }
         },
+        "/v1/subcategories/reorder": {
+            "patch": {
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
+                "description": "Sets display_order from the given order (drag-to-reorder). Send the ids in the desired order.",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "subcategories"
+                ],
+                "summary": "Reorder subcategories",
+                "parameters": [
+                    {
+                        "description": "Ordered subcategory IDs",
+                        "name": "request",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/v1.ReorderRequest"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "allOf": [
+                                {
+                                    "$ref": "#/definitions/dto.Response"
+                                },
+                                {
+                                    "type": "object",
+                                    "properties": {
+                                        "data": {
+                                            "type": "string"
+                                        }
+                                    }
+                                }
+                            ]
+                        }
+                    }
+                }
+            }
+        },
         "/v1/subcategories/{subcategory_id}": {
             "get": {
                 "security": [
@@ -5717,6 +5973,10 @@ const docTemplate = `{
                     "description": "Creation timestamp, RFC3339",
                     "type": "string"
                 },
+                "display_order": {
+                    "description": "Curated sort order (lower shows first in the app)",
+                    "type": "integer"
+                },
                 "image_url": {
                     "description": "URL of the brand's display image",
                     "type": "string"
@@ -5840,6 +6100,10 @@ const docTemplate = `{
                     "description": "Creation timestamp, RFC3339",
                     "type": "string"
                 },
+                "display_order": {
+                    "description": "Curated sort order (lower shows first in the app)",
+                    "type": "integer"
+                },
                 "image_url": {
                     "description": "URL of the category's display image",
                     "type": "string"
@@ -5937,10 +6201,6 @@ const docTemplate = `{
                 "default_pincode": {
                     "description": "Pincode used as the default QuickCommerce location anchor",
                     "type": "string"
-                },
-                "display_order": {
-                    "description": "Sort order in pickers",
-                    "type": "integer"
                 },
                 "enabled": {
                     "description": "Whether the city is serviceable",
@@ -6471,24 +6731,6 @@ const docTemplate = `{
                 }
             }
         },
-        "dto.PlatformPrice": {
-            "description": "Live price of a product across tracked delivery platforms.",
-            "type": "object",
-            "properties": {
-                "blinkit_price": {
-                    "description": "Current price on Blinkit",
-                    "type": "number"
-                },
-                "instamart_price": {
-                    "description": "Current price on Instamart",
-                    "type": "number"
-                },
-                "zepto_price": {
-                    "description": "Current price on Zepto",
-                    "type": "number"
-                }
-            }
-        },
         "dto.PlatformPriceChipDTO": {
             "type": "object",
             "properties": {
@@ -6512,6 +6754,36 @@ const docTemplate = `{
                 },
                 "price": {
                     "$ref": "#/definitions/dto.MoneyDTO"
+                }
+            }
+        },
+        "dto.PlatformPriceItem": {
+            "description": "One active platform's live price for a product. Money is integer paise (3800 = ₹38.00).",
+            "type": "object",
+            "properties": {
+                "available": {
+                    "description": "Whether the product is available on this platform",
+                    "type": "boolean"
+                },
+                "mrp_paise": {
+                    "description": "MRP in paise (0 when unknown)",
+                    "type": "integer"
+                },
+                "platform_code": {
+                    "description": "Platform code, e.g. \"blinkit\"",
+                    "type": "string"
+                },
+                "platform_id": {
+                    "description": "Platform identifier",
+                    "type": "string"
+                },
+                "platform_name": {
+                    "description": "Platform display name, e.g. \"Blinkit\"",
+                    "type": "string"
+                },
+                "price_paise": {
+                    "description": "Selling price in paise (0 if this platform has no price for the product)",
+                    "type": "integer"
                 }
             }
         },
@@ -6740,16 +7012,15 @@ const docTemplate = `{
             }
         },
         "dto.ProductPrice": {
-            "description": "A product with its live price across platforms.",
+            "description": "A product with its live price across every active platform.",
             "type": "object",
             "properties": {
-                "platform_price": {
-                    "description": "Per-platform live prices",
-                    "allOf": [
-                        {
-                            "$ref": "#/definitions/dto.PlatformPrice"
-                        }
-                    ]
+                "platform_prices": {
+                    "description": "One entry per active platform (dynamic — not a fixed set)",
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/dto.PlatformPriceItem"
+                    }
                 },
                 "product_category": {
                     "description": "Name of the category the product belongs to",
@@ -6913,6 +7184,10 @@ const docTemplate = `{
                 "created_at": {
                     "description": "Creation timestamp, RFC3339",
                     "type": "string"
+                },
+                "display_order": {
+                    "description": "Curated sort order (lower shows first in the app)",
+                    "type": "integer"
                 },
                 "image_url": {
                     "description": "URL of the subcategory's display image",
@@ -7499,9 +7774,6 @@ const docTemplate = `{
                 "default_pincode": {
                     "type": "string"
                 },
-                "display_order": {
-                    "type": "integer"
-                },
                 "enabled": {
                     "type": "boolean"
                 },
@@ -7574,9 +7846,6 @@ const docTemplate = `{
                 },
                 "display_name": {
                     "type": "string"
-                },
-                "display_order": {
-                    "type": "integer"
                 },
                 "enabled": {
                     "type": "boolean"
@@ -7913,6 +8182,20 @@ const docTemplate = `{
                 }
             }
         },
+        "v1.ReorderRequest": {
+            "type": "object",
+            "required": [
+                "ids"
+            ],
+            "properties": {
+                "ids": {
+                    "type": "array",
+                    "items": {
+                        "type": "string"
+                    }
+                }
+            }
+        },
         "v1.ResetPasswordRequest": {
             "type": "object",
             "required": [
@@ -8022,9 +8305,6 @@ const docTemplate = `{
                 "default_pincode": {
                     "type": "string"
                 },
-                "display_order": {
-                    "type": "integer"
-                },
                 "enabled": {
                     "type": "boolean"
                 },
@@ -8095,9 +8375,6 @@ const docTemplate = `{
                 },
                 "display_name": {
                     "type": "string"
-                },
-                "display_order": {
-                    "type": "integer"
                 },
                 "enabled": {
                     "type": "boolean"

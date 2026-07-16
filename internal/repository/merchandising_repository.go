@@ -21,7 +21,7 @@ func (r *BannerRepository) ListActive() ([]domain.Banner, error) {
 		Where("is_active AND deleted_at IS NULL").
 		Where("(start_date IS NULL OR start_date <= now())").
 		Where("(end_date IS NULL OR end_date >= now())").
-		Order("display_order").Find(ctx)
+		Order("created_at DESC").Find(ctx)
 	if err != nil {
 		return nil, util.ParseDatabaseError(err, "idx_banners_")
 	}

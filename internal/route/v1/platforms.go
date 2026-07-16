@@ -31,7 +31,32 @@ func RegisterPlatformRoutes(r *gin.Engine, d PlatformDeps) {
 	admin.GET("/platforms/:platform_id", getPlatformByID(d))
 	admin.POST("/platforms", createPlatform(d))
 	admin.PATCH("/platforms", updatePlatform(d))
+	admin.PATCH("/platforms/reorder", reorderPlatforms(d))
 	admin.DELETE("/platforms", deletePlatform(d))
+}
+
+// @Summary Reorder platforms
+// @Description Sets display_order from the given order (drag-to-reorder). Send the ids in the desired order.
+// @Tags platforms
+// @Accept json
+// @Produce json
+// @Param request body ReorderRequest true "Ordered platform IDs"
+// @Success 200 {object} dto.Response{data=string}
+// @Security BearerAuth
+// @Router /v1/platforms/reorder [patch]
+func reorderPlatforms(d PlatformDeps) gin.HandlerFunc {
+	return func(c *gin.Context) {
+		var req ReorderRequest
+		if err := c.ShouldBindJSON(&req); err != nil {
+			c.Error(errs.BadRequest("VALIDATION", util.ParseValidationError(err).Error()))
+			return
+		}
+		if err := d.Platforms.Reorder(req.IDs); err != nil {
+			c.Error(err)
+			return
+		}
+		c.JSON(200, dto.Response{Status: "success", Message: "Platforms reordered"})
+	}
 }
 
 func toPlatformDTO(p domain.Platform) dto.PlatformItem {
@@ -106,7 +131,6 @@ type CreatePlatformRequest struct {
 	LogoURL         string `json:"logo_url"`
 	DeliveryETAText string `json:"delivery_eta_text"`
 	Enabled         *bool  `json:"enabled"`
-	DisplayOrder    int    `json:"display_order"`
 }
 
 // @Summary Create a platform
@@ -137,7 +161,6 @@ func createPlatform(d PlatformDeps) gin.HandlerFunc {
 			LogoURL:         util.PtrIfSet(req.LogoURL),
 			DeliveryETAText: util.PtrIfSet(req.DeliveryETAText),
 			Enabled:         enabled,
-			DisplayOrder:    req.DisplayOrder,
 		})
 		if err != nil {
 			c.Error(err)
@@ -155,7 +178,6 @@ type UpdatePlatformRequest struct {
 	LogoURL         string `json:"logo_url"`
 	DeliveryETAText string `json:"delivery_eta_text"`
 	Enabled         *bool  `json:"enabled"`
-	DisplayOrder    *int   `json:"display_order"`
 }
 
 // @Summary Update a platform
@@ -198,9 +220,6 @@ func updatePlatform(d PlatformDeps) gin.HandlerFunc {
 		}
 		if req.Enabled != nil {
 			fields["enabled"] = *req.Enabled
-		}
-		if req.DisplayOrder != nil {
-			fields["display_order"] = *req.DisplayOrder
 		}
 		updated, err := d.Platforms.Update(req.PlatformID, fields)
 		if err != nil {

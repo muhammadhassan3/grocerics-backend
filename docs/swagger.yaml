@@ -151,6 +151,9 @@ definitions:
       created_at:
         description: Creation timestamp, RFC3339
         type: string
+      display_order:
+        description: Curated sort order (lower shows first in the app)
+        type: integer
       image_url:
         description: URL of the brand's display image
         type: string
@@ -233,6 +236,9 @@ definitions:
       created_at:
         description: Creation timestamp, RFC3339
         type: string
+      display_order:
+        description: Curated sort order (lower shows first in the app)
+        type: integer
       image_url:
         description: URL of the category's display image
         type: string
@@ -299,9 +305,6 @@ definitions:
       default_pincode:
         description: Pincode used as the default QuickCommerce location anchor
         type: string
-      display_order:
-        description: Sort order in pickers
-        type: integer
       enabled:
         description: Whether the city is serviceable
         type: boolean
@@ -655,19 +658,6 @@ definitions:
         description: True when qc_name is set, i.e. the platform can be searched/linked.
         type: boolean
     type: object
-  dto.PlatformPrice:
-    description: Live price of a product across tracked delivery platforms.
-    properties:
-      blinkit_price:
-        description: Current price on Blinkit
-        type: number
-      instamart_price:
-        description: Current price on Instamart
-        type: number
-      zepto_price:
-        description: Current price on Zepto
-        type: number
-    type: object
   dto.PlatformPriceChipDTO:
     properties:
       available:
@@ -684,6 +674,30 @@ definitions:
         type: string
       price:
         $ref: '#/definitions/dto.MoneyDTO'
+    type: object
+  dto.PlatformPriceItem:
+    description: One active platform's live price for a product. Money is integer
+      paise (3800 = ₹38.00).
+    properties:
+      available:
+        description: Whether the product is available on this platform
+        type: boolean
+      mrp_paise:
+        description: MRP in paise (0 when unknown)
+        type: integer
+      platform_code:
+        description: Platform code, e.g. "blinkit"
+        type: string
+      platform_id:
+        description: Platform identifier
+        type: string
+      platform_name:
+        description: Platform display name, e.g. "Blinkit"
+        type: string
+      price_paise:
+        description: Selling price in paise (0 if this platform has no price for the
+          product)
+        type: integer
     type: object
   dto.PlatformSearchResult:
     description: A delivery platform considered when searching or listing products.
@@ -836,12 +850,13 @@ definitions:
         type: string
     type: object
   dto.ProductPrice:
-    description: A product with its live price across platforms.
+    description: A product with its live price across every active platform.
     properties:
-      platform_price:
-        allOf:
-        - $ref: '#/definitions/dto.PlatformPrice'
-        description: Per-platform live prices
+      platform_prices:
+        description: One entry per active platform (dynamic — not a fixed set)
+        items:
+          $ref: '#/definitions/dto.PlatformPriceItem'
+        type: array
       product_category:
         description: Name of the category the product belongs to
         type: string
@@ -956,6 +971,9 @@ definitions:
       created_at:
         description: Creation timestamp, RFC3339
         type: string
+      display_order:
+        description: Curated sort order (lower shows first in the app)
+        type: integer
       image_url:
         description: URL of the subcategory's display image
         type: string
@@ -1358,8 +1376,6 @@ definitions:
     properties:
       default_pincode:
         type: string
-      display_order:
-        type: integer
       enabled:
         type: boolean
       lat:
@@ -1412,8 +1428,6 @@ definitions:
         type: string
       display_name:
         type: string
-      display_order:
-        type: integer
       enabled:
         type: boolean
       logo_url:
@@ -1638,6 +1652,15 @@ definitions:
     - name
     - password
     type: object
+  v1.ReorderRequest:
+    properties:
+      ids:
+        items:
+          type: string
+        type: array
+    required:
+    - ids
+    type: object
   v1.ResetPasswordRequest:
     properties:
       new_password:
@@ -1709,8 +1732,6 @@ definitions:
         type: string
       default_pincode:
         type: string
-      display_order:
-        type: integer
       enabled:
         type: boolean
       lat:
@@ -1758,8 +1779,6 @@ definitions:
         type: string
       display_name:
         type: string
-      display_order:
-        type: integer
       enabled:
         type: boolean
       logo_url:
@@ -2593,6 +2612,36 @@ paths:
       summary: Get brand by ID
       tags:
       - brands
+  /v1/brands/reorder:
+    patch:
+      consumes:
+      - application/json
+      description: Sets display_order from the given order (drag-to-reorder). Send
+        the ids in the desired order.
+      parameters:
+      - description: Ordered brand IDs
+        in: body
+        name: request
+        required: true
+        schema:
+          $ref: '#/definitions/v1.ReorderRequest'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            allOf:
+            - $ref: '#/definitions/dto.Response'
+            - properties:
+                data:
+                  type: string
+              type: object
+      security:
+      - BearerAuth: []
+      summary: Reorder brands
+      tags:
+      - brands
   /v1/cart:
     get:
       description: The cart plus, for every enabled platform, the available/not-available
@@ -2931,6 +2980,36 @@ paths:
       summary: Products in a category (PLP)
       tags:
       - consumer
+  /v1/categories/reorder:
+    patch:
+      consumes:
+      - application/json
+      description: Sets display_order from the given order (drag-to-reorder). Send
+        every id in the desired order.
+      parameters:
+      - description: Ordered category IDs
+        in: body
+        name: request
+        required: true
+        schema:
+          $ref: '#/definitions/v1.ReorderRequest'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            allOf:
+            - $ref: '#/definitions/dto.Response'
+            - properties:
+                data:
+                  type: string
+              type: object
+      security:
+      - BearerAuth: []
+      summary: Reorder categories
+      tags:
+      - categories
   /v1/cities:
     delete:
       consumes:
@@ -3125,8 +3204,6 @@ paths:
       - cities
   /v1/dashboard:
     get:
-      consumes:
-      - application/json
       description: Fetches the data needed to populate the admin dashboard, including
         headline stats, daily active users, and monthly active users.
       produces:
@@ -3166,21 +3243,21 @@ paths:
       - dashboard
   /v1/dashboard/live-price-comparison:
     get:
-      consumes:
-      - application/json
-      description: Fetches the live price comparison data for products across different
-        delivery platforms.
+      description: Per-product prices across every active platform for the default
+        (first enabled) city.
       parameters:
       - description: Page number
         in: query
         name: page
-        required: true
         type: integer
-      - description: Number of items per page
+      - description: Items per page
         in: query
-        name: limit
-        required: true
+        name: page_size
         type: integer
+      - description: Filter by product name
+        in: query
+        name: q
+        type: string
       produces:
       - application/json
       responses:
@@ -3218,10 +3295,7 @@ paths:
       - dashboard
   /v1/dashboard/mobile:
     get:
-      consumes:
-      - application/json
-      description: Fetches the data needed to populate the mobile dashboard, including
-        headline stats and daily active users.
+      description: STUB — out of scope for the admin dashboard slice; overlaps /v1/home.
       produces:
       - application/json
       responses:
@@ -3234,24 +3308,6 @@ paths:
                 data:
                   $ref: '#/definitions/dto.DashboardMobile'
               type: object
-        "401":
-          description: Unauthorized
-          schema:
-            allOf:
-            - $ref: '#/definitions/dto.Response'
-            - properties:
-                data:
-                  type: string
-              type: object
-        "403":
-          description: Forbidden
-          schema:
-            allOf:
-            - $ref: '#/definitions/dto.Response'
-            - properties:
-                data:
-                  type: string
-              type: object
       security:
       - BearerAuth: []
       summary: Get mobile dashboard data
@@ -3259,20 +3315,18 @@ paths:
       - dashboard
   /v1/dashboard/stats:
     get:
-      consumes:
-      - application/json
       description: 'Fetches the headline stat cards for the admin dashboard: total
         users, average basket size, and total searches.'
       parameters:
       - default: daily
-        description: Interval for stats aggregation (e.g., daily, weekly, monthly)
+        description: Accepted but currently inert — the response always carries a
+          month-over-month diff
         enum:
         - daily
         - weekly
         - monthly
         in: query
         name: interval
-        required: true
         type: string
       produces:
       - application/json
@@ -3311,19 +3365,15 @@ paths:
       - dashboard
   /v1/dashboard/top-searched-products:
     get:
-      consumes:
-      - application/json
-      description: Fetches the top searched products data for the admin dashboard.
+      description: Products ranked by how often they were the top search result.
       parameters:
       - description: Page number
         in: query
         name: page
-        required: true
         type: integer
-      - description: Number of items per page
+      - description: Items per page
         in: query
-        name: limit
-        required: true
+        name: page_size
         type: integer
       produces:
       - application/json
@@ -3728,6 +3778,36 @@ paths:
       summary: Refresh live prices/stock from QuickCommerce
       tags:
       - linking
+  /v1/inventory-management/reorder:
+    patch:
+      consumes:
+      - application/json
+      description: Sets display_order from the given order (drag-to-reorder). Send
+        product ids in the desired order.
+      parameters:
+      - description: Ordered product IDs
+        in: body
+        name: request
+        required: true
+        schema:
+          $ref: '#/definitions/v1.ReorderRequest'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            allOf:
+            - $ref: '#/definitions/dto.Response'
+            - properties:
+                data:
+                  type: string
+              type: object
+      security:
+      - BearerAuth: []
+      summary: Reorder products
+      tags:
+      - inventory-management
   /v1/inventory-management/stats:
     get:
       produces:
@@ -3976,6 +4056,36 @@ paths:
       summary: Set a manual price (fallback when not on QuickCommerce)
       tags:
       - linking
+  /v1/inventory-management/variants/reorder:
+    patch:
+      consumes:
+      - application/json
+      description: Sets display_order from the given order (drag-to-reorder). Send
+        variant ids in the desired order.
+      parameters:
+      - description: Ordered variant IDs
+        in: body
+        name: request
+        required: true
+        schema:
+          $ref: '#/definitions/v1.ReorderRequest'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            allOf:
+            - $ref: '#/definitions/dto.Response'
+            - properties:
+                data:
+                  type: string
+              type: object
+      security:
+      - BearerAuth: []
+      summary: Reorder a product's variants
+      tags:
+      - inventory-management
   /v1/me:
     get:
       produces:
@@ -4442,6 +4552,36 @@ paths:
       summary: List all platforms (admin)
       tags:
       - platforms
+  /v1/platforms/reorder:
+    patch:
+      consumes:
+      - application/json
+      description: Sets display_order from the given order (drag-to-reorder). Send
+        the ids in the desired order.
+      parameters:
+      - description: Ordered platform IDs
+        in: body
+        name: request
+        required: true
+        schema:
+          $ref: '#/definitions/v1.ReorderRequest'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            allOf:
+            - $ref: '#/definitions/dto.Response'
+            - properties:
+                data:
+                  type: string
+              type: object
+      security:
+      - BearerAuth: []
+      summary: Reorder platforms
+      tags:
+      - platforms
   /v1/presigned-url:
     post:
       consumes:
@@ -4815,6 +4955,36 @@ paths:
       security:
       - BearerAuth: []
       summary: Get subcategory by ID
+      tags:
+      - subcategories
+  /v1/subcategories/reorder:
+    patch:
+      consumes:
+      - application/json
+      description: Sets display_order from the given order (drag-to-reorder). Send
+        the ids in the desired order.
+      parameters:
+      - description: Ordered subcategory IDs
+        in: body
+        name: request
+        required: true
+        schema:
+          $ref: '#/definitions/v1.ReorderRequest'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            allOf:
+            - $ref: '#/definitions/dto.Response'
+            - properties:
+                data:
+                  type: string
+              type: object
+      security:
+      - BearerAuth: []
+      summary: Reorder subcategories
       tags:
       - subcategories
   /v1/top-deals:
