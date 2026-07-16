@@ -11,6 +11,17 @@ type ProductCategory struct {
 	ProductCategoryName string `json:"product_category_name"`
 }
 
+// @Swagger:model ProductSubCategory
+// @Property product_sub_category_id: Unique identifier for the subcategory
+// @Property product_sub_category_name: Display name of the subcategory
+// @Description Subcategory a product belongs to.
+type ProductSubCategory struct {
+	// Unique identifier for the subcategory
+	ProductSubCategoryID string `json:"product_sub_category_id"`
+	// Display name of the subcategory
+	ProductSubCategoryName string `json:"product_sub_category_name"`
+}
+
 // @Swagger:model Brand
 // @Property product_brand_id: Unique identifier for the brand
 // @Property product_brand_name: Display name of the brand
@@ -20,15 +31,6 @@ type Brand struct {
 	ProductBrandID string `json:"product_brand_id"`
 	// Display name of the brand
 	ProductBrandName string `json:"product_brand_name"`
-}
-
-// @Swagger:model ProductSubCategory
-// @Property product_sub_category_id: Unique identifier for the sub-category
-// @Property product_sub_category_name: Display name of the sub-category
-// @Description Sub-category a product belongs to. Zero-valued if the product has none.
-type ProductSubCategory struct {
-	ProductSubCategoryID   string `json:"product_sub_category_id"`
-	ProductSubCategoryName string `json:"product_sub_category_name"`
 }
 
 // @Swagger:model ProductItem

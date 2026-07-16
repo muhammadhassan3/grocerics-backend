@@ -181,6 +181,11 @@ func (a *App) buildRouter() *gin.Engine {
 		Cities: repository.NewCityRepository(a.DB),
 	})
 	v1.RegisterPresignedURLRoutes(r, a.JWTService, a.UserRepo)
+	// Mobile-contract stub routes. cart/wishlist/product-detail were dropped in
+	// the master merge — consumer.go implements those for real on the same paths.
+	v1.RegisterAddressRoutes(r)
+	v1.RegisterTopDealsRoutes(r)
+	v1.RegisterSettingsRoutes(r)
 
 	v1.RegisterConsumerRoutes(r, v1.ConsumerDeps{
 		JWT:     a.JWTService,

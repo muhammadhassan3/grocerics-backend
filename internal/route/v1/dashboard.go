@@ -18,6 +18,8 @@ func RegisterDashboardRoutes(jwt *auth.JWTService, users *repository.UserReposit
 	group.GET("/dashboard/stats", getDashboardStats())
 	group.GET("/dashboard/live-price-comparison", getLivePriceComparison())
 	group.GET("/dashboard/top-searched-products", getTopSearchedProducts())
+
+	group.GET("/dashboard/mobile", getDashboardMobile())
 }
 
 // @Swagger:route GET /v1/dashboard dashboard getDashboard
@@ -104,6 +106,27 @@ func getDashboardStats() gin.HandlerFunc {
 		c.JSON(200, dto.Response{
 			Data:    dto.DashboardStats{},
 			Message: "Dashboard stats fetched successfully",
+			Status:  "success",
+		})
+	}
+}
+
+// @Swagger:route GET /v1/dashboard/mobile dashboard getDashboardMobile
+// @Summary Get mobile dashboard data
+// @Description Fetches the data needed to populate the mobile dashboard, including headline stats and daily active users.
+// @Tags dashboard
+// @Accept json
+// @Produce json
+// @Success 200 {object} dto.Response{data=dto.DashboardMobile}
+// @Failure 401 {object} dto.Response{data=string}
+// @Failure 403 {object} dto.Response{data=string}
+// @Security BearerAuth
+// @Router /v1/dashboard/mobile [get]
+func getDashboardMobile() gin.HandlerFunc {
+	return func(c *gin.Context) {
+		c.JSON(200, dto.Response{
+			Data:    dto.DashboardMobile{},
+			Message: "Dashboard data fetched successfully",
 			Status:  "success",
 		})
 	}

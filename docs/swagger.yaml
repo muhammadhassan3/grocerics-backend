@@ -1,4 +1,25 @@
 definitions:
+  dto.AboutUsResponse:
+    properties:
+      content:
+        type: string
+    type: object
+  dto.AddAddressRequest:
+    description: Request payload for adding a new delivery address.
+    properties:
+      address_line_1:
+        description: Primary address line, e.g. house/flat number and street
+        type: string
+      address_line_2:
+        description: Secondary address line, e.g. landmark or apartment details
+        type: string
+      pincode:
+        description: Postal/ZIP code of the address
+        type: string
+    required:
+    - address_line_1
+    - pincode
+    type: object
   dto.AddressDTO:
     properties:
       city_id:
@@ -24,6 +45,20 @@ definitions:
       serviceable:
         description: true if the pincode resolved to a serving city
         type: boolean
+    type: object
+  dto.AddressResponse:
+    description: Response payload containing details of a delivery address.
+    properties:
+      address_id:
+        type: string
+      address_line_1:
+        type: string
+      address_line_2:
+        type: string
+      created_at:
+        type: string
+      pincode:
+        type: string
     type: object
   dto.BannerCardDTO:
     properties:
@@ -66,6 +101,19 @@ definitions:
         type: string
       title:
         description: Admin-facing name, so banners are distinguishable in the grid
+        type: string
+    type: object
+  dto.BannerMobileItem:
+    description: A promotional banner shown on the mobile dashboard.
+    properties:
+      banner_id:
+        description: Unique identifier for the banner
+        type: string
+      deeplink:
+        description: App deeplink to navigate to when the banner is tapped
+        type: string
+      image_url:
+        description: URL of the banner image
         type: string
     type: object
   dto.Banners:
@@ -298,6 +346,30 @@ definitions:
         description: Active users on Wednesday
         type: integer
     type: object
+  dto.DashboardMobile:
+    description: Envelope for the mobile app's home dashboard endpoint.
+    properties:
+      banners:
+        description: Promotional banners for the mobile dashboard
+        items:
+          $ref: '#/definitions/dto.BannerMobileItem'
+        type: array
+      top_stores:
+        description: Featured stores for the mobile dashboard
+        items:
+          $ref: '#/definitions/dto.TopStoreMobileItem'
+        type: array
+      trending_categories:
+        description: Trending product categories for the mobile dashboard
+        items:
+          $ref: '#/definitions/dto.TrendingCategoryMobileItem'
+        type: array
+      trending_items:
+        description: Trending products for the mobile dashboard
+        items:
+          $ref: '#/definitions/dto.TrendingItemMobileItem'
+        type: array
+    type: object
   dto.DashboardResponse:
     description: Envelope for the admin dashboard endpoint.
     properties:
@@ -446,6 +518,15 @@ definitions:
         type: string
       phone:
         type: string
+    type: object
+  dto.MobileLoginRequest:
+    description: Request payload submitted to the mobile app's phone-based login endpoint.
+    properties:
+      phone_number:
+        description: Phone number to send the login OTP to, in E.164 format
+        type: string
+    required:
+    - phone_number
     type: object
   dto.MoneyDTO:
     properties:
@@ -604,6 +685,19 @@ definitions:
       price:
         $ref: '#/definitions/dto.MoneyDTO'
     type: object
+  dto.PlatformSearchResult:
+    description: A delivery platform considered when searching or listing products.
+    properties:
+      platform_id:
+        description: Unique identifier for the delivery platform
+        type: string
+      platform_logo:
+        description: URL of the delivery platform's logo
+        type: string
+      platform_name:
+        description: Display name of the delivery platform
+        type: string
+    type: object
   dto.Platforms:
     description: Paginated list of platforms.
     properties:
@@ -759,12 +853,13 @@ definitions:
         type: string
     type: object
   dto.ProductSubCategory:
-    description: Sub-category a product belongs to. Zero-valued if the product has
-      none.
+    description: Subcategory a product belongs to.
     properties:
       product_sub_category_id:
+        description: Unique identifier for the subcategory
         type: string
       product_sub_category_name:
+        description: Display name of the subcategory
         type: string
     type: object
   dto.ProductVariantItem:
@@ -785,6 +880,7 @@ definitions:
         type: string
     type: object
   dto.ProductVariantItems:
+    description: List of sellable variants for a product.
     properties:
       variants:
         description: Page of product variants
@@ -879,6 +975,11 @@ definitions:
         description: Unique identifier for the subcategory
         type: string
     type: object
+  dto.TermsAndConditionsResponse:
+    properties:
+      content:
+        type: string
+    type: object
   dto.TokenResponse:
     description: Response structure for authentication tokens.
     properties:
@@ -893,6 +994,46 @@ definitions:
         allOf:
         - $ref: '#/definitions/dto.UserData'
         description: User data associated with the authenticated user
+    type: object
+  dto.TopDealsMobileItem:
+    description: A single product row within the top deals list.
+    properties:
+      cart_count:
+        description: Number of times the product has been added to a cart
+        type: integer
+      category_name:
+        description: Name of the category the product belongs to
+        type: string
+      image_url:
+        description: URL of the product's display image
+        type: string
+      item_id:
+        description: Unique identifier for the product
+        type: string
+      item_name:
+        description: Display name of the product
+        type: string
+      lowest_price:
+        description: Lowest price for the product across tracked delivery platforms
+        type: number
+    type: object
+  dto.TopDealsMobileResponse:
+    description: Envelope for the mobile app's top deals endpoint.
+    properties:
+      meta:
+        allOf:
+        - $ref: '#/definitions/query.Meta'
+        description: Pagination metadata
+      platforms:
+        description: Delivery platforms considered when pricing the deals
+        items:
+          $ref: '#/definitions/dto.PlatformSearchResult'
+        type: array
+      results:
+        description: Page of top deal products
+        items:
+          $ref: '#/definitions/dto.TopDealsMobileItem'
+        type: array
     type: object
   dto.TopSearchProduct:
     description: Paginated list of top-searched products.
@@ -922,6 +1063,51 @@ definitions:
       search_count:
         description: Number of times the product was searched for
         type: integer
+    type: object
+  dto.TopStoreMobileItem:
+    description: A featured store shown on the mobile dashboard.
+    properties:
+      eta:
+        description: Estimated delivery time for the store, e.g. "10 mins"
+        type: string
+      image_url:
+        description: URL of the store's display image
+        type: string
+      store_id:
+        description: Unique identifier for the store
+        type: string
+      store_name:
+        description: Display name of the store
+        type: string
+    type: object
+  dto.TrendingCategoryMobileItem:
+    description: A trending product category shown on the mobile dashboard.
+    properties:
+      category_id:
+        description: Unique identifier for the category
+        type: string
+      category_name:
+        description: Display name of the category
+        type: string
+      image_url:
+        description: URL of the category's display image
+        type: string
+    type: object
+  dto.TrendingItemMobileItem:
+    description: A trending product shown on the mobile dashboard.
+    properties:
+      image_url:
+        description: URL of the product's display image
+        type: string
+      item_id:
+        description: Unique identifier for the product
+        type: string
+      item_name:
+        description: Display name of the product
+        type: string
+      lowest_price:
+        description: Lowest price for the product across tracked delivery platforms
+        type: number
     type: object
   dto.UserDTO:
     description: Data Transfer Object for a User entity.
@@ -1386,6 +1572,13 @@ definitions:
     - price_paise
     - variant_id
     type: object
+  v1.MobileRegisterRequest:
+    properties:
+      phone_number:
+        type: string
+    required:
+    - phone_number
+    type: object
   v1.PlatformOption:
     properties:
       code:
@@ -1636,6 +1829,16 @@ definitions:
       source:
         type: string
     type: object
+  v1.VerifyPhoneOTPRequest:
+    properties:
+      otp_code:
+        type: string
+      phone_number:
+        type: string
+    required:
+    - otp_code
+    - phone_number
+    type: object
   v1.addCartItemRequest:
     properties:
       quantity:
@@ -1709,6 +1912,27 @@ info:
   title: Grocerics API
   version: "1.1"
 paths:
+  /auth/delete:
+    delete:
+      consumes:
+      - application/json
+      description: Delete the authenticated user's account. This action is irreversible.
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: User deleted
+          schema:
+            $ref: '#/definitions/dto.Response'
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/dto.Response'
+      security:
+      - BearerAuth: []
+      summary: Delete User
+      tags:
+      - Auth
   /auth/forgot-password:
     post:
       consumes:
@@ -1801,6 +2025,58 @@ paths:
       security:
       - BearerAuth: []
       summary: Logout
+      tags:
+      - Auth
+  /auth/mobile-register:
+    post:
+      consumes:
+      - application/json
+      description: User registration via mobile phone number (OTP-based)
+      parameters:
+      - description: Mobile register request payload
+        in: body
+        name: mobileRegisterRequest
+        required: true
+        schema:
+          $ref: '#/definitions/v1.MobileRegisterRequest'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OTP code sent
+          schema:
+            $ref: '#/definitions/dto.Response'
+        "400":
+          description: Bad request
+          schema:
+            $ref: '#/definitions/dto.Response'
+      summary: Mobile Register
+      tags:
+      - Auth
+  /auth/phone-login:
+    post:
+      consumes:
+      - application/json
+      description: User login via phone number (OTP-based)
+      parameters:
+      - description: Mobile login request payload
+        in: body
+        name: mobileLoginRequest
+        required: true
+        schema:
+          $ref: '#/definitions/dto.MobileLoginRequest'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OTP code sent
+          schema:
+            $ref: '#/definitions/dto.Response'
+        "400":
+          description: Bad request
+          schema:
+            $ref: '#/definitions/dto.Response'
+      summary: Phone Login
       tags:
       - Auth
   /auth/refresh:
@@ -1899,6 +2175,97 @@ paths:
       summary: Reset Password
       tags:
       - Auth
+  /auth/verify-phone-otp:
+    post:
+      consumes:
+      - application/json
+      description: Verify the OTP code sent to the user's phone number
+      parameters:
+      - description: Verify phone OTP request payload
+        in: body
+        name: verifyPhoneOTPRequest
+        required: true
+        schema:
+          $ref: '#/definitions/v1.VerifyPhoneOTPRequest'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OTP verified successfully
+          schema:
+            allOf:
+            - $ref: '#/definitions/dto.Response'
+            - properties:
+                data:
+                  $ref: '#/definitions/dto.TokenResponse'
+              type: object
+        "400":
+          description: Bad request
+          schema:
+            $ref: '#/definitions/dto.Response'
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/dto.Response'
+      summary: Verify Phone OTP
+      tags:
+      - Auth
+  /v1/address:
+    post:
+      consumes:
+      - application/json
+      description: Creates a new address for the authenticated user.
+      parameters:
+      - description: Address details
+        in: body
+        name: address
+        required: true
+        schema:
+          $ref: '#/definitions/dto.AddAddressRequest'
+      produces:
+      - application/json
+      responses:
+        "201":
+          description: Created
+          schema:
+            allOf:
+            - $ref: '#/definitions/dto.Response'
+            - properties:
+                data:
+                  $ref: '#/definitions/dto.AddressResponse'
+              type: object
+        "400":
+          description: Bad Request
+          schema:
+            allOf:
+            - $ref: '#/definitions/dto.Response'
+            - properties:
+                data:
+                  type: string
+              type: object
+        "401":
+          description: Unauthorized
+          schema:
+            allOf:
+            - $ref: '#/definitions/dto.Response'
+            - properties:
+                data:
+                  type: string
+              type: object
+        "403":
+          description: Forbidden
+          schema:
+            allOf:
+            - $ref: '#/definitions/dto.Response'
+            - properties:
+                data:
+                  type: string
+              type: object
+      security:
+      - BearerAuth: []
+      summary: Create a new address
+      tags:
+      - address
   /v1/banners:
     delete:
       consumes:
@@ -2847,6 +3214,47 @@ paths:
       security:
       - BearerAuth: []
       summary: Get live price comparison
+      tags:
+      - dashboard
+  /v1/dashboard/mobile:
+    get:
+      consumes:
+      - application/json
+      description: Fetches the data needed to populate the mobile dashboard, including
+        headline stats and daily active users.
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            allOf:
+            - $ref: '#/definitions/dto.Response'
+            - properties:
+                data:
+                  $ref: '#/definitions/dto.DashboardMobile'
+              type: object
+        "401":
+          description: Unauthorized
+          schema:
+            allOf:
+            - $ref: '#/definitions/dto.Response'
+            - properties:
+                data:
+                  type: string
+              type: object
+        "403":
+          description: Forbidden
+          schema:
+            allOf:
+            - $ref: '#/definitions/dto.Response'
+            - properties:
+                data:
+                  type: string
+              type: object
+      security:
+      - BearerAuth: []
+      summary: Get mobile dashboard data
       tags:
       - dashboard
   /v1/dashboard/stats:
@@ -4160,6 +4568,86 @@ paths:
       summary: Search products (curated catalog)
       tags:
       - consumer
+  /v1/settings/about-us:
+    get:
+      consumes:
+      - application/json
+      description: Fetches the About Us information.
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            allOf:
+            - $ref: '#/definitions/dto.Response'
+            - properties:
+                data:
+                  $ref: '#/definitions/dto.AboutUsResponse'
+              type: object
+        "401":
+          description: Unauthorized
+          schema:
+            allOf:
+            - $ref: '#/definitions/dto.Response'
+            - properties:
+                data:
+                  type: string
+              type: object
+        "403":
+          description: Forbidden
+          schema:
+            allOf:
+            - $ref: '#/definitions/dto.Response'
+            - properties:
+                data:
+                  type: string
+              type: object
+      security:
+      - BearerAuth: []
+      summary: Get About Us
+      tags:
+      - settings
+  /v1/settings/terms-and-conditions:
+    get:
+      consumes:
+      - application/json
+      description: Fetches the Terms and Conditions information.
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            allOf:
+            - $ref: '#/definitions/dto.Response'
+            - properties:
+                data:
+                  $ref: '#/definitions/dto.TermsAndConditionsResponse'
+              type: object
+        "401":
+          description: Unauthorized
+          schema:
+            allOf:
+            - $ref: '#/definitions/dto.Response'
+            - properties:
+                data:
+                  type: string
+              type: object
+        "403":
+          description: Forbidden
+          schema:
+            allOf:
+            - $ref: '#/definitions/dto.Response'
+            - properties:
+                data:
+                  type: string
+              type: object
+      security:
+      - BearerAuth: []
+      summary: Get Terms and Conditions
+      tags:
+      - settings
   /v1/subcategories:
     delete:
       consumes:
@@ -4329,6 +4817,46 @@ paths:
       summary: Get subcategory by ID
       tags:
       - subcategories
+  /v1/top-deals:
+    get:
+      consumes:
+      - application/json
+      description: Fetches a list of top deals.
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            allOf:
+            - $ref: '#/definitions/dto.Response'
+            - properties:
+                data:
+                  $ref: '#/definitions/dto.TopDealsMobileResponse'
+              type: object
+        "401":
+          description: Unauthorized
+          schema:
+            allOf:
+            - $ref: '#/definitions/dto.Response'
+            - properties:
+                data:
+                  type: string
+              type: object
+        "403":
+          description: Forbidden
+          schema:
+            allOf:
+            - $ref: '#/definitions/dto.Response'
+            - properties:
+                data:
+                  type: string
+              type: object
+      security:
+      - BearerAuth: []
+      summary: Get top deals
+      tags:
+      - top-deals
   /v1/users:
     get:
       description: Paginated list of users. Admins see every tenant (optionally filter

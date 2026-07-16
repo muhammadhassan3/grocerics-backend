@@ -30,6 +30,9 @@ type ProductVariantItem struct {
 	ProductVolume ProductVariantUnit `json:"product_volume"`
 }
 
+// @Swagger:model ProductVariantItems
+// @Property variants: Page of product variants
+// @Description List of sellable variants for a product.
 type ProductVariantItems struct {
 	// Page of product variants
 	Variants []ProductVariantItem `json:"variants"`

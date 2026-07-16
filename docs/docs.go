@@ -17,6 +17,40 @@ const docTemplate = `{
     "host": "{{.Host}}",
     "basePath": "{{.BasePath}}",
     "paths": {
+        "/auth/delete": {
+            "delete": {
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
+                "description": "Delete the authenticated user's account. This action is irreversible.",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Auth"
+                ],
+                "summary": "Delete User",
+                "responses": {
+                    "200": {
+                        "description": "User deleted",
+                        "schema": {
+                            "$ref": "#/definitions/dto.Response"
+                        }
+                    },
+                    "401": {
+                        "description": "Unauthorized",
+                        "schema": {
+                            "$ref": "#/definitions/dto.Response"
+                        }
+                    }
+                }
+            }
+        },
         "/auth/forgot-password": {
             "post": {
                 "description": "Issue a single-use password-reset token. Always returns 200 to avoid email enumeration.",
@@ -159,6 +193,86 @@ const docTemplate = `{
                     },
                     "401": {
                         "description": "Unauthorized",
+                        "schema": {
+                            "$ref": "#/definitions/dto.Response"
+                        }
+                    }
+                }
+            }
+        },
+        "/auth/mobile-register": {
+            "post": {
+                "description": "User registration via mobile phone number (OTP-based)",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Auth"
+                ],
+                "summary": "Mobile Register",
+                "parameters": [
+                    {
+                        "description": "Mobile register request payload",
+                        "name": "mobileRegisterRequest",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/v1.MobileRegisterRequest"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OTP code sent",
+                        "schema": {
+                            "$ref": "#/definitions/dto.Response"
+                        }
+                    },
+                    "400": {
+                        "description": "Bad request",
+                        "schema": {
+                            "$ref": "#/definitions/dto.Response"
+                        }
+                    }
+                }
+            }
+        },
+        "/auth/phone-login": {
+            "post": {
+                "description": "User login via phone number (OTP-based)",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Auth"
+                ],
+                "summary": "Phone Login",
+                "parameters": [
+                    {
+                        "description": "Mobile login request payload",
+                        "name": "mobileLoginRequest",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/dto.MobileLoginRequest"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OTP code sent",
+                        "schema": {
+                            "$ref": "#/definitions/dto.Response"
+                        }
+                    },
+                    "400": {
+                        "description": "Bad request",
                         "schema": {
                             "$ref": "#/definitions/dto.Response"
                         }
@@ -317,6 +431,169 @@ const docTemplate = `{
                         "description": "Unauthorized",
                         "schema": {
                             "$ref": "#/definitions/dto.Response"
+                        }
+                    }
+                }
+            }
+        },
+        "/auth/verify-phone-otp": {
+            "post": {
+                "description": "Verify the OTP code sent to the user's phone number",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Auth"
+                ],
+                "summary": "Verify Phone OTP",
+                "parameters": [
+                    {
+                        "description": "Verify phone OTP request payload",
+                        "name": "verifyPhoneOTPRequest",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/v1.VerifyPhoneOTPRequest"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OTP verified successfully",
+                        "schema": {
+                            "allOf": [
+                                {
+                                    "$ref": "#/definitions/dto.Response"
+                                },
+                                {
+                                    "type": "object",
+                                    "properties": {
+                                        "data": {
+                                            "$ref": "#/definitions/dto.TokenResponse"
+                                        }
+                                    }
+                                }
+                            ]
+                        }
+                    },
+                    "400": {
+                        "description": "Bad request",
+                        "schema": {
+                            "$ref": "#/definitions/dto.Response"
+                        }
+                    },
+                    "401": {
+                        "description": "Unauthorized",
+                        "schema": {
+                            "$ref": "#/definitions/dto.Response"
+                        }
+                    }
+                }
+            }
+        },
+        "/v1/address": {
+            "post": {
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
+                "description": "Creates a new address for the authenticated user.",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "address"
+                ],
+                "summary": "Create a new address",
+                "parameters": [
+                    {
+                        "description": "Address details",
+                        "name": "address",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/dto.AddAddressRequest"
+                        }
+                    }
+                ],
+                "responses": {
+                    "201": {
+                        "description": "Created",
+                        "schema": {
+                            "allOf": [
+                                {
+                                    "$ref": "#/definitions/dto.Response"
+                                },
+                                {
+                                    "type": "object",
+                                    "properties": {
+                                        "data": {
+                                            "$ref": "#/definitions/dto.AddressResponse"
+                                        }
+                                    }
+                                }
+                            ]
+                        }
+                    },
+                    "400": {
+                        "description": "Bad Request",
+                        "schema": {
+                            "allOf": [
+                                {
+                                    "$ref": "#/definitions/dto.Response"
+                                },
+                                {
+                                    "type": "object",
+                                    "properties": {
+                                        "data": {
+                                            "type": "string"
+                                        }
+                                    }
+                                }
+                            ]
+                        }
+                    },
+                    "401": {
+                        "description": "Unauthorized",
+                        "schema": {
+                            "allOf": [
+                                {
+                                    "$ref": "#/definitions/dto.Response"
+                                },
+                                {
+                                    "type": "object",
+                                    "properties": {
+                                        "data": {
+                                            "type": "string"
+                                        }
+                                    }
+                                }
+                            ]
+                        }
+                    },
+                    "403": {
+                        "description": "Forbidden",
+                        "schema": {
+                            "allOf": [
+                                {
+                                    "$ref": "#/definitions/dto.Response"
+                                },
+                                {
+                                    "type": "object",
+                                    "properties": {
+                                        "data": {
+                                            "type": "string"
+                                        }
+                                    }
+                                }
+                            ]
                         }
                     }
                 }
@@ -1984,6 +2261,82 @@ const docTemplate = `{
                                     "properties": {
                                         "data": {
                                             "$ref": "#/definitions/dto.LivePrice"
+                                        }
+                                    }
+                                }
+                            ]
+                        }
+                    },
+                    "401": {
+                        "description": "Unauthorized",
+                        "schema": {
+                            "allOf": [
+                                {
+                                    "$ref": "#/definitions/dto.Response"
+                                },
+                                {
+                                    "type": "object",
+                                    "properties": {
+                                        "data": {
+                                            "type": "string"
+                                        }
+                                    }
+                                }
+                            ]
+                        }
+                    },
+                    "403": {
+                        "description": "Forbidden",
+                        "schema": {
+                            "allOf": [
+                                {
+                                    "$ref": "#/definitions/dto.Response"
+                                },
+                                {
+                                    "type": "object",
+                                    "properties": {
+                                        "data": {
+                                            "type": "string"
+                                        }
+                                    }
+                                }
+                            ]
+                        }
+                    }
+                }
+            }
+        },
+        "/v1/dashboard/mobile": {
+            "get": {
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
+                "description": "Fetches the data needed to populate the mobile dashboard, including headline stats and daily active users.",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "dashboard"
+                ],
+                "summary": "Get mobile dashboard data",
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "allOf": [
+                                {
+                                    "$ref": "#/definitions/dto.Response"
+                                },
+                                {
+                                    "type": "object",
+                                    "properties": {
+                                        "data": {
+                                            "$ref": "#/definitions/dto.DashboardMobile"
                                         }
                                     }
                                 }
@@ -4328,6 +4681,158 @@ const docTemplate = `{
                 }
             }
         },
+        "/v1/settings/about-us": {
+            "get": {
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
+                "description": "Fetches the About Us information.",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "settings"
+                ],
+                "summary": "Get About Us",
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "allOf": [
+                                {
+                                    "$ref": "#/definitions/dto.Response"
+                                },
+                                {
+                                    "type": "object",
+                                    "properties": {
+                                        "data": {
+                                            "$ref": "#/definitions/dto.AboutUsResponse"
+                                        }
+                                    }
+                                }
+                            ]
+                        }
+                    },
+                    "401": {
+                        "description": "Unauthorized",
+                        "schema": {
+                            "allOf": [
+                                {
+                                    "$ref": "#/definitions/dto.Response"
+                                },
+                                {
+                                    "type": "object",
+                                    "properties": {
+                                        "data": {
+                                            "type": "string"
+                                        }
+                                    }
+                                }
+                            ]
+                        }
+                    },
+                    "403": {
+                        "description": "Forbidden",
+                        "schema": {
+                            "allOf": [
+                                {
+                                    "$ref": "#/definitions/dto.Response"
+                                },
+                                {
+                                    "type": "object",
+                                    "properties": {
+                                        "data": {
+                                            "type": "string"
+                                        }
+                                    }
+                                }
+                            ]
+                        }
+                    }
+                }
+            }
+        },
+        "/v1/settings/terms-and-conditions": {
+            "get": {
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
+                "description": "Fetches the Terms and Conditions information.",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "settings"
+                ],
+                "summary": "Get Terms and Conditions",
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "allOf": [
+                                {
+                                    "$ref": "#/definitions/dto.Response"
+                                },
+                                {
+                                    "type": "object",
+                                    "properties": {
+                                        "data": {
+                                            "$ref": "#/definitions/dto.TermsAndConditionsResponse"
+                                        }
+                                    }
+                                }
+                            ]
+                        }
+                    },
+                    "401": {
+                        "description": "Unauthorized",
+                        "schema": {
+                            "allOf": [
+                                {
+                                    "$ref": "#/definitions/dto.Response"
+                                },
+                                {
+                                    "type": "object",
+                                    "properties": {
+                                        "data": {
+                                            "type": "string"
+                                        }
+                                    }
+                                }
+                            ]
+                        }
+                    },
+                    "403": {
+                        "description": "Forbidden",
+                        "schema": {
+                            "allOf": [
+                                {
+                                    "$ref": "#/definitions/dto.Response"
+                                },
+                                {
+                                    "type": "object",
+                                    "properties": {
+                                        "data": {
+                                            "type": "string"
+                                        }
+                                    }
+                                }
+                            ]
+                        }
+                    }
+                }
+            }
+        },
         "/v1/subcategories": {
             "get": {
                 "security": [
@@ -4614,6 +5119,82 @@ const docTemplate = `{
                     },
                     "404": {
                         "description": "Not Found",
+                        "schema": {
+                            "allOf": [
+                                {
+                                    "$ref": "#/definitions/dto.Response"
+                                },
+                                {
+                                    "type": "object",
+                                    "properties": {
+                                        "data": {
+                                            "type": "string"
+                                        }
+                                    }
+                                }
+                            ]
+                        }
+                    }
+                }
+            }
+        },
+        "/v1/top-deals": {
+            "get": {
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
+                "description": "Fetches a list of top deals.",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "top-deals"
+                ],
+                "summary": "Get top deals",
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "allOf": [
+                                {
+                                    "$ref": "#/definitions/dto.Response"
+                                },
+                                {
+                                    "type": "object",
+                                    "properties": {
+                                        "data": {
+                                            "$ref": "#/definitions/dto.TopDealsMobileResponse"
+                                        }
+                                    }
+                                }
+                            ]
+                        }
+                    },
+                    "401": {
+                        "description": "Unauthorized",
+                        "schema": {
+                            "allOf": [
+                                {
+                                    "$ref": "#/definitions/dto.Response"
+                                },
+                                {
+                                    "type": "object",
+                                    "properties": {
+                                        "data": {
+                                            "type": "string"
+                                        }
+                                    }
+                                }
+                            ]
+                        }
+                    },
+                    "403": {
+                        "description": "Forbidden",
                         "schema": {
                             "allOf": [
                                 {
@@ -4922,6 +5503,36 @@ const docTemplate = `{
         }
     },
     "definitions": {
+        "dto.AboutUsResponse": {
+            "type": "object",
+            "properties": {
+                "content": {
+                    "type": "string"
+                }
+            }
+        },
+        "dto.AddAddressRequest": {
+            "description": "Request payload for adding a new delivery address.",
+            "type": "object",
+            "required": [
+                "address_line_1",
+                "pincode"
+            ],
+            "properties": {
+                "address_line_1": {
+                    "description": "Primary address line, e.g. house/flat number and street",
+                    "type": "string"
+                },
+                "address_line_2": {
+                    "description": "Secondary address line, e.g. landmark or apartment details",
+                    "type": "string"
+                },
+                "pincode": {
+                    "description": "Postal/ZIP code of the address",
+                    "type": "string"
+                }
+            }
+        },
         "dto.AddressDTO": {
             "type": "object",
             "properties": {
@@ -4958,6 +5569,27 @@ const docTemplate = `{
                 "serviceable": {
                     "description": "true if the pincode resolved to a serving city",
                     "type": "boolean"
+                }
+            }
+        },
+        "dto.AddressResponse": {
+            "description": "Response payload containing details of a delivery address.",
+            "type": "object",
+            "properties": {
+                "address_id": {
+                    "type": "string"
+                },
+                "address_line_1": {
+                    "type": "string"
+                },
+                "address_line_2": {
+                    "type": "string"
+                },
+                "created_at": {
+                    "type": "string"
+                },
+                "pincode": {
+                    "type": "string"
                 }
             }
         },
@@ -5012,6 +5644,24 @@ const docTemplate = `{
                 },
                 "title": {
                     "description": "Admin-facing name, so banners are distinguishable in the grid",
+                    "type": "string"
+                }
+            }
+        },
+        "dto.BannerMobileItem": {
+            "description": "A promotional banner shown on the mobile dashboard.",
+            "type": "object",
+            "properties": {
+                "banner_id": {
+                    "description": "Unique identifier for the banner",
+                    "type": "string"
+                },
+                "deeplink": {
+                    "description": "App deeplink to navigate to when the banner is tapped",
+                    "type": "string"
+                },
+                "image_url": {
+                    "description": "URL of the banner image",
                     "type": "string"
                 }
             }
@@ -5352,6 +6002,40 @@ const docTemplate = `{
                 }
             }
         },
+        "dto.DashboardMobile": {
+            "description": "Envelope for the mobile app's home dashboard endpoint.",
+            "type": "object",
+            "properties": {
+                "banners": {
+                    "description": "Promotional banners for the mobile dashboard",
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/dto.BannerMobileItem"
+                    }
+                },
+                "top_stores": {
+                    "description": "Featured stores for the mobile dashboard",
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/dto.TopStoreMobileItem"
+                    }
+                },
+                "trending_categories": {
+                    "description": "Trending product categories for the mobile dashboard",
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/dto.TrendingCategoryMobileItem"
+                    }
+                },
+                "trending_items": {
+                    "description": "Trending products for the mobile dashboard",
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/dto.TrendingItemMobileItem"
+                    }
+                }
+            }
+        },
         "dto.DashboardResponse": {
             "description": "Envelope for the admin dashboard endpoint.",
             "type": "object",
@@ -5594,6 +6278,19 @@ const docTemplate = `{
                 }
             }
         },
+        "dto.MobileLoginRequest": {
+            "description": "Request payload submitted to the mobile app's phone-based login endpoint.",
+            "type": "object",
+            "required": [
+                "phone_number"
+            ],
+            "properties": {
+                "phone_number": {
+                    "description": "Phone number to send the login OTP to, in E.164 format",
+                    "type": "string"
+                }
+            }
+        },
         "dto.MoneyDTO": {
             "type": "object",
             "properties": {
@@ -5815,6 +6512,24 @@ const docTemplate = `{
                 },
                 "price": {
                     "$ref": "#/definitions/dto.MoneyDTO"
+                }
+            }
+        },
+        "dto.PlatformSearchResult": {
+            "description": "A delivery platform considered when searching or listing products.",
+            "type": "object",
+            "properties": {
+                "platform_id": {
+                    "description": "Unique identifier for the delivery platform",
+                    "type": "string"
+                },
+                "platform_logo": {
+                    "description": "URL of the delivery platform's logo",
+                    "type": "string"
+                },
+                "platform_name": {
+                    "description": "Display name of the delivery platform",
+                    "type": "string"
                 }
             }
         },
@@ -6051,13 +6766,15 @@ const docTemplate = `{
             }
         },
         "dto.ProductSubCategory": {
-            "description": "Sub-category a product belongs to. Zero-valued if the product has none.",
+            "description": "Subcategory a product belongs to.",
             "type": "object",
             "properties": {
                 "product_sub_category_id": {
+                    "description": "Unique identifier for the subcategory",
                     "type": "string"
                 },
                 "product_sub_category_name": {
+                    "description": "Display name of the subcategory",
                     "type": "string"
                 }
             }
@@ -6089,6 +6806,7 @@ const docTemplate = `{
             }
         },
         "dto.ProductVariantItems": {
+            "description": "List of sellable variants for a product.",
             "type": "object",
             "properties": {
                 "variants": {
@@ -6222,6 +6940,14 @@ const docTemplate = `{
                 }
             }
         },
+        "dto.TermsAndConditionsResponse": {
+            "type": "object",
+            "properties": {
+                "content": {
+                    "type": "string"
+                }
+            }
+        },
         "dto.TokenResponse": {
             "description": "Response structure for authentication tokens.",
             "type": "object",
@@ -6241,6 +6967,64 @@ const docTemplate = `{
                             "$ref": "#/definitions/dto.UserData"
                         }
                     ]
+                }
+            }
+        },
+        "dto.TopDealsMobileItem": {
+            "description": "A single product row within the top deals list.",
+            "type": "object",
+            "properties": {
+                "cart_count": {
+                    "description": "Number of times the product has been added to a cart",
+                    "type": "integer"
+                },
+                "category_name": {
+                    "description": "Name of the category the product belongs to",
+                    "type": "string"
+                },
+                "image_url": {
+                    "description": "URL of the product's display image",
+                    "type": "string"
+                },
+                "item_id": {
+                    "description": "Unique identifier for the product",
+                    "type": "string"
+                },
+                "item_name": {
+                    "description": "Display name of the product",
+                    "type": "string"
+                },
+                "lowest_price": {
+                    "description": "Lowest price for the product across tracked delivery platforms",
+                    "type": "number"
+                }
+            }
+        },
+        "dto.TopDealsMobileResponse": {
+            "description": "Envelope for the mobile app's top deals endpoint.",
+            "type": "object",
+            "properties": {
+                "meta": {
+                    "description": "Pagination metadata",
+                    "allOf": [
+                        {
+                            "$ref": "#/definitions/query.Meta"
+                        }
+                    ]
+                },
+                "platforms": {
+                    "description": "Delivery platforms considered when pricing the deals",
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/dto.PlatformSearchResult"
+                    }
+                },
+                "results": {
+                    "description": "Page of top deal products",
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/dto.TopDealsMobileItem"
+                    }
                 }
             }
         },
@@ -6284,6 +7068,68 @@ const docTemplate = `{
                 "search_count": {
                     "description": "Number of times the product was searched for",
                     "type": "integer"
+                }
+            }
+        },
+        "dto.TopStoreMobileItem": {
+            "description": "A featured store shown on the mobile dashboard.",
+            "type": "object",
+            "properties": {
+                "eta": {
+                    "description": "Estimated delivery time for the store, e.g. \"10 mins\"",
+                    "type": "string"
+                },
+                "image_url": {
+                    "description": "URL of the store's display image",
+                    "type": "string"
+                },
+                "store_id": {
+                    "description": "Unique identifier for the store",
+                    "type": "string"
+                },
+                "store_name": {
+                    "description": "Display name of the store",
+                    "type": "string"
+                }
+            }
+        },
+        "dto.TrendingCategoryMobileItem": {
+            "description": "A trending product category shown on the mobile dashboard.",
+            "type": "object",
+            "properties": {
+                "category_id": {
+                    "description": "Unique identifier for the category",
+                    "type": "string"
+                },
+                "category_name": {
+                    "description": "Display name of the category",
+                    "type": "string"
+                },
+                "image_url": {
+                    "description": "URL of the category's display image",
+                    "type": "string"
+                }
+            }
+        },
+        "dto.TrendingItemMobileItem": {
+            "description": "A trending product shown on the mobile dashboard.",
+            "type": "object",
+            "properties": {
+                "image_url": {
+                    "description": "URL of the product's display image",
+                    "type": "string"
+                },
+                "item_id": {
+                    "description": "Unique identifier for the product",
+                    "type": "string"
+                },
+                "item_name": {
+                    "description": "Display name of the product",
+                    "type": "string"
+                },
+                "lowest_price": {
+                    "description": "Lowest price for the product across tracked delivery platforms",
+                    "type": "number"
                 }
             }
         },
@@ -6967,6 +7813,17 @@ const docTemplate = `{
                 }
             }
         },
+        "v1.MobileRegisterRequest": {
+            "type": "object",
+            "required": [
+                "phone_number"
+            ],
+            "properties": {
+                "phone_number": {
+                    "type": "string"
+                }
+            }
+        },
         "v1.PlatformOption": {
             "type": "object",
             "properties": {
@@ -7339,6 +8196,21 @@ const docTemplate = `{
                     "type": "integer"
                 },
                 "source": {
+                    "type": "string"
+                }
+            }
+        },
+        "v1.VerifyPhoneOTPRequest": {
+            "type": "object",
+            "required": [
+                "otp_code",
+                "phone_number"
+            ],
+            "properties": {
+                "otp_code": {
+                    "type": "string"
+                },
+                "phone_number": {
                     "type": "string"
                 }
             }
