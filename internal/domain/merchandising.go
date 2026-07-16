@@ -4,16 +4,30 @@ import "time"
 
 type Banner struct {
 	BaseModel
+	Title        string           `gorm:"not null;default:''" json:"title"`
 	ImageURL     string           `gorm:"not null" json:"image_url"`
 	TargetType   BannerTargetType `gorm:"type:varchar;not null;default:'none'" json:"target_type"`
 	TargetID     *string          `gorm:"type:uuid" json:"target_id,omitempty"`
 	TargetURL    *string          `json:"target_url,omitempty"`
 	StartDate    *time.Time       `json:"start_date,omitempty"`
 	EndDate      *time.Time       `json:"end_date,omitempty"`
-	IsActive     bool             `gorm:"not null;default:true" json:"is_active"`
+	IsActive     bool             `gorm:"not null" json:"is_active"`
 	DisplayOrder int              `gorm:"not null;default:0" json:"display_order"`
 	Timestamps
 	SoftDelete
+}
+
+func (b Banner) IsLive(now time.Time) bool {
+	if !b.IsActive {
+		return false
+	}
+	if b.StartDate != nil && now.Before(*b.StartDate) {
+		return false
+	}
+	if b.EndDate != nil && now.After(*b.EndDate) {
+		return false
+	}
+	return true
 }
 
 // powering the admin dashboards "total searches" and "top searched products".

@@ -29,7 +29,7 @@ func NewHTTPClient(cfg Config) Client {
 	return &httpClient{
 		apiKey:  cfg.APIKey,
 		baseURL: strings.TrimRight(base, "/"),
-		http:    &http.Client{Timeout: 15 * time.Second},
+		http:    &http.Client{Timeout: 20 * time.Second},
 	}
 }
 
@@ -60,30 +60,45 @@ func (c *httpClient) locQuery(loc Location) url.Values {
 	q := url.Values{}
 	q.Set("lat", ftoa(loc.Lat))
 	q.Set("lon", ftoa(loc.Lon))
+	if loc.Pincode != "" {
+		q.Set("pincode", loc.Pincode)
+	}
 	return q
 }
 
 type rawProduct struct {
-	ID         string   `json:"id"`
-	Name       string   `json:"name"`
-	Brand      string   `json:"brand"`
-	Available  bool     `json:"available"`
-	MRP        float64  `json:"mrp"`
-	OfferPrice float64  `json:"offer_price"`
-	Quantity   string   `json:"quantity"`
-	Rating     float64  `json:"rating"`
-	Inventory  int      `json:"inventory"`
-	Images     []string `json:"images"`
-	DeepLink   string   `json:"deeplink"`
+	ID         string        `json:"id"`
+	Name       string        `json:"name"`
+	Brand      string        `json:"brand"`
+	Available  flexBool      `json:"available"`
+	MRP        flexFloat     `json:"mrp"`
+	OfferPrice flexFloat     `json:"offer_price"`
+	Quantity   string        `json:"quantity"`
+	Rating     float64       `json:"rating"`
+	Inventory  flexInventory `json:"inventory"`
+	Images     []string      `json:"images"`
+	DeepLink   string        `json:"deeplink"`
 }
 
 func (r rawProduct) toProduct() Product {
+	avail, inv, label := resolveStock(bool(r.Available), r.Inventory)
 	return Product{
-		ID: r.ID, Name: r.Name, Brand: r.Brand, Available: r.Available,
-		PricePaise: util.RupeesToPaise(r.OfferPrice), MRPPaise: util.RupeesToPaise(r.MRP),
-		Quantity: r.Quantity, Rating: r.Rating, Inventory: r.Inventory,
-		Images: r.Images, DeepLink: r.DeepLink,
+		ID: r.ID, Name: r.Name, Brand: r.Brand, Available: avail,
+		PricePaise: util.RupeesToPaise(float64(r.OfferPrice)),
+		MRPPaise:   util.RupeesToPaise(float64(r.MRP)),
+		Quantity:   r.Quantity, Multipack: parseMultipack(r.Quantity), Rating: r.Rating,
+		Inventory: inv, StockLabel: label, Images: r.Images, DeepLink: r.DeepLink,
 	}
+}
+
+func resolveStock(rowAvail bool, fi flexInventory) (bool, *int, string) {
+	if !fi.present {
+		return rowAvail, nil, ""
+	}
+	if fi.Count != nil {
+		return *fi.Count > 0, fi.Count, fi.Label
+	}
+	return fi.Available, nil, fi.Label
 }
 
 func (c *httpClient) Search(ctx context.Context, query string, loc Location, platform string) (*SearchResult, error) {
@@ -109,25 +124,38 @@ func (c *httpClient) Search(ctx context.Context, query string, loc Location, pla
 	return out, nil
 }
 
+type rawItem struct {
+	ItemID    string        `json:"item_id"`
+	Name      string        `json:"name"`
+	Quantity  string        `json:"quantity"`
+	Available flexBool      `json:"available"`
+	Price     flexFloat     `json:"price"`
+	MRP       flexFloat     `json:"mrp"`
+	Inventory flexInventory `json:"inventory"`
+	DeepLink  string        `json:"deeplink"`
+}
+
 func (c *httpClient) GetItem(ctx context.Context, itemID, platform string, loc Location) (*ItemDetail, error) {
 	q := c.locQuery(loc)
-	q.Set("id", itemID)
+	q.Set("item_id", itemID)
 	q.Set("platform", platform)
 	var raw struct {
 		Data struct {
-			ID        string  `json:"id"`
-			Price     float64 `json:"price"`
-			MRP       float64 `json:"mrp"`
-			Available bool    `json:"available"`
-			Stock     int     `json:"stock"`
+			Items []rawItem `json:"items"`
 		} `json:"data"`
 	}
 	if err := c.doGet(ctx, "/item", q, &raw); err != nil {
 		return nil, err
 	}
+	if len(raw.Data.Items) == 0 {
+		return nil, fmt.Errorf("quickcommerce: item %s not found on %s", itemID, platform)
+	}
+	it := raw.Data.Items[0]
+	avail, inv, label := resolveStock(bool(it.Available), it.Inventory)
 	return &ItemDetail{
-		ID: raw.Data.ID, PricePaise: util.RupeesToPaise(raw.Data.Price),
-		MRPPaise: util.RupeesToPaise(raw.Data.MRP), Available: raw.Data.Available, Stock: raw.Data.Stock,
+		ID: it.ItemID, Name: it.Name, Quantity: it.Quantity, Available: avail,
+		PricePaise: util.RupeesToPaise(float64(it.Price)), MRPPaise: util.RupeesToPaise(float64(it.MRP)),
+		Inventory: inv, StockLabel: label, DeepLink: it.DeepLink,
 	}, nil
 }
 
@@ -136,15 +164,14 @@ func (c *httpClient) ETA(ctx context.Context, platform string, loc Location) (*E
 	q.Set("platform", platform)
 	var raw struct {
 		Data struct {
-			Platform    string `json:"platform"`
-			ETA         int    `json:"eta"`
-			Serviceable bool   `json:"serviceable"`
+			ETA  string `json:"eta"`
+			Open bool   `json:"open"`
 		} `json:"data"`
 	}
 	if err := c.doGet(ctx, "/eta", q, &raw); err != nil {
 		return nil, err
 	}
-	return &ETAResult{Platform: raw.Data.Platform, ETAMinutes: raw.Data.ETA, Serviceable: raw.Data.Serviceable}, nil
+	return &ETAResult{Platform: platform, ETAMinutes: firstInt(raw.Data.ETA), ETAText: raw.Data.ETA, Serviceable: raw.Data.Open}, nil
 }
 
 func (c *httpClient) GroupSearch(ctx context.Context, query string, loc Location, platforms []string) (*GroupSearchResult, error) {
@@ -154,15 +181,15 @@ func (c *httpClient) GroupSearch(ctx context.Context, query string, loc Location
 	var raw struct {
 		CreditsRemaining int `json:"credits_remaining"`
 		Data             struct {
-			Query     string                  `json:"query"`
-			Platforms map[string][]rawProduct `json:"platforms"`
+			Query   string                  `json:"query"`
+			Results map[string][]rawProduct `json:"results"`
 		} `json:"data"`
 	}
 	if err := c.doGet(ctx, "/groupsearch", q, &raw); err != nil {
 		return nil, err
 	}
 	out := &GroupSearchResult{Query: raw.Data.Query, ByPlatform: make(map[string][]Product), CreditsRemaining: raw.CreditsRemaining}
-	for plat, prods := range raw.Data.Platforms {
+	for plat, prods := range raw.Data.Results {
 		for _, p := range prods {
 			out.ByPlatform[plat] = append(out.ByPlatform[plat], p.toProduct())
 		}
@@ -176,18 +203,19 @@ func (c *httpClient) GroupETA(ctx context.Context, loc Location, platforms []str
 	var raw struct {
 		CreditsRemaining int `json:"credits_remaining"`
 		Data             struct {
-			Platforms map[string]struct {
-				ETA         int  `json:"eta"`
-				Serviceable bool `json:"serviceable"`
-			} `json:"platforms"`
+			Results []struct {
+				Platform string `json:"platform"`
+				ETA      string `json:"eta"`
+				Open     bool   `json:"open"`
+			} `json:"results"`
 		} `json:"data"`
 	}
 	if err := c.doGet(ctx, "/groupeta", q, &raw); err != nil {
 		return nil, err
 	}
 	out := &GroupETAResult{ByPlatform: make(map[string]ETAResult), CreditsRemaining: raw.CreditsRemaining}
-	for plat, e := range raw.Data.Platforms {
-		out.ByPlatform[plat] = ETAResult{Platform: plat, ETAMinutes: e.ETA, Serviceable: e.Serviceable}
+	for _, e := range raw.Data.Results {
+		out.ByPlatform[e.Platform] = ETAResult{Platform: e.Platform, ETAMinutes: firstInt(e.ETA), ETAText: e.ETA, Serviceable: e.Open}
 	}
 	return out, nil
 }
@@ -195,16 +223,16 @@ func (c *httpClient) GroupETA(ctx context.Context, loc Location, platforms []str
 func (c *httpClient) Credits(ctx context.Context) (*Credits, error) {
 	var raw struct {
 		CreditsRemaining int `json:"credits_remaining"`
-		Data             struct {
-			CreditsRemaining int `json:"credits_remaining"`
-		} `json:"data"`
+		Summary          struct {
+			TotalAvailable int `json:"total_available"`
+		} `json:"summary"`
 	}
 	if err := c.doGet(ctx, "/credits", nil, &raw); err != nil {
 		return nil, err
 	}
 	rem := raw.CreditsRemaining
 	if rem == 0 {
-		rem = raw.Data.CreditsRemaining
+		rem = raw.Summary.TotalAvailable
 	}
 	return &Credits{Remaining: rem}, nil
 }

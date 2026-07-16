@@ -22,6 +22,15 @@ type Brand struct {
 	ProductBrandName string `json:"product_brand_name"`
 }
 
+// @Swagger:model ProductSubCategory
+// @Property product_sub_category_id: Unique identifier for the sub-category
+// @Property product_sub_category_name: Display name of the sub-category
+// @Description Sub-category a product belongs to. Zero-valued if the product has none.
+type ProductSubCategory struct {
+	ProductSubCategoryID   string `json:"product_sub_category_id"`
+	ProductSubCategoryName string `json:"product_sub_category_name"`
+}
+
 // @Swagger:model ProductItem
 // @Property product_id: Unique identifier for the product
 // @Property image_url: URL of the product's display image
@@ -44,8 +53,16 @@ type ProductItem struct {
 	ProductDescription string `json:"product_description"`
 	// Category the product belongs to
 	ProductCategory ProductCategory `json:"product_category"`
+	// Sub-category the product belongs to (zero-valued if none)
+	ProductSubCategory ProductSubCategory `json:"product_sub_category"`
 	// Brand the product belongs to
 	ProductBrand Brand `json:"product_brand"`
+	// Flat category id, echoing the write shape (same value as product_category.product_category_id)
+	CategoryID string `json:"category_id"`
+	// Flat sub-category id, echoing the write shape
+	SubcategoryID string `json:"subcategory_id"`
+	// Flat brand id, echoing the write shape
+	BrandID string `json:"brand_id"`
 	// Whether the product is flagged as a top/featured item
 	IsTopItem bool `json:"is_top_item"`
 	// Status of the product

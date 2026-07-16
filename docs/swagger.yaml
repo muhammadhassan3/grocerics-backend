@@ -1,4 +1,41 @@
 definitions:
+  dto.AddressDTO:
+    properties:
+      city_id:
+        type: string
+      city_name:
+        type: string
+      id:
+        type: string
+      is_default:
+        type: boolean
+      label:
+        type: string
+      lat:
+        type: number
+      line1:
+        type: string
+      line2:
+        type: string
+      lng:
+        type: number
+      pincode:
+        type: string
+      serviceable:
+        description: true if the pincode resolved to a serving city
+        type: boolean
+    type: object
+  dto.BannerCardDTO:
+    properties:
+      image_url:
+        type: string
+      target_id:
+        type: string
+      target_type:
+        type: string
+      target_url:
+        type: string
+    type: object
   dto.BannerItem:
     description: A promotional banner shown on the storefront.
     properties:
@@ -15,10 +52,20 @@ definitions:
         description: URL of the banner image
         type: string
       is_active:
-        description: Whether the banner is currently enabled
+        description: |-
+          Manual on/off switch. Can only turn a banner OFF — it never forces one
+          live outside its date window.
+        type: boolean
+      is_live:
+        description: |-
+          Derived, read-only: whether the banner is actually showing right now
+          (is_active AND inside the date window). This is what the grid should display.
         type: boolean
       start_date:
         description: Date the banner becomes visible, RFC3339
+        type: string
+      title:
+        description: Admin-facing name, so banners are distinguishable in the grid
         type: string
     type: object
   dto.Banners:
@@ -85,6 +132,34 @@ definitions:
         - $ref: '#/definitions/query.Meta'
         description: Pagination metadata
     type: object
+  dto.CartLineDTO:
+    properties:
+      average_price:
+        $ref: '#/definitions/dto.MoneyDTO'
+      item_id:
+        type: string
+      pack_label:
+        type: string
+      product_name:
+        type: string
+      quantity:
+        type: integer
+      variant_id:
+        type: string
+    type: object
+  dto.CartResponse:
+    properties:
+      cart_id:
+        type: string
+      items:
+        items:
+          $ref: '#/definitions/dto.CartLineDTO'
+        type: array
+      platforms:
+        items:
+          $ref: '#/definitions/dto.PlatformBreakdownDTO'
+        type: array
+    type: object
   dto.Categories:
     description: Paginated list of categories.
     properties:
@@ -126,12 +201,76 @@ definitions:
         description: Number of subcategories nested under this category
         type: integer
     type: object
+  dto.CategoryCardDTO:
+    properties:
+      id:
+        type: string
+      image_url:
+        type: string
+      name:
+        type: string
+      slug:
+        type: string
+    type: object
   dto.CategoryData:
     description: Data Transfer Object for a Category entity.
     properties:
       category_id:
         type: string
       category_name:
+        type: string
+    type: object
+  dto.Cities:
+    description: Paginated list of cities.
+    properties:
+      cities:
+        description: Page of cities
+        items:
+          $ref: '#/definitions/dto.CityItem'
+        type: array
+      meta:
+        allOf:
+        - $ref: '#/definitions/query.Meta'
+        description: Pagination metadata
+    type: object
+  dto.CityDTO:
+    properties:
+      city_id:
+        type: string
+      name:
+        type: string
+      slug:
+        type: string
+    type: object
+  dto.CityItem:
+    description: A serviceable city. The lat/lng + default_pincode are the location
+    properties:
+      city_id:
+        description: Unique identifier for the city
+        type: string
+      default_pincode:
+        description: Pincode used as the default QuickCommerce location anchor
+        type: string
+      display_order:
+        description: Sort order in pickers
+        type: integer
+      enabled:
+        description: Whether the city is serviceable
+        type: boolean
+      lat:
+        description: Latitude of the city's QuickCommerce location anchor
+        type: number
+      lng:
+        description: Longitude of the city's QuickCommerce location anchor
+        type: number
+      name:
+        description: Display name of the city
+        type: string
+      slug:
+        description: URL-safe name
+        type: string
+      state:
+        description: State the city sits in
         type: string
     type: object
   dto.DailyActiveUsers:
@@ -191,6 +330,25 @@ definitions:
         - $ref: '#/definitions/dto.StatsItem'
         description: Total registered users
     type: object
+  dto.HomeResponse:
+    properties:
+      banners:
+        items:
+          $ref: '#/definitions/dto.BannerCardDTO'
+        type: array
+      categories:
+        items:
+          $ref: '#/definitions/dto.CategoryCardDTO'
+        type: array
+      top_stores:
+        items:
+          $ref: '#/definitions/dto.PlatformDTO'
+        type: array
+      trending_items:
+        items:
+          $ref: '#/definitions/dto.ProductCardDTO'
+        type: array
+    type: object
   dto.InventoryManagements:
     description: Paginated inventory management product list.
     properties:
@@ -219,6 +377,9 @@ definitions:
       product_name:
         description: Display name of the product
         type: string
+      product_sub_category:
+        description: Name of the sub-category the product belongs to ("" if none)
+        type: string
       status:
         description: Status of the product
         enum:
@@ -228,6 +389,9 @@ definitions:
       stock_count:
         description: Units currently in stock across all variants
         type: integer
+      subcategory_id:
+        description: Unique identifier of the sub-category ("" if none)
+        type: string
       top_item:
         description: Whether the product is flagged as a top/featured item
         type: boolean
@@ -267,6 +431,28 @@ definitions:
         items:
           $ref: '#/definitions/dto.ProductPrice'
         type: array
+    type: object
+  dto.MeDTO:
+    properties:
+      current_city_id:
+        type: string
+      current_city_name:
+        type: string
+      email:
+        type: string
+      id:
+        type: string
+      name:
+        type: string
+      phone:
+        type: string
+    type: object
+  dto.MoneyDTO:
+    properties:
+      display:
+        type: string
+      paise:
+        type: integer
     type: object
   dto.MonthlyActiveUsers:
     description: Monthly active user counts for the current year, keyed by month.
@@ -308,6 +494,86 @@ definitions:
         description: Active users in September
         type: integer
     type: object
+  dto.NotificationPreferencesDTO:
+    properties:
+      order_updates:
+        type: boolean
+      price_alerts:
+        type: boolean
+      promotions:
+        type: boolean
+    type: object
+  dto.PlatformBreakdownDTO:
+    properties:
+      available_item_ids:
+        items:
+          type: string
+        type: array
+      available_total:
+        $ref: '#/definitions/dto.MoneyDTO'
+      delivery_eta_minutes:
+        type: integer
+      is_cheapest:
+        type: boolean
+      item_total:
+        $ref: '#/definitions/dto.MoneyDTO'
+      logo_url:
+        type: string
+      platform_code:
+        type: string
+      platform_name:
+        type: string
+      unavailable_item_ids:
+        items:
+          type: string
+        type: array
+    type: object
+  dto.PlatformDTO:
+    properties:
+      code:
+        type: string
+      delivery_eta_text:
+        type: string
+      logo_url:
+        type: string
+      name:
+        type: string
+    type: object
+  dto.PlatformItem:
+    description: A delivery platform (Blinkit, Zepto, ...). qc_name maps it onto
+    properties:
+      code:
+        description: Short code used in requests, e.g. "blinkit"
+        type: string
+      created_at:
+        description: Creation timestamp, RFC3339
+        type: string
+      delivery_eta_text:
+        description: Fallback delivery ETA copy, e.g. "10 Mins"
+        type: string
+      display_name:
+        description: Display name, e.g. "Blinkit"
+        type: string
+      display_order:
+        description: Sort order in pickers
+        type: integer
+      enabled:
+        description: Whether the platform is enabled
+        type: boolean
+      logo_url:
+        description: URL of the platform's logo
+        type: string
+      platform_id:
+        description: Unique identifier for the platform
+        type: string
+      qc_name:
+        description: The platform's name on QuickCommerce, e.g. "BlinkIt". Empty =
+          not mapped.
+        type: string
+      searchable:
+        description: True when qc_name is set, i.e. the platform can be searched/linked.
+        type: boolean
+    type: object
   dto.PlatformPrice:
     description: Live price of a product across tracked delivery platforms.
     properties:
@@ -320,6 +586,36 @@ definitions:
       zepto_price:
         description: Current price on Zepto
         type: number
+    type: object
+  dto.PlatformPriceChipDTO:
+    properties:
+      available:
+        type: boolean
+      deep_link:
+        type: string
+      logo_url:
+        type: string
+      mrp:
+        $ref: '#/definitions/dto.MoneyDTO'
+      platform_code:
+        type: string
+      platform_name:
+        type: string
+      price:
+        $ref: '#/definitions/dto.MoneyDTO'
+    type: object
+  dto.Platforms:
+    description: Paginated list of platforms.
+    properties:
+      meta:
+        allOf:
+        - $ref: '#/definitions/query.Meta'
+        description: Pagination metadata
+      platforms:
+        description: Page of platforms
+        items:
+          $ref: '#/definitions/dto.PlatformItem'
+        type: array
     type: object
   dto.PresignedURL:
     description: Signed URL for uploading a file to the storage bucket.
@@ -337,18 +633,29 @@ definitions:
         description: Public URL of the uploaded file
         type: string
     type: object
-  dto.Pricing:
-    description: Price and stock details for a product variant.
+  dto.ProductCardDTO:
     properties:
-      discounted_price:
-        description: Price after discount, equal to Price when no discount applies
-        type: number
-      price:
-        description: List price
-        type: number
-      stock:
-        description: Units currently in stock
-        type: integer
+      brand_name:
+        type: string
+      default_variant_id:
+        type: string
+      image_url:
+        type: string
+      name:
+        type: string
+      product_id:
+        type: string
+      starting_price:
+        $ref: '#/definitions/dto.MoneyDTO'
+    type: object
+  dto.ProductCardListDTO:
+    properties:
+      items:
+        items:
+          $ref: '#/definitions/dto.ProductCardDTO'
+        type: array
+      meta:
+        $ref: '#/definitions/query.Meta'
     type: object
   dto.ProductCategory:
     description: Category a product belongs to.
@@ -360,9 +667,40 @@ definitions:
         description: Display name of the category
         type: string
     type: object
+  dto.ProductDetailDTO:
+    properties:
+      brand_name:
+        type: string
+      category_id:
+        type: string
+      description:
+        type: string
+      images:
+        items:
+          type: string
+        type: array
+      name:
+        type: string
+      product_id:
+        type: string
+      similar:
+        items:
+          $ref: '#/definitions/dto.ProductCardDTO'
+        type: array
+      variants:
+        items:
+          $ref: '#/definitions/dto.VariantDetailDTO'
+        type: array
+    type: object
   dto.ProductItem:
     description: A single product row as shown in product listings.
     properties:
+      brand_id:
+        description: Flat brand id, echoing the write shape
+        type: string
+      category_id:
+        description: Flat category id, echoing the write shape (same value as product_category.product_category_id)
+        type: string
       created_at:
         description: Creation timestamp, RFC3339
         type: string
@@ -389,11 +727,18 @@ definitions:
       product_name:
         description: Display name of the product
         type: string
+      product_sub_category:
+        allOf:
+        - $ref: '#/definitions/dto.ProductSubCategory'
+        description: Sub-category the product belongs to (zero-valued if none)
       status:
         description: Status of the product
         enum:
         - active
         - disabled
+        type: string
+      subcategory_id:
+        description: Flat sub-category id, echoing the write shape
         type: string
     type: object
   dto.ProductPrice:
@@ -413,13 +758,18 @@ definitions:
         description: Display name of the product
         type: string
     type: object
+  dto.ProductSubCategory:
+    description: Sub-category a product belongs to. Zero-valued if the product has
+      none.
+    properties:
+      product_sub_category_id:
+        type: string
+      product_sub_category_name:
+        type: string
+    type: object
   dto.ProductVariantItem:
     description: A single sellable variant of a product (e.g. a specific pack size).
     properties:
-      pricing:
-        allOf:
-        - $ref: '#/definitions/dto.Pricing'
-        description: Price and stock for this variant
       product_id:
         description: Parent product's identifier
         type: string
@@ -504,6 +854,9 @@ definitions:
       category_id:
         description: Identifier of the parent category
         type: string
+      category_name:
+        description: Display name of the parent category
+        type: string
       created_at:
         description: Creation timestamp, RFC3339
         type: string
@@ -519,11 +872,11 @@ definitions:
         - active
         - disabled
         type: string
-      sub_category_id:
-        description: Unique identifier for the subcategory
-        type: string
       sub_category_name:
         description: Display name of the subcategory
+        type: string
+      subcategory_id:
+        description: Unique identifier for the subcategory
         type: string
     type: object
   dto.TokenResponse:
@@ -673,6 +1026,23 @@ definitions:
         - $ref: '#/definitions/query.Meta'
         description: Pagination metadata
     type: object
+  dto.VariantDetailDTO:
+    properties:
+      average_price:
+        $ref: '#/definitions/dto.MoneyDTO'
+      pack_label:
+        description: '"500 gm"'
+        type: string
+      platform_prices:
+        items:
+          $ref: '#/definitions/dto.PlatformPriceChipDTO'
+        type: array
+      unit_price:
+        description: '"₹72/100gm"'
+        type: string
+      variant_id:
+        type: string
+    type: object
   query.Meta:
     properties:
       page:
@@ -684,12 +1054,67 @@ definitions:
       total:
         type: integer
     type: object
+  service.Candidate:
+    properties:
+      available:
+        type: boolean
+      brand:
+        type: string
+      deeplink:
+        type: string
+      inventory:
+        type: integer
+      is_combo:
+        type: boolean
+      is_multipack:
+        type: boolean
+      mrp_paise:
+        type: integer
+      multipack:
+        type: integer
+      name:
+        type: string
+      out_of_stock:
+        type: boolean
+      price_paise:
+        type: integer
+      qc_item_id:
+        type: string
+      quantity:
+        type: string
+      stock_label:
+        type: string
+    type: object
+  service.RefreshResult:
+    properties:
+      credits_remaining:
+        type: integer
+      failed:
+        type: integer
+      refreshed:
+        type: integer
+    type: object
   v1.BanUserRequest:
     properties:
       user_id:
         type: string
     required:
     - user_id
+    type: object
+  v1.ConfirmLinkRequest:
+    properties:
+      city_id:
+        type: string
+      deep_link:
+        type: string
+      platform_code:
+        type: string
+      qc_item_id:
+        type: string
+    required:
+    - city_id
+    - platform_code
+    - qc_item_id
     type: object
   v1.CreateBannerRequest:
     properties:
@@ -698,14 +1123,14 @@ definitions:
       image_url:
         type: string
       is_active:
-        default: true
         type: boolean
       start_date:
         type: string
+      title:
+        type: string
     required:
-    - end_date
     - image_url
-    - start_date
+    - title
     type: object
   v1.CreateBrandRequest:
     properties:
@@ -723,7 +1148,6 @@ definitions:
     required:
     - brand_name
     - image_url
-    - is_top_brand
     - status
     type: object
   v1.CreateCategoryRequest:
@@ -742,8 +1166,29 @@ definitions:
     required:
     - category_name
     - image_url
-    - is_top_category
     - status
+    type: object
+  v1.CreateCityRequest:
+    properties:
+      default_pincode:
+        type: string
+      display_order:
+        type: integer
+      enabled:
+        type: boolean
+      lat:
+        type: number
+      lng:
+        type: number
+      name:
+        type: string
+      state:
+        type: string
+    required:
+    - default_pincode
+    - lat
+    - lng
+    - name
     type: object
   v1.CreateNewItemRequest:
     properties:
@@ -764,14 +1209,34 @@ definitions:
         - active
         - disabled
         type: string
+      subcategory_id:
+        type: string
     required:
     - brand_id
     - category_id
     - image_url
-    - is_top_item
-    - product_description
     - product_name
     - status
+    type: object
+  v1.CreatePlatformRequest:
+    properties:
+      code:
+        type: string
+      delivery_eta_text:
+        type: string
+      display_name:
+        type: string
+      display_order:
+        type: integer
+      enabled:
+        type: boolean
+      logo_url:
+        type: string
+      qc_name:
+        type: string
+    required:
+    - code
+    - display_name
     type: object
   v1.CreateSubcategoryRequest:
     properties:
@@ -791,7 +1256,6 @@ definitions:
     required:
     - category_id
     - image_url
-    - is_top_sub_category
     - status
     - sub_category_name
     type: object
@@ -799,15 +1263,11 @@ definitions:
     properties:
       custom_product_variant_id:
         type: string
-      price:
-        $ref: '#/definitions/dto.Pricing'
       product_id:
         type: string
       volume:
         $ref: '#/definitions/dto.ProductVariantUnit'
     required:
-    - custom_product_variant_id
-    - price
     - product_id
     - volume
     type: object
@@ -821,7 +1281,6 @@ definitions:
   v1.DeleteBrandRequest:
     properties:
       brand_id:
-        description: Unique identifier for the brand
         type: string
     required:
     - brand_id
@@ -833,6 +1292,13 @@ definitions:
     required:
     - category_id
     type: object
+  v1.DeleteCityRequest:
+    properties:
+      city_id:
+        type: string
+    required:
+    - city_id
+    type: object
   v1.DeleteItemRequest:
     properties:
       product_id:
@@ -840,12 +1306,19 @@ definitions:
     required:
     - product_id
     type: object
-  v1.DeleteSubcategoryRequest:
+  v1.DeletePlatformRequest:
     properties:
-      sub_category_id:
+      platform_id:
         type: string
     required:
-    - sub_category_id
+    - platform_id
+    type: object
+  v1.DeleteSubcategoryRequest:
+    properties:
+      subcategory_id:
+        type: string
+    required:
+    - subcategory_id
     type: object
   v1.DeleteVariantRequest:
     properties:
@@ -861,6 +1334,17 @@ definitions:
         type: string
     required:
     - email
+    type: object
+  v1.LinkSearchResponse:
+    properties:
+      credits_remaining:
+        type: integer
+      results:
+        additionalProperties:
+          items:
+            $ref: '#/definitions/service.Candidate'
+          type: array
+        type: object
     type: object
   v1.LoginRequest:
     properties:
@@ -879,6 +1363,44 @@ definitions:
     required:
     - refresh_token
     type: object
+  v1.ManualPriceRequest:
+    properties:
+      city_id:
+        type: string
+      deep_link:
+        type: string
+      mrp_paise:
+        type: integer
+      platform_code:
+        type: string
+      platform_sku:
+        type: string
+      price_paise:
+        type: integer
+      variant_id:
+        type: string
+    required:
+    - city_id
+    - mrp_paise
+    - platform_code
+    - price_paise
+    - variant_id
+    type: object
+  v1.PlatformOption:
+    properties:
+      code:
+        type: string
+      display_name:
+        type: string
+      logo_url:
+        type: string
+      platform_id:
+        type: string
+      qc_name:
+        type: string
+      searchable:
+        type: boolean
+    type: object
   v1.PresignRequest:
     properties:
       contentType:
@@ -891,6 +1413,17 @@ definitions:
     - contentType
     - fileName
     - folder
+    type: object
+  v1.RefreshRequest:
+    properties:
+      city_id:
+        type: string
+      product_id:
+        type: string
+      variant_id:
+        type: string
+    required:
+    - city_id
     type: object
   v1.RefreshTokenRequest:
     properties:
@@ -936,6 +1469,8 @@ definitions:
         type: boolean
       start_date:
         type: string
+      title:
+        type: string
     required:
     - banner_id
     type: object
@@ -975,6 +1510,27 @@ definitions:
     required:
     - category_id
     type: object
+  v1.UpdateCityRequest:
+    properties:
+      city_id:
+        type: string
+      default_pincode:
+        type: string
+      display_order:
+        type: integer
+      enabled:
+        type: boolean
+      lat:
+        type: number
+      lng:
+        type: number
+      name:
+        type: string
+      state:
+        type: string
+    required:
+    - city_id
+    type: object
   v1.UpdateItemRequest:
     properties:
       brand_id:
@@ -996,8 +1552,31 @@ definitions:
         - active
         - disabled
         type: string
+      subcategory_id:
+        type: string
     required:
     - product_id
+    type: object
+  v1.UpdatePlatformRequest:
+    properties:
+      code:
+        type: string
+      delivery_eta_text:
+        type: string
+      display_name:
+        type: string
+      display_order:
+        type: integer
+      enabled:
+        type: boolean
+      logo_url:
+        type: string
+      platform_id:
+        type: string
+      qc_name:
+        type: string
+    required:
+    - platform_id
     type: object
   v1.UpdateSubcategoryRequest:
     properties:
@@ -1012,20 +1591,16 @@ definitions:
         - active
         - disabled
         type: string
-      sub_category_id:
-        type: string
       sub_category_name:
         type: string
+      subcategory_id:
+        type: string
     required:
-    - sub_category_id
+    - subcategory_id
     type: object
   v1.UpdateVariantRequest:
     properties:
       custom_product_variant_id:
-        type: string
-      price:
-        $ref: '#/definitions/dto.Pricing'
-      product_id:
         type: string
       product_variant_id:
         type: string
@@ -1033,6 +1608,99 @@ definitions:
         $ref: '#/definitions/dto.ProductVariantUnit'
     required:
     - product_variant_id
+    type: object
+  v1.VariantPriceRow:
+    properties:
+      available:
+        type: boolean
+      deep_link:
+        type: string
+      inventory:
+        type: integer
+      last_updated_at:
+        type: string
+      mrp_paise:
+        description: MRP in paise. 0 when the platform reports no MRP.
+        type: integer
+      platform_code:
+        type: string
+      platform_id:
+        type: string
+      platform_name:
+        type: string
+      platform_sku:
+        type: string
+      price_paise:
+        description: Selling price in paise. 3800 = ₹38.00
+        type: integer
+      source:
+        type: string
+    type: object
+  v1.addCartItemRequest:
+    properties:
+      quantity:
+        type: integer
+      variant_id:
+        type: string
+    required:
+    - variant_id
+    type: object
+  v1.addressRequest:
+    properties:
+      is_default:
+        type: boolean
+      label:
+        type: string
+      lat:
+        type: number
+      line1:
+        type: string
+      line2:
+        type: string
+      lng:
+        type: number
+      pincode:
+        type: string
+    required:
+    - line1
+    - pincode
+    type: object
+  v1.fcmDeleteRequest:
+    properties:
+      token:
+        type: string
+    required:
+    - token
+    type: object
+  v1.fcmTokenRequest:
+    properties:
+      platform:
+        type: string
+      token:
+        type: string
+    required:
+    - token
+    type: object
+  v1.quantityRequest:
+    properties:
+      quantity:
+        type: integer
+    required:
+    - quantity
+    type: object
+  v1.updateMeRequest:
+    properties:
+      name:
+        type: string
+    required:
+    - name
+    type: object
+  v1.wishlistRequest:
+    properties:
+      variant_id:
+        type: string
+    required:
+    - variant_id
     type: object
 info:
   contact:
@@ -1235,8 +1903,6 @@ paths:
     delete:
       consumes:
       - application/json
-      description: Deletes an existing banner. This endpoint is intended for internal
-        use and should be secured appropriately.
       parameters:
       - description: Delete Banner Request
         in: body
@@ -1256,52 +1922,21 @@ paths:
                 data:
                   type: string
               type: object
-        "400":
-          description: Bad Request
-          schema:
-            allOf:
-            - $ref: '#/definitions/dto.Response'
-            - properties:
-                data:
-                  type: string
-              type: object
-        "401":
-          description: Unauthorized
-          schema:
-            allOf:
-            - $ref: '#/definitions/dto.Response'
-            - properties:
-                data:
-                  type: string
-              type: object
-        "403":
-          description: Forbidden
-          schema:
-            allOf:
-            - $ref: '#/definitions/dto.Response'
-            - properties:
-                data:
-                  type: string
-              type: object
       security:
       - BearerAuth: []
-      summary: Delete an existing banner
+      summary: Delete a banner
       tags:
       - banners
     get:
-      consumes:
-      - application/json
-      description: Fetches a paginated list of banners.
+      description: Paginated list of all banners (admin sees inactive/expired too).
       parameters:
       - description: Page number
         in: query
         name: page
-        required: true
         type: integer
-      - description: Number of items per page
+      - description: Items per page
         in: query
-        name: limit
-        required: true
+        name: page_size
         type: integer
       produces:
       - application/json
@@ -1315,24 +1950,6 @@ paths:
                 data:
                   $ref: '#/definitions/dto.Banners'
               type: object
-        "401":
-          description: Unauthorized
-          schema:
-            allOf:
-            - $ref: '#/definitions/dto.Response'
-            - properties:
-                data:
-                  type: string
-              type: object
-        "403":
-          description: Forbidden
-          schema:
-            allOf:
-            - $ref: '#/definitions/dto.Response'
-            - properties:
-                data:
-                  type: string
-              type: object
       security:
       - BearerAuth: []
       summary: Get banners
@@ -1341,8 +1958,6 @@ paths:
     patch:
       consumes:
       - application/json
-      description: Updates an existing banner. This endpoint is intended for internal
-        use and should be secured appropriately.
       parameters:
       - description: Update Banner Request
         in: body
@@ -1362,26 +1977,8 @@ paths:
                 data:
                   $ref: '#/definitions/dto.BannerItem'
               type: object
-        "400":
-          description: Bad Request
-          schema:
-            allOf:
-            - $ref: '#/definitions/dto.Response'
-            - properties:
-                data:
-                  type: string
-              type: object
-        "401":
-          description: Unauthorized
-          schema:
-            allOf:
-            - $ref: '#/definitions/dto.Response'
-            - properties:
-                data:
-                  type: string
-              type: object
-        "403":
-          description: Forbidden
+        "404":
+          description: Not Found
           schema:
             allOf:
             - $ref: '#/definitions/dto.Response'
@@ -1391,14 +1988,12 @@ paths:
               type: object
       security:
       - BearerAuth: []
-      summary: Update an existing banner
+      summary: Update a banner
       tags:
       - banners
     post:
       consumes:
       - application/json
-      description: Creates a new banner. This endpoint is intended for internal use
-        and should be secured appropriately.
       parameters:
       - description: Create Banner Request
         in: body
@@ -1427,36 +2022,15 @@ paths:
                 data:
                   type: string
               type: object
-        "401":
-          description: Unauthorized
-          schema:
-            allOf:
-            - $ref: '#/definitions/dto.Response'
-            - properties:
-                data:
-                  type: string
-              type: object
-        "403":
-          description: Forbidden
-          schema:
-            allOf:
-            - $ref: '#/definitions/dto.Response'
-            - properties:
-                data:
-                  type: string
-              type: object
       security:
       - BearerAuth: []
-      summary: Create a new banner
+      summary: Create a banner
       tags:
       - banners
   /v1/banners/{banner_id}:
     get:
-      consumes:
-      - application/json
-      description: Fetches a banner by its unique identifier.
       parameters:
-      - description: Unique identifier for the banner
+      - description: Banner ID
         in: path
         name: banner_id
         required: true
@@ -1472,24 +2046,6 @@ paths:
             - properties:
                 data:
                   $ref: '#/definitions/dto.BannerItem'
-              type: object
-        "401":
-          description: Unauthorized
-          schema:
-            allOf:
-            - $ref: '#/definitions/dto.Response'
-            - properties:
-                data:
-                  type: string
-              type: object
-        "403":
-          description: Forbidden
-          schema:
-            allOf:
-            - $ref: '#/definitions/dto.Response'
-            - properties:
-                data:
-                  type: string
               type: object
         "404":
           description: Not Found
@@ -1509,10 +2065,8 @@ paths:
     delete:
       consumes:
       - application/json
-      description: Deletes a brand. This endpoint is intended for internal use and
-        should be secured appropriately.
       parameters:
-      - description: Unique identifier for the brand
+      - description: Delete Brand Request
         in: body
         name: DeleteBrandRequest
         required: true
@@ -1530,53 +2084,25 @@ paths:
                 data:
                   type: string
               type: object
-        "400":
-          description: Bad Request
-          schema:
-            allOf:
-            - $ref: '#/definitions/dto.Response'
-            - properties:
-                data:
-                  type: string
-              type: object
-        "401":
-          description: Unauthorized
-          schema:
-            allOf:
-            - $ref: '#/definitions/dto.Response'
-            - properties:
-                data:
-                  type: string
-              type: object
-        "403":
-          description: Forbidden
-          schema:
-            allOf:
-            - $ref: '#/definitions/dto.Response'
-            - properties:
-                data:
-                  type: string
-              type: object
       security:
       - BearerAuth: []
       summary: Delete a brand
       tags:
       - brands
     get:
-      consumes:
-      - application/json
-      description: Fetches a paginated list of brands.
       parameters:
       - description: Page number
         in: query
         name: page
-        required: true
         type: integer
-      - description: Number of items per page
+      - description: Items per page
         in: query
-        name: limit
-        required: true
+        name: page_size
         type: integer
+      - description: Filter by name
+        in: query
+        name: search
+        type: string
       produces:
       - application/json
       responses:
@@ -1589,24 +2115,6 @@ paths:
                 data:
                   $ref: '#/definitions/dto.BrandList'
               type: object
-        "401":
-          description: Unauthorized
-          schema:
-            allOf:
-            - $ref: '#/definitions/dto.Response'
-            - properties:
-                data:
-                  type: string
-              type: object
-        "403":
-          description: Forbidden
-          schema:
-            allOf:
-            - $ref: '#/definitions/dto.Response'
-            - properties:
-                data:
-                  type: string
-              type: object
       security:
       - BearerAuth: []
       summary: Get brands
@@ -1615,8 +2123,6 @@ paths:
     patch:
       consumes:
       - application/json
-      description: Updates an existing brand. This endpoint is intended for internal
-        use and should be secured appropriately.
       parameters:
       - description: Update Brand Request
         in: body
@@ -1636,26 +2142,8 @@ paths:
                 data:
                   $ref: '#/definitions/dto.BrandItem'
               type: object
-        "400":
-          description: Bad Request
-          schema:
-            allOf:
-            - $ref: '#/definitions/dto.Response'
-            - properties:
-                data:
-                  type: string
-              type: object
-        "401":
-          description: Unauthorized
-          schema:
-            allOf:
-            - $ref: '#/definitions/dto.Response'
-            - properties:
-                data:
-                  type: string
-              type: object
-        "403":
-          description: Forbidden
+        "404":
+          description: Not Found
           schema:
             allOf:
             - $ref: '#/definitions/dto.Response'
@@ -1665,14 +2153,12 @@ paths:
               type: object
       security:
       - BearerAuth: []
-      summary: Update an existing brand
+      summary: Update a brand
       tags:
       - brands
     post:
       consumes:
       - application/json
-      description: Creates a new brand. This endpoint is intended for internal use
-        and should be secured appropriately.
       parameters:
       - description: Create Brand Request
         in: body
@@ -1701,36 +2187,15 @@ paths:
                 data:
                   type: string
               type: object
-        "401":
-          description: Unauthorized
-          schema:
-            allOf:
-            - $ref: '#/definitions/dto.Response'
-            - properties:
-                data:
-                  type: string
-              type: object
-        "403":
-          description: Forbidden
-          schema:
-            allOf:
-            - $ref: '#/definitions/dto.Response'
-            - properties:
-                data:
-                  type: string
-              type: object
       security:
       - BearerAuth: []
-      summary: Create a new brand
+      summary: Create a brand
       tags:
       - brands
   /v1/brands/{brand_id}:
     get:
-      consumes:
-      - application/json
-      description: Fetches a brand by its unique identifier.
       parameters:
-      - description: Unique identifier for the brand
+      - description: Brand ID
         in: path
         name: brand_id
         required: true
@@ -1747,24 +2212,6 @@ paths:
                 data:
                   $ref: '#/definitions/dto.BrandItem'
               type: object
-        "401":
-          description: Unauthorized
-          schema:
-            allOf:
-            - $ref: '#/definitions/dto.Response'
-            - properties:
-                data:
-                  type: string
-              type: object
-        "403":
-          description: Forbidden
-          schema:
-            allOf:
-            - $ref: '#/definitions/dto.Response'
-            - properties:
-                data:
-                  type: string
-              type: object
         "404":
           description: Not Found
           schema:
@@ -1779,14 +2226,128 @@ paths:
       summary: Get brand by ID
       tags:
       - brands
+  /v1/cart:
+    get:
+      description: The cart plus, for every enabled platform, the available/not-available
+        split and totals.
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            allOf:
+            - $ref: '#/definitions/dto.Response'
+            - properties:
+                data:
+                  $ref: '#/definitions/dto.CartResponse'
+              type: object
+      security:
+      - BearerAuth: []
+      summary: Get cart with per-platform breakdown
+      tags:
+      - consumer
+  /v1/cart/items:
+    post:
+      consumes:
+      - application/json
+      description: Add a variant (upserts quantity if already present). Returns the
+        updated cart.
+      parameters:
+      - description: variant + quantity
+        in: body
+        name: request
+        required: true
+        schema:
+          $ref: '#/definitions/v1.addCartItemRequest'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            allOf:
+            - $ref: '#/definitions/dto.Response'
+            - properties:
+                data:
+                  $ref: '#/definitions/dto.CartResponse'
+              type: object
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/dto.Response'
+      security:
+      - BearerAuth: []
+      summary: Add an item to the cart
+      tags:
+      - consumer
+  /v1/cart/items/{id}:
+    delete:
+      parameters:
+      - description: Cart item ID
+        in: path
+        name: id
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            allOf:
+            - $ref: '#/definitions/dto.Response'
+            - properties:
+                data:
+                  $ref: '#/definitions/dto.CartResponse'
+              type: object
+      security:
+      - BearerAuth: []
+      summary: Remove a cart item
+      tags:
+      - consumer
+    patch:
+      consumes:
+      - application/json
+      parameters:
+      - description: Cart item ID
+        in: path
+        name: id
+        required: true
+        type: string
+      - description: new quantity
+        in: body
+        name: request
+        required: true
+        schema:
+          $ref: '#/definitions/v1.quantityRequest'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            allOf:
+            - $ref: '#/definitions/dto.Response'
+            - properties:
+                data:
+                  $ref: '#/definitions/dto.CartResponse'
+              type: object
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/dto.Response'
+      security:
+      - BearerAuth: []
+      summary: Update a cart item's quantity
+      tags:
+      - consumer
   /v1/categories:
     delete:
       consumes:
       - application/json
-      description: Deletes an existing category. This endpoint is intended for internal
-        use and should be secured appropriately.
       parameters:
-      - description: Unique identifier for the category
+      - description: Delete Category Request
         in: body
         name: DeleteCategoryRequest
         required: true
@@ -1813,44 +2374,26 @@ paths:
                 data:
                   type: string
               type: object
-        "401":
-          description: Unauthorized
-          schema:
-            allOf:
-            - $ref: '#/definitions/dto.Response'
-            - properties:
-                data:
-                  type: string
-              type: object
-        "403":
-          description: Forbidden
-          schema:
-            allOf:
-            - $ref: '#/definitions/dto.Response'
-            - properties:
-                data:
-                  type: string
-              type: object
       security:
       - BearerAuth: []
-      summary: Delete an existing category
+      summary: Delete a category
       tags:
       - categories
     get:
-      consumes:
-      - application/json
-      description: Fetches a paginated list of categories.
+      description: Paginated list of categories (admin sees all, including disabled).
       parameters:
       - description: Page number
         in: query
         name: page
-        required: true
         type: integer
-      - description: Number of items per page
+      - description: Items per page
         in: query
-        name: limit
-        required: true
+        name: page_size
         type: integer
+      - description: Filter by name
+        in: query
+        name: search
+        type: string
       produces:
       - application/json
       responses:
@@ -1863,24 +2406,6 @@ paths:
                 data:
                   $ref: '#/definitions/dto.Categories'
               type: object
-        "401":
-          description: Unauthorized
-          schema:
-            allOf:
-            - $ref: '#/definitions/dto.Response'
-            - properties:
-                data:
-                  type: string
-              type: object
-        "403":
-          description: Forbidden
-          schema:
-            allOf:
-            - $ref: '#/definitions/dto.Response'
-            - properties:
-                data:
-                  type: string
-              type: object
       security:
       - BearerAuth: []
       summary: Get categories
@@ -1889,8 +2414,6 @@ paths:
     patch:
       consumes:
       - application/json
-      description: Updates an existing category. This endpoint is intended for internal
-        use and should be secured appropriately.
       parameters:
       - description: Update Category Request
         in: body
@@ -1919,17 +2442,8 @@ paths:
                 data:
                   type: string
               type: object
-        "401":
-          description: Unauthorized
-          schema:
-            allOf:
-            - $ref: '#/definitions/dto.Response'
-            - properties:
-                data:
-                  type: string
-              type: object
-        "403":
-          description: Forbidden
+        "404":
+          description: Not Found
           schema:
             allOf:
             - $ref: '#/definitions/dto.Response'
@@ -1939,14 +2453,12 @@ paths:
               type: object
       security:
       - BearerAuth: []
-      summary: Update an existing category
+      summary: Update a category
       tags:
       - categories
     post:
       consumes:
       - application/json
-      description: Creates a new category. This endpoint is intended for internal
-        use and should be secured appropriately.
       parameters:
       - description: Create Category Request
         in: body
@@ -1975,38 +2487,17 @@ paths:
                 data:
                   type: string
               type: object
-        "401":
-          description: Unauthorized
-          schema:
-            allOf:
-            - $ref: '#/definitions/dto.Response'
-            - properties:
-                data:
-                  type: string
-              type: object
-        "403":
-          description: Forbidden
-          schema:
-            allOf:
-            - $ref: '#/definitions/dto.Response'
-            - properties:
-                data:
-                  type: string
-              type: object
       security:
       - BearerAuth: []
-      summary: Create a new category
+      summary: Create a category
       tags:
       - categories
-  /v1/categories/{category_id}:
+  /v1/categories/{id}:
     get:
-      consumes:
-      - application/json
-      description: Fetches a category by its unique identifier.
       parameters:
-      - description: Unique identifier for the category
+      - description: Category ID
         in: path
-        name: category_id
+        name: id
         required: true
         type: string
       produces:
@@ -2020,24 +2511,6 @@ paths:
             - properties:
                 data:
                   $ref: '#/definitions/dto.Category'
-              type: object
-        "401":
-          description: Unauthorized
-          schema:
-            allOf:
-            - $ref: '#/definitions/dto.Response'
-            - properties:
-                data:
-                  type: string
-              type: object
-        "403":
-          description: Forbidden
-          schema:
-            allOf:
-            - $ref: '#/definitions/dto.Response'
-            - properties:
-                data:
-                  type: string
               type: object
         "404":
           description: Not Found
@@ -2053,22 +2526,23 @@ paths:
       summary: Get category by ID
       tags:
       - categories
-  /v1/categories/{category_id}/subcategories/{subcategory_id}:
+  /v1/categories/{id}/products:
     get:
-      consumes:
-      - application/json
-      description: Fetches a subcategory by its unique identifier.
+      description: Paginated grid of product cards for a category in the user's city.
       parameters:
-      - description: Unique identifier for the category
+      - description: Category ID
         in: path
-        name: category_id
+        name: id
         required: true
         type: string
-      - description: Unique identifier for the subcategory
-        in: path
-        name: subcategory_id
-        required: true
-        type: string
+      - description: page number (default 1)
+        in: query
+        name: page
+        type: integer
+      - description: page size, max 100 (default 20)
+        in: query
+        name: page_size
+        type: integer
       produces:
       - application/json
       responses:
@@ -2079,25 +2553,91 @@ paths:
             - $ref: '#/definitions/dto.Response'
             - properties:
                 data:
-                  $ref: '#/definitions/dto.SubCategory'
+                  $ref: '#/definitions/dto.ProductCardListDTO'
               type: object
         "401":
           description: Unauthorized
           schema:
-            allOf:
-            - $ref: '#/definitions/dto.Response'
-            - properties:
-                data:
-                  type: string
-              type: object
-        "403":
-          description: Forbidden
+            $ref: '#/definitions/dto.Response'
+      security:
+      - BearerAuth: []
+      summary: Products in a category (PLP)
+      tags:
+      - consumer
+  /v1/cities:
+    delete:
+      consumes:
+      - application/json
+      parameters:
+      - description: Delete City Request
+        in: body
+        name: DeleteCityRequest
+        required: true
+        schema:
+          $ref: '#/definitions/v1.DeleteCityRequest'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
           schema:
             allOf:
             - $ref: '#/definitions/dto.Response'
             - properties:
                 data:
                   type: string
+              type: object
+      security:
+      - BearerAuth: []
+      summary: Delete a city
+      tags:
+      - cities
+    get:
+      description: Cities the app serves — used by the location picker.
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            allOf:
+            - $ref: '#/definitions/dto.Response'
+            - properties:
+                data:
+                  items:
+                    $ref: '#/definitions/dto.CityDTO'
+                  type: array
+              type: object
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/dto.Response'
+      security:
+      - BearerAuth: []
+      summary: List serviceable cities
+      tags:
+      - consumer
+    patch:
+      consumes:
+      - application/json
+      parameters:
+      - description: Update City Request
+        in: body
+        name: city
+        required: true
+        schema:
+          $ref: '#/definitions/v1.UpdateCityRequest'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            allOf:
+            - $ref: '#/definitions/dto.Response'
+            - properties:
+                data:
+                  $ref: '#/definitions/dto.CityItem'
               type: object
         "404":
           description: Not Found
@@ -2110,193 +2650,19 @@ paths:
               type: object
       security:
       - BearerAuth: []
-      summary: Get subcategory by ID
+      summary: Update a city
       tags:
-      - subcategories
-  /v1/categories/subcategories:
-    delete:
-      consumes:
-      - application/json
-      description: Deletes a subcategory. This endpoint is intended for internal use
-        and should be secured appropriately.
-      parameters:
-      - description: Delete Subcategory Request
-        in: body
-        name: DeleteSubcategoryRequest
-        required: true
-        schema:
-          $ref: '#/definitions/v1.DeleteSubcategoryRequest'
-      produces:
-      - application/json
-      responses:
-        "200":
-          description: OK
-          schema:
-            allOf:
-            - $ref: '#/definitions/dto.Response'
-            - properties:
-                data:
-                  type: string
-              type: object
-        "400":
-          description: Bad Request
-          schema:
-            allOf:
-            - $ref: '#/definitions/dto.Response'
-            - properties:
-                data:
-                  type: string
-              type: object
-        "401":
-          description: Unauthorized
-          schema:
-            allOf:
-            - $ref: '#/definitions/dto.Response'
-            - properties:
-                data:
-                  type: string
-              type: object
-        "403":
-          description: Forbidden
-          schema:
-            allOf:
-            - $ref: '#/definitions/dto.Response'
-            - properties:
-                data:
-                  type: string
-              type: object
-      security:
-      - BearerAuth: []
-      summary: Delete a subcategory
-      tags:
-      - subcategories
-    get:
-      consumes:
-      - application/json
-      description: Fetches a paginated list of subcategories.
-      parameters:
-      - description: Search term to filter subcategories by name
-        in: query
-        name: search
-        type: string
-      - description: Unique identifier for the category whose subcategories are to
-          be fetched
-        in: query
-        name: category_id
-        type: string
-      - description: Page number
-        in: query
-        name: page
-        required: true
-        type: integer
-      - description: Number of items per page
-        in: query
-        name: limit
-        required: true
-        type: integer
-      produces:
-      - application/json
-      responses:
-        "200":
-          description: OK
-          schema:
-            allOf:
-            - $ref: '#/definitions/dto.Response'
-            - properties:
-                data:
-                  $ref: '#/definitions/dto.SubCategories'
-              type: object
-        "401":
-          description: Unauthorized
-          schema:
-            allOf:
-            - $ref: '#/definitions/dto.Response'
-            - properties:
-                data:
-                  type: string
-              type: object
-        "403":
-          description: Forbidden
-          schema:
-            allOf:
-            - $ref: '#/definitions/dto.Response'
-            - properties:
-                data:
-                  type: string
-              type: object
-      security:
-      - BearerAuth: []
-      summary: Get subcategories
-      tags:
-      - subcategories
-    patch:
-      consumes:
-      - application/json
-      description: Updates an existing subcategory. This endpoint is intended for
-        internal use and should be secured appropriately.
-      parameters:
-      - description: Update Subcategory Request
-        in: body
-        name: subcategory
-        required: true
-        schema:
-          $ref: '#/definitions/v1.UpdateSubcategoryRequest'
-      produces:
-      - application/json
-      responses:
-        "200":
-          description: OK
-          schema:
-            allOf:
-            - $ref: '#/definitions/dto.Response'
-            - properties:
-                data:
-                  $ref: '#/definitions/dto.SubCategory'
-              type: object
-        "400":
-          description: Bad Request
-          schema:
-            allOf:
-            - $ref: '#/definitions/dto.Response'
-            - properties:
-                data:
-                  type: string
-              type: object
-        "401":
-          description: Unauthorized
-          schema:
-            allOf:
-            - $ref: '#/definitions/dto.Response'
-            - properties:
-                data:
-                  type: string
-              type: object
-        "403":
-          description: Forbidden
-          schema:
-            allOf:
-            - $ref: '#/definitions/dto.Response'
-            - properties:
-                data:
-                  type: string
-              type: object
-      security:
-      - BearerAuth: []
-      summary: Update an existing subcategory (id supplied via form data)
-      tags:
-      - subcategories
+      - cities
     post:
       consumes:
       - application/json
-      description: Creates a new subcategory. This endpoint is intended for internal
-        use and should be secured appropriately.
       parameters:
-      - description: Create Subcategory Request
+      - description: Create City Request
         in: body
-        name: subcategory
+        name: city
         required: true
         schema:
-          $ref: '#/definitions/v1.CreateSubcategoryRequest'
+          $ref: '#/definitions/v1.CreateCityRequest'
       produces:
       - application/json
       responses:
@@ -2307,7 +2673,7 @@ paths:
             - $ref: '#/definitions/dto.Response'
             - properties:
                 data:
-                  $ref: '#/definitions/dto.SubCategory'
+                  $ref: '#/definitions/dto.CityItem'
               type: object
         "400":
           description: Bad Request
@@ -2318,17 +2684,33 @@ paths:
                 data:
                   type: string
               type: object
-        "401":
-          description: Unauthorized
+      security:
+      - BearerAuth: []
+      summary: Create a serviceable city
+      tags:
+      - cities
+  /v1/cities/{id}:
+    get:
+      parameters:
+      - description: City ID
+        in: path
+        name: id
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
           schema:
             allOf:
             - $ref: '#/definitions/dto.Response'
             - properties:
                 data:
-                  type: string
+                  $ref: '#/definitions/dto.CityItem'
               type: object
-        "403":
-          description: Forbidden
+        "404":
+          description: Not Found
           schema:
             allOf:
             - $ref: '#/definitions/dto.Response'
@@ -2338,9 +2720,42 @@ paths:
               type: object
       security:
       - BearerAuth: []
-      summary: Create a new subcategory
+      summary: Get a city by ID (admin)
       tags:
-      - subcategories
+      - cities
+  /v1/cities/all:
+    get:
+      description: Paginated list of serviceable cities, including disabled.
+      parameters:
+      - description: Page number
+        in: query
+        name: page
+        type: integer
+      - description: Items per page
+        in: query
+        name: page_size
+        type: integer
+      - description: Filter by name
+        in: query
+        name: search
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            allOf:
+            - $ref: '#/definitions/dto.Response'
+            - properties:
+                data:
+                  $ref: '#/definitions/dto.Cities'
+              type: object
+      security:
+      - BearerAuth: []
+      summary: List all cities (admin)
+      tags:
+      - cities
   /v1/dashboard:
     get:
       consumes:
@@ -2537,12 +2952,62 @@ paths:
       summary: Get top searched products
       tags:
       - dashboard
+  /v1/deals:
+    get:
+      description: Products that have a discounted platform price (mrp > price) in
+        the user's city.
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            allOf:
+            - $ref: '#/definitions/dto.Response'
+            - properties:
+                data:
+                  items:
+                    $ref: '#/definitions/dto.ProductCardDTO'
+                  type: array
+              type: object
+      security:
+      - BearerAuth: []
+      summary: Top Deals
+      tags:
+      - consumer
+  /v1/home:
+    get:
+      description: Banners, top stores (platforms), trending categories and trending
+        items for the user's city.
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            allOf:
+            - $ref: '#/definitions/dto.Response'
+            - properties:
+                data:
+                  $ref: '#/definitions/dto.HomeResponse'
+              type: object
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/dto.Response'
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/dto.Response'
+      security:
+      - BearerAuth: []
+      summary: Home screen
+      tags:
+      - consumer
   /v1/inventory-management:
     delete:
       consumes:
       - application/json
-      description: Deletes an existing inventory item in the system. This endpoint
-        is intended for internal use and should be secured appropriately.
       parameters:
       - description: Delete Item Request
         in: body
@@ -2562,45 +3027,25 @@ paths:
                 data:
                   type: string
               type: object
-        "401":
-          description: Unauthorized
-          schema:
-            allOf:
-            - $ref: '#/definitions/dto.Response'
-            - properties:
-                data:
-                  type: string
-              type: object
-        "403":
-          description: Forbidden
-          schema:
-            allOf:
-            - $ref: '#/definitions/dto.Response'
-            - properties:
-                data:
-                  type: string
-              type: object
       security:
       - BearerAuth: []
-      summary: Delete an existing inventory item
+      summary: Delete an inventory item
       tags:
       - inventory-management
     get:
-      consumes:
-      - application/json
-      description: Fetches the data needed to populate the inventory management dashboard,
-        including headline stats and a paginated list of products.
       parameters:
       - description: Page number
         in: query
         name: page
-        required: true
         type: integer
-      - description: Number of items per page
+      - description: Items per page
         in: query
-        name: limit
-        required: true
+        name: page_size
         type: integer
+      - description: Filter by product name
+        in: query
+        name: search
+        type: string
       produces:
       - application/json
       responses:
@@ -2613,34 +3058,14 @@ paths:
                 data:
                   $ref: '#/definitions/dto.InventoryManagements'
               type: object
-        "401":
-          description: Unauthorized
-          schema:
-            allOf:
-            - $ref: '#/definitions/dto.Response'
-            - properties:
-                data:
-                  type: string
-              type: object
-        "403":
-          description: Forbidden
-          schema:
-            allOf:
-            - $ref: '#/definitions/dto.Response'
-            - properties:
-                data:
-                  type: string
-              type: object
       security:
       - BearerAuth: []
-      summary: Get inventory management data
+      summary: Inventory list
       tags:
       - inventory-management
     patch:
       consumes:
       - application/json
-      description: Updates an existing inventory item in the system. This endpoint
-        is intended for internal use and should be secured appropriately.
       parameters:
       - description: Update Item Request
         in: body
@@ -2658,19 +3083,10 @@ paths:
             - $ref: '#/definitions/dto.Response'
             - properties:
                 data:
-                  $ref: '#/definitions/dto.ProductItem'
-              type: object
-        "401":
-          description: Unauthorized
-          schema:
-            allOf:
-            - $ref: '#/definitions/dto.Response'
-            - properties:
-                data:
                   type: string
               type: object
-        "403":
-          description: Forbidden
+        "404":
+          description: Not Found
           schema:
             allOf:
             - $ref: '#/definitions/dto.Response'
@@ -2680,16 +3096,14 @@ paths:
               type: object
       security:
       - BearerAuth: []
-      summary: Update an existing inventory item
+      summary: Update an inventory item
       tags:
       - inventory-management
     post:
       consumes:
       - application/json
-      description: Creates a new inventory item in the system. This endpoint is intended
-        for internal use and should be secured appropriately.
       parameters:
-      - description: Create New Item Request
+      - description: Create Item Request
         in: body
         name: item
         required: true
@@ -2698,8 +3112,8 @@ paths:
       produces:
       - application/json
       responses:
-        "200":
-          description: OK
+        "201":
+          description: Created
           schema:
             allOf:
             - $ref: '#/definitions/dto.Response'
@@ -2707,17 +3121,8 @@ paths:
                 data:
                   $ref: '#/definitions/dto.ProductItem'
               type: object
-        "401":
-          description: Unauthorized
-          schema:
-            allOf:
-            - $ref: '#/definitions/dto.Response'
-            - properties:
-                data:
-                  type: string
-              type: object
-        "403":
-          description: Forbidden
+        "400":
+          description: Bad Request
           schema:
             allOf:
             - $ref: '#/definitions/dto.Response'
@@ -2727,16 +3132,13 @@ paths:
               type: object
       security:
       - BearerAuth: []
-      summary: Create a new inventory item
+      summary: Create an inventory item (product)
       tags:
       - inventory-management
   /v1/inventory-management/{product_id}:
     get:
-      consumes:
-      - application/json
-      description: Fetches an inventory item by its unique identifier.
       parameters:
-      - description: Unique identifier for the inventory item
+      - description: Product ID
         in: path
         name: product_id
         required: true
@@ -2753,24 +3155,6 @@ paths:
                 data:
                   $ref: '#/definitions/dto.ProductItem'
               type: object
-        "401":
-          description: Unauthorized
-          schema:
-            allOf:
-            - $ref: '#/definitions/dto.Response'
-            - properties:
-                data:
-                  type: string
-              type: object
-        "403":
-          description: Forbidden
-          schema:
-            allOf:
-            - $ref: '#/definitions/dto.Response'
-            - properties:
-                data:
-                  type: string
-              type: object
         "404":
           description: Not Found
           schema:
@@ -2782,17 +3166,13 @@ paths:
               type: object
       security:
       - BearerAuth: []
-      summary: Get inventory item by ID
+      summary: Get inventory item
       tags:
       - inventory-management
   /v1/inventory-management/{product_id}/variants:
     get:
-      consumes:
-      - application/json
-      description: Fetches a list of variants for a specific product. This endpoint
-        is intended for internal use and should be secured appropriately.
       parameters:
-      - description: Unique identifier for the product
+      - description: Product ID
         in: path
         name: product_id
         required: true
@@ -2809,41 +3189,20 @@ paths:
                 data:
                   $ref: '#/definitions/dto.ProductVariantItems'
               type: object
-        "401":
-          description: Unauthorized
-          schema:
-            allOf:
-            - $ref: '#/definitions/dto.Response'
-            - properties:
-                data:
-                  type: string
-              type: object
-        "403":
-          description: Forbidden
-          schema:
-            allOf:
-            - $ref: '#/definitions/dto.Response'
-            - properties:
-                data:
-                  type: string
-              type: object
       security:
       - BearerAuth: []
-      summary: List variants of a product
+      summary: List a product's variants
       tags:
       - inventory-management
   /v1/inventory-management/{product_id}/variants/{variant_id}:
     get:
-      consumes:
-      - application/json
-      description: Fetches the variants of an inventory item by its unique identifier.
       parameters:
-      - description: Unique identifier for the inventory item
+      - description: Product ID
         in: path
         name: product_id
         required: true
         type: string
-      - description: Unique identifier for the variant
+      - description: Variant ID
         in: path
         name: variant_id
         required: true
@@ -2858,25 +3217,7 @@ paths:
             - $ref: '#/definitions/dto.Response'
             - properties:
                 data:
-                  $ref: '#/definitions/dto.ProductVariantItems'
-              type: object
-        "401":
-          description: Unauthorized
-          schema:
-            allOf:
-            - $ref: '#/definitions/dto.Response'
-            - properties:
-                data:
-                  type: string
-              type: object
-        "403":
-          description: Forbidden
-          schema:
-            allOf:
-            - $ref: '#/definitions/dto.Response'
-            - properties:
-                data:
-                  type: string
+                  $ref: '#/definitions/dto.ProductVariantItem'
               type: object
         "404":
           description: Not Found
@@ -2889,15 +3230,98 @@ paths:
               type: object
       security:
       - BearerAuth: []
-      summary: Get inventory item variants by product ID
+      summary: Get a single variant
       tags:
       - inventory-management
-  /v1/inventory-management/stats:
+  /v1/inventory-management/link/search:
     get:
+      description: 'Discovery step: groupsearch across platforms so the admin can
+        confirm the right item per platform. Costs 1 credit per platform. Never called
+        on a consumer request.'
+      parameters:
+      - description: search term
+        in: query
+        name: q
+        required: true
+        type: string
+      - description: city ID (supplies the QC location anchor)
+        in: query
+        name: city
+        required: true
+        type: string
+      - description: comma-separated platform codes to search, e.g. blinkit,zepto.
+          Omit to search every enabled QC-mapped platform. Costs 1 credit per platform.
+        in: query
+        name: platforms
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            allOf:
+            - $ref: '#/definitions/dto.Response'
+            - properties:
+                data:
+                  $ref: '#/definitions/v1.LinkSearchResponse'
+              type: object
+        "400":
+          description: Bad Request
+          schema:
+            allOf:
+            - $ref: '#/definitions/dto.Response'
+            - properties:
+                data:
+                  type: string
+              type: object
+      security:
+      - BearerAuth: []
+      summary: Search QuickCommerce candidates for linking
+      tags:
+      - linking
+  /v1/inventory-management/refresh:
+    post:
       consumes:
       - application/json
-      description: Fetches the headline stats for the inventory management dashboard,
-        including total categories, products, brands, and tracked delivery platforms.
+      description: Re-pulls live price+stock via GetItem for a variant or a whole
+        product's variants in one city. Costs 1 credit per linked platform. One platform
+        failing never fails the refresh.
+      parameters:
+      - description: Refresh request (one of product_id / variant_id)
+        in: body
+        name: request
+        required: true
+        schema:
+          $ref: '#/definitions/v1.RefreshRequest'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            allOf:
+            - $ref: '#/definitions/dto.Response'
+            - properties:
+                data:
+                  $ref: '#/definitions/service.RefreshResult'
+              type: object
+        "400":
+          description: Bad Request
+          schema:
+            allOf:
+            - $ref: '#/definitions/dto.Response'
+            - properties:
+                data:
+                  type: string
+              type: object
+      security:
+      - BearerAuth: []
+      summary: Refresh live prices/stock from QuickCommerce
+      tags:
+      - linking
+  /v1/inventory-management/stats:
+    get:
       produces:
       - application/json
       responses:
@@ -2910,35 +3334,15 @@ paths:
                 data:
                   $ref: '#/definitions/dto.InventoryManagementsStats'
               type: object
-        "401":
-          description: Unauthorized
-          schema:
-            allOf:
-            - $ref: '#/definitions/dto.Response'
-            - properties:
-                data:
-                  type: string
-              type: object
-        "403":
-          description: Forbidden
-          schema:
-            allOf:
-            - $ref: '#/definitions/dto.Response'
-            - properties:
-                data:
-                  type: string
-              type: object
       security:
       - BearerAuth: []
-      summary: Get inventory management stats
+      summary: Inventory headline stats
       tags:
       - inventory-management
   /v1/inventory-management/variants:
     delete:
       consumes:
       - application/json
-      description: Deletes an existing variant for a specific product. This endpoint
-        is intended for internal use and should be secured appropriately.
       parameters:
       - description: Delete Variant Request
         in: body
@@ -2958,43 +3362,14 @@ paths:
                 data:
                   type: string
               type: object
-        "400":
-          description: Bad Request
-          schema:
-            allOf:
-            - $ref: '#/definitions/dto.Response'
-            - properties:
-                data:
-                  type: string
-              type: object
-        "401":
-          description: Unauthorized
-          schema:
-            allOf:
-            - $ref: '#/definitions/dto.Response'
-            - properties:
-                data:
-                  type: string
-              type: object
-        "403":
-          description: Forbidden
-          schema:
-            allOf:
-            - $ref: '#/definitions/dto.Response'
-            - properties:
-                data:
-                  type: string
-              type: object
       security:
       - BearerAuth: []
-      summary: Delete an existing variant for a product
+      summary: Delete a variant
       tags:
       - inventory-management
     patch:
       consumes:
       - application/json
-      description: Updates an existing variant for a specific product. This endpoint
-        is intended for internal use and should be secured appropriately.
       parameters:
       - description: Update Variant Request
         in: body
@@ -3014,26 +3389,8 @@ paths:
                 data:
                   $ref: '#/definitions/dto.ProductVariantItem'
               type: object
-        "400":
-          description: Bad Request
-          schema:
-            allOf:
-            - $ref: '#/definitions/dto.Response'
-            - properties:
-                data:
-                  type: string
-              type: object
-        "401":
-          description: Unauthorized
-          schema:
-            allOf:
-            - $ref: '#/definitions/dto.Response'
-            - properties:
-                data:
-                  type: string
-              type: object
-        "403":
-          description: Forbidden
+        "404":
+          description: Not Found
           schema:
             allOf:
             - $ref: '#/definitions/dto.Response'
@@ -3043,14 +3400,14 @@ paths:
               type: object
       security:
       - BearerAuth: []
-      summary: Update an existing variant for a product
+      summary: Update a variant
       tags:
       - inventory-management
     post:
       consumes:
       - application/json
-      description: Creates a new variant for a specific product. This endpoint is
-        intended for internal use and should be secured appropriately.
+      description: Creates a pack-size variant. Per-platform linking + price is set
+        separately via the linking endpoints.
       parameters:
       - description: Create Variant Request
         in: body
@@ -3061,8 +3418,8 @@ paths:
       produces:
       - application/json
       responses:
-        "200":
-          description: OK
+        "201":
+          description: Created
           schema:
             allOf:
             - $ref: '#/definitions/dto.Response'
@@ -3079,8 +3436,35 @@ paths:
                 data:
                   type: string
               type: object
-        "401":
-          description: Unauthorized
+      security:
+      - BearerAuth: []
+      summary: Create a variant (pack size)
+      tags:
+      - inventory-management
+  /v1/inventory-management/variants/{variant_id}/links:
+    post:
+      consumes:
+      - application/json
+      description: Pins a (variant, platform) to the chosen QC item id and seeds its
+        price/stock via GetItem. The link is city-independent; the price is stored
+        per city.
+      parameters:
+      - description: Variant ID
+        in: path
+        name: variant_id
+        required: true
+        type: string
+      - description: Confirm link request
+        in: body
+        name: request
+        required: true
+        schema:
+          $ref: '#/definitions/v1.ConfirmLinkRequest'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
           schema:
             allOf:
             - $ref: '#/definitions/dto.Response'
@@ -3088,8 +3472,8 @@ paths:
                 data:
                   type: string
               type: object
-        "403":
-          description: Forbidden
+        "400":
+          description: Bad Request
           schema:
             allOf:
             - $ref: '#/definitions/dto.Response'
@@ -3099,9 +3483,557 @@ paths:
               type: object
       security:
       - BearerAuth: []
-      summary: Create a new variant for a product
+      summary: Confirm a platform link for a variant
       tags:
-      - inventory-management
+      - linking
+  /v1/inventory-management/variants/{variant_id}/prices:
+    get:
+      description: Joins links + platform_prices for a variant in a city — powers
+        the wizard's Variations grid.
+      parameters:
+      - description: Variant ID
+        in: path
+        name: variant_id
+        required: true
+        type: string
+      - description: City ID
+        in: query
+        name: city
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            allOf:
+            - $ref: '#/definitions/dto.Response'
+            - properties:
+                data:
+                  items:
+                    $ref: '#/definitions/v1.VariantPriceRow'
+                  type: array
+              type: object
+        "400":
+          description: Bad Request
+          schema:
+            allOf:
+            - $ref: '#/definitions/dto.Response'
+            - properties:
+                data:
+                  type: string
+              type: object
+      security:
+      - BearerAuth: []
+      summary: Per-platform prices for a variant
+      tags:
+      - linking
+  /v1/inventory-management/variants/manual-price:
+    post:
+      consumes:
+      - application/json
+      description: 'Admin fallback: pin the link and write the price by hand. price
+        = MRP, discounted_price = shown price.'
+      parameters:
+      - description: Manual price request
+        in: body
+        name: request
+        required: true
+        schema:
+          $ref: '#/definitions/v1.ManualPriceRequest'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            allOf:
+            - $ref: '#/definitions/dto.Response'
+            - properties:
+                data:
+                  type: string
+              type: object
+        "400":
+          description: Bad Request
+          schema:
+            allOf:
+            - $ref: '#/definitions/dto.Response'
+            - properties:
+                data:
+                  type: string
+              type: object
+      security:
+      - BearerAuth: []
+      summary: Set a manual price (fallback when not on QuickCommerce)
+      tags:
+      - linking
+  /v1/me:
+    get:
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            allOf:
+            - $ref: '#/definitions/dto.Response'
+            - properties:
+                data:
+                  $ref: '#/definitions/dto.MeDTO'
+              type: object
+      security:
+      - BearerAuth: []
+      summary: Get my profile
+      tags:
+      - profile
+    patch:
+      consumes:
+      - application/json
+      parameters:
+      - description: profile fields
+        in: body
+        name: request
+        required: true
+        schema:
+          $ref: '#/definitions/v1.updateMeRequest'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            allOf:
+            - $ref: '#/definitions/dto.Response'
+            - properties:
+                data:
+                  $ref: '#/definitions/dto.MeDTO'
+              type: object
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/dto.Response'
+      security:
+      - BearerAuth: []
+      summary: Update my profile
+      tags:
+      - profile
+  /v1/me/addresses:
+    get:
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            allOf:
+            - $ref: '#/definitions/dto.Response'
+            - properties:
+                data:
+                  items:
+                    $ref: '#/definitions/dto.AddressDTO'
+                  type: array
+              type: object
+      security:
+      - BearerAuth: []
+      summary: List my delivery addresses
+      tags:
+      - profile
+    post:
+      consumes:
+      - application/json
+      description: Saves an address; the pincode resolves to a serving city. Setting
+        is_default updates the user's current city.
+      parameters:
+      - description: address
+        in: body
+        name: request
+        required: true
+        schema:
+          $ref: '#/definitions/v1.addressRequest'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            allOf:
+            - $ref: '#/definitions/dto.Response'
+            - properties:
+                data:
+                  $ref: '#/definitions/dto.AddressDTO'
+              type: object
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/dto.Response'
+      security:
+      - BearerAuth: []
+      summary: Add a delivery address
+      tags:
+      - profile
+  /v1/me/addresses/{id}:
+    delete:
+      parameters:
+      - description: Address ID
+        in: path
+        name: id
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/dto.Response'
+        "404":
+          description: Not Found
+          schema:
+            $ref: '#/definitions/dto.Response'
+      security:
+      - BearerAuth: []
+      summary: Delete a delivery address
+      tags:
+      - profile
+    patch:
+      consumes:
+      - application/json
+      parameters:
+      - description: Address ID
+        in: path
+        name: id
+        required: true
+        type: string
+      - description: address
+        in: body
+        name: request
+        required: true
+        schema:
+          $ref: '#/definitions/v1.addressRequest'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            allOf:
+            - $ref: '#/definitions/dto.Response'
+            - properties:
+                data:
+                  $ref: '#/definitions/dto.AddressDTO'
+              type: object
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/dto.Response'
+        "404":
+          description: Not Found
+          schema:
+            $ref: '#/definitions/dto.Response'
+      security:
+      - BearerAuth: []
+      summary: Update a delivery address
+      tags:
+      - profile
+  /v1/me/fcm-token:
+    delete:
+      consumes:
+      - application/json
+      parameters:
+      - description: device token
+        in: body
+        name: request
+        required: true
+        schema:
+          $ref: '#/definitions/v1.fcmDeleteRequest'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/dto.Response'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/dto.Response'
+      security:
+      - BearerAuth: []
+      summary: Remove a device push token
+      tags:
+      - profile
+    post:
+      consumes:
+      - application/json
+      parameters:
+      - description: device token
+        in: body
+        name: request
+        required: true
+        schema:
+          $ref: '#/definitions/v1.fcmTokenRequest'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/dto.Response'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/dto.Response'
+      security:
+      - BearerAuth: []
+      summary: Register a device push token
+      tags:
+      - profile
+  /v1/me/notification-preferences:
+    get:
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            allOf:
+            - $ref: '#/definitions/dto.Response'
+            - properties:
+                data:
+                  $ref: '#/definitions/dto.NotificationPreferencesDTO'
+              type: object
+      security:
+      - BearerAuth: []
+      summary: Get my notification preferences
+      tags:
+      - profile
+    put:
+      consumes:
+      - application/json
+      parameters:
+      - description: preferences
+        in: body
+        name: request
+        required: true
+        schema:
+          $ref: '#/definitions/dto.NotificationPreferencesDTO'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            allOf:
+            - $ref: '#/definitions/dto.Response'
+            - properties:
+                data:
+                  $ref: '#/definitions/dto.NotificationPreferencesDTO'
+              type: object
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/dto.Response'
+      security:
+      - BearerAuth: []
+      summary: Update my notification preferences
+      tags:
+      - profile
+  /v1/platforms:
+    delete:
+      consumes:
+      - application/json
+      parameters:
+      - description: Delete Platform Request
+        in: body
+        name: DeletePlatformRequest
+        required: true
+        schema:
+          $ref: '#/definitions/v1.DeletePlatformRequest'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            allOf:
+            - $ref: '#/definitions/dto.Response'
+            - properties:
+                data:
+                  type: string
+              type: object
+      security:
+      - BearerAuth: []
+      summary: Delete a platform
+      tags:
+      - platforms
+    get:
+      description: Enabled delivery platforms — powers the linking picker's platform
+        checkboxes. Only those with searchable=true can be queried on QuickCommerce.
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            allOf:
+            - $ref: '#/definitions/dto.Response'
+            - properties:
+                data:
+                  items:
+                    $ref: '#/definitions/v1.PlatformOption'
+                  type: array
+              type: object
+      security:
+      - BearerAuth: []
+      summary: List enabled platforms
+      tags:
+      - linking
+    patch:
+      consumes:
+      - application/json
+      description: Set qc_name to make a platform searchable on QuickCommerce; clear
+        it (send "-") to make it unsearchable.
+      parameters:
+      - description: Update Platform Request
+        in: body
+        name: platform
+        required: true
+        schema:
+          $ref: '#/definitions/v1.UpdatePlatformRequest'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            allOf:
+            - $ref: '#/definitions/dto.Response'
+            - properties:
+                data:
+                  $ref: '#/definitions/dto.PlatformItem'
+              type: object
+        "404":
+          description: Not Found
+          schema:
+            allOf:
+            - $ref: '#/definitions/dto.Response'
+            - properties:
+                data:
+                  type: string
+              type: object
+      security:
+      - BearerAuth: []
+      summary: Update a platform
+      tags:
+      - platforms
+    post:
+      consumes:
+      - application/json
+      description: qc_name is the platform's name on QuickCommerce (e.g. "BlinkIt",
+        "Zepto", "Swiggy"). Leave it blank and the platform exists but cannot be searched
+        or linked.
+      parameters:
+      - description: Create Platform Request
+        in: body
+        name: platform
+        required: true
+        schema:
+          $ref: '#/definitions/v1.CreatePlatformRequest'
+      produces:
+      - application/json
+      responses:
+        "201":
+          description: Created
+          schema:
+            allOf:
+            - $ref: '#/definitions/dto.Response'
+            - properties:
+                data:
+                  $ref: '#/definitions/dto.PlatformItem'
+              type: object
+        "400":
+          description: Bad Request
+          schema:
+            allOf:
+            - $ref: '#/definitions/dto.Response'
+            - properties:
+                data:
+                  type: string
+              type: object
+      security:
+      - BearerAuth: []
+      summary: Create a platform
+      tags:
+      - platforms
+  /v1/platforms/{platform_id}:
+    get:
+      parameters:
+      - description: Platform ID
+        in: path
+        name: platform_id
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            allOf:
+            - $ref: '#/definitions/dto.Response'
+            - properties:
+                data:
+                  $ref: '#/definitions/dto.PlatformItem'
+              type: object
+        "404":
+          description: Not Found
+          schema:
+            allOf:
+            - $ref: '#/definitions/dto.Response'
+            - properties:
+                data:
+                  type: string
+              type: object
+      security:
+      - BearerAuth: []
+      summary: Get a platform by ID
+      tags:
+      - platforms
+  /v1/platforms/all:
+    get:
+      description: Every platform including disabled ones. searchable=true means the
+        platform has a QuickCommerce mapping (qc_name) and can be searched/linked.
+      parameters:
+      - description: Page number
+        in: query
+        name: page
+        type: integer
+      - description: Items per page
+        in: query
+        name: page_size
+        type: integer
+      - description: Filter by name or code
+        in: query
+        name: search
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            allOf:
+            - $ref: '#/definitions/dto.Response'
+            - properties:
+                data:
+                  $ref: '#/definitions/dto.Platforms'
+              type: object
+      security:
+      - BearerAuth: []
+      summary: List all platforms (admin)
+      tags:
+      - platforms
   /v1/presigned-url:
     post:
       consumes:
@@ -3158,6 +4090,245 @@ paths:
       summary: Get presigned URL for S3 upload
       tags:
       - File Upload
+  /v1/products/{id}:
+    get:
+      description: Variants with per-platform prices, average price, unit price, and
+        similar products.
+      parameters:
+      - description: Product ID
+        in: path
+        name: id
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            allOf:
+            - $ref: '#/definitions/dto.Response'
+            - properties:
+                data:
+                  $ref: '#/definitions/dto.ProductDetailDTO'
+              type: object
+        "404":
+          description: Not Found
+          schema:
+            $ref: '#/definitions/dto.Response'
+      security:
+      - BearerAuth: []
+      summary: Product detail (PDP)
+      tags:
+      - consumer
+  /v1/search:
+    get:
+      description: Full-text search over the Groceric catalog (min 2 chars). Never
+        hits the platform APIs.
+      parameters:
+      - description: search term (min 2 chars)
+        in: query
+        name: q
+        required: true
+        type: string
+      - description: page number (default 1)
+        in: query
+        name: page
+        type: integer
+      - description: page size, max 100 (default 20)
+        in: query
+        name: page_size
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            allOf:
+            - $ref: '#/definitions/dto.Response'
+            - properties:
+                data:
+                  $ref: '#/definitions/dto.ProductCardListDTO'
+              type: object
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/dto.Response'
+      security:
+      - BearerAuth: []
+      summary: Search products (curated catalog)
+      tags:
+      - consumer
+  /v1/subcategories:
+    delete:
+      consumes:
+      - application/json
+      parameters:
+      - description: Delete Subcategory Request
+        in: body
+        name: DeleteSubcategoryRequest
+        required: true
+        schema:
+          $ref: '#/definitions/v1.DeleteSubcategoryRequest'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            allOf:
+            - $ref: '#/definitions/dto.Response'
+            - properties:
+                data:
+                  type: string
+              type: object
+      security:
+      - BearerAuth: []
+      summary: Delete a subcategory
+      tags:
+      - subcategories
+    get:
+      parameters:
+      - description: Page number
+        in: query
+        name: page
+        type: integer
+      - description: Items per page
+        in: query
+        name: page_size
+        type: integer
+      - description: Filter by parent category
+        in: query
+        name: category_id
+        type: string
+      - description: Filter by name
+        in: query
+        name: search
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            allOf:
+            - $ref: '#/definitions/dto.Response'
+            - properties:
+                data:
+                  $ref: '#/definitions/dto.SubCategories'
+              type: object
+      security:
+      - BearerAuth: []
+      summary: Get subcategories
+      tags:
+      - subcategories
+    patch:
+      consumes:
+      - application/json
+      parameters:
+      - description: Update Subcategory Request
+        in: body
+        name: subcategory
+        required: true
+        schema:
+          $ref: '#/definitions/v1.UpdateSubcategoryRequest'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            allOf:
+            - $ref: '#/definitions/dto.Response'
+            - properties:
+                data:
+                  $ref: '#/definitions/dto.SubCategory'
+              type: object
+        "404":
+          description: Not Found
+          schema:
+            allOf:
+            - $ref: '#/definitions/dto.Response'
+            - properties:
+                data:
+                  type: string
+              type: object
+      security:
+      - BearerAuth: []
+      summary: Update a subcategory
+      tags:
+      - subcategories
+    post:
+      consumes:
+      - application/json
+      parameters:
+      - description: Create Subcategory Request
+        in: body
+        name: subcategory
+        required: true
+        schema:
+          $ref: '#/definitions/v1.CreateSubcategoryRequest'
+      produces:
+      - application/json
+      responses:
+        "201":
+          description: Created
+          schema:
+            allOf:
+            - $ref: '#/definitions/dto.Response'
+            - properties:
+                data:
+                  $ref: '#/definitions/dto.SubCategory'
+              type: object
+        "400":
+          description: Bad Request
+          schema:
+            allOf:
+            - $ref: '#/definitions/dto.Response'
+            - properties:
+                data:
+                  type: string
+              type: object
+      security:
+      - BearerAuth: []
+      summary: Create a subcategory
+      tags:
+      - subcategories
+  /v1/subcategories/{subcategory_id}:
+    get:
+      parameters:
+      - description: Subcategory ID
+        in: path
+        name: subcategory_id
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            allOf:
+            - $ref: '#/definitions/dto.Response'
+            - properties:
+                data:
+                  $ref: '#/definitions/dto.SubCategory'
+              type: object
+        "404":
+          description: Not Found
+          schema:
+            allOf:
+            - $ref: '#/definitions/dto.Response'
+            - properties:
+                data:
+                  type: string
+              type: object
+      security:
+      - BearerAuth: []
+      summary: Get subcategory by ID
+      tags:
+      - subcategories
   /v1/users:
     get:
       description: Paginated list of users. Admins see every tenant (optionally filter
@@ -3180,7 +4351,7 @@ paths:
         in: query
         name: order
         type: string
-      - description: 'filter by status: active | disabled'
+      - description: 'filter by status: active | disabled | banned'
         in: query
         name: status
         type: string
@@ -3222,7 +4393,7 @@ paths:
       consumes:
       - application/json
       description: Bans a user by their unique identifier. This action is irreversible
-        and will prevent the user from accessing the system.
+        and will prevent the user from accessing the system. Sets status to "banned".
       parameters:
       - description: Ban User Request
         in: body
@@ -3249,9 +4420,89 @@ paths:
           description: Forbidden
           schema:
             $ref: '#/definitions/dto.Response'
+        "404":
+          description: User not found
+          schema:
+            $ref: '#/definitions/dto.Response'
       summary: Ban User
       tags:
       - Users
+  /v1/wishlist:
+    get:
+      description: Same per-platform available/not-available shape as the cart.
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            allOf:
+            - $ref: '#/definitions/dto.Response'
+            - properties:
+                data:
+                  $ref: '#/definitions/dto.CartResponse'
+              type: object
+      security:
+      - BearerAuth: []
+      summary: Get wishlist with per-platform breakdown
+      tags:
+      - consumer
+    post:
+      consumes:
+      - application/json
+      parameters:
+      - description: variant
+        in: body
+        name: request
+        required: true
+        schema:
+          $ref: '#/definitions/v1.wishlistRequest'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            allOf:
+            - $ref: '#/definitions/dto.Response'
+            - properties:
+                data:
+                  $ref: '#/definitions/dto.CartResponse'
+              type: object
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/dto.Response'
+      security:
+      - BearerAuth: []
+      summary: Add a variant to the wishlist
+      tags:
+      - consumer
+  /v1/wishlist/{variantId}:
+    delete:
+      parameters:
+      - description: Variant ID
+        in: path
+        name: variantId
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            allOf:
+            - $ref: '#/definitions/dto.Response'
+            - properties:
+                data:
+                  $ref: '#/definitions/dto.CartResponse'
+              type: object
+      security:
+      - BearerAuth: []
+      summary: Remove a variant from the wishlist
+      tags:
+      - consumer
 securityDefinitions:
   BearerAuth:
     in: header

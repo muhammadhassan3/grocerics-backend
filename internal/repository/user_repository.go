@@ -81,6 +81,17 @@ func (r *UserRepository) Update(user *domain.User) (*domain.User, error) {
 	return user, nil
 }
 
+func (r *UserRepository) SetStatus(userID string, status domain.UserStatus) (int64, error) {
+	res := r.db.WithContext(context.Background()).
+		Model(&domain.User{}).
+		Where("id = ? AND deleted_at IS NULL", userID).
+		Update("status", status)
+	if res.Error != nil {
+		return 0, util.ParseDatabaseError(res.Error, "idx_users_")
+	}
+	return res.RowsAffected, nil
+}
+
 func (r *UserRepository) SetCurrentCity(userID string, cityID *string) error {
 	err := r.db.WithContext(context.Background()).
 		Model(&domain.User{}).

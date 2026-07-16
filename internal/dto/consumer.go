@@ -52,7 +52,7 @@ type CategoryCardDTO struct {
 }
 
 type CityDTO struct {
-	ID   string `json:"id"`
+	ID   string `json:"city_id"`
 	Name string `json:"name"`
 	Slug string `json:"slug"`
 }

@@ -1,75 +1,125 @@
 package v1
 
 import (
+	"time"
+
 	"grocerics-backend/internal/auth"
 	"grocerics-backend/internal/domain"
 	"grocerics-backend/internal/dto"
+	"grocerics-backend/internal/errs"
 	"grocerics-backend/internal/middleware"
+	"grocerics-backend/internal/query"
 	"grocerics-backend/internal/repository"
+	"grocerics-backend/internal/util"
 
 	"github.com/gin-gonic/gin"
 )
 
-func RegisterSubcategoryRoutes(jwt *auth.JWTService, user *repository.UserRepository, r *gin.Engine) {
-	group := r.Group("/v1/categories")
-	group.Use(middleware.AuthMiddleware(jwt, user))
-	group.GET("/subcategories", getSubcategories())
-	group.GET("/:id/subcategories/:subcategory_id", getSubcategoryByID())
-	adminGroup := group.Group("")
-	adminGroup.Use(middleware.RequireRole(domain.RoleAdmin))
-	adminGroup.POST("/subcategories", CreateSubcategory())
-	adminGroup.PATCH("/subcategories", UpdateSubcategory())
-	adminGroup.DELETE("/subcategories", DeleteSubcategory())
+type SubcategoryDeps struct {
+	JWT           *auth.JWTService
+	Users         *repository.UserRepository
+	Subcategories *repository.SubcategoryRepository
+	Categories    *repository.CategoryRepository
 }
 
-// @Swagger:route GET /v1/categories/subcategories subcategories getSubcategories
-// @Summary Get subcategories
-// @Description Fetches a paginated list of subcategories.
-// @Tags subcategories
-// @Accept json
-// @Produce json
-// @Param search query string false "Search term to filter subcategories by name"
-// @Param category_id query string false "Unique identifier for the category whose subcategories are to be fetched"
-// @Param page query int true "Page number"
-// @Param limit query int true "Number of items per page"
-// @Success 200 {object} dto.Response{data=dto.SubCategories}
-// @Failure 401 {object} dto.Response{data=string}
-// @Failure 403 {object} dto.Response{data=string}
-// @Security BearerAuth
-// @Router /v1/categories/subcategories [get]
-func getSubcategories() gin.HandlerFunc {
-	return func(c *gin.Context) {
-		_ = c.Param("page")
-		_ = c.Param("limit")
-		c.JSON(200, dto.Response{
-			Data:    dto.SubCategories{},
-			Message: "Subcategories fetched successfully",
-			Status:  "success",
-		})
+// Routes live under /v1/subcategories (not /v1/categories/...) to avoid colliding
+// with the GET /v1/categories/:category_id wildcard.
+func RegisterSubcategoryRoutes(r *gin.Engine, d SubcategoryDeps) {
+	group := r.Group("/v1")
+	group.Use(middleware.AuthMiddleware(d.JWT, d.Users))
+	group.GET("/subcategories", listSubcategories(d))
+	group.GET("/subcategories/:subcategory_id", getSubcategoryByID(d))
+
+	admin := group.Group("")
+	admin.Use(middleware.RequireRole(domain.RoleAdmin))
+	admin.POST("/subcategories", createSubcategory(d))
+	admin.PATCH("/subcategories", updateSubcategory(d))
+	admin.DELETE("/subcategories", deleteSubcategory(d))
+}
+
+func toSubcategoryDTO(s domain.Subcategory, categoryName string) dto.SubCategory {
+	return dto.SubCategory{
+		SubCategoryID:    s.ID,
+		SubCategoryName:  s.Name,
+		ImageURL:         util.Deref(s.ImageURL),
+		Status:           string(s.Status),
+		IsTopSubCategory: s.IsTopSubcategory,
+		CategoryID:       s.CategoryID,
+		CategoryName:     categoryName,
+		CreatedAt:        s.CreatedAt.Format(time.RFC3339),
 	}
 }
 
-// @Swagger:route GET /v1/categories/{id}/subcategories/{subcategory_id} subcategories getSubcategoryByID
-// @Summary Get subcategory by ID
-// @Description Fetches a subcategory by its unique identifier.
+func (d SubcategoryDeps) categoryName(categoryID string) string {
+	names, err := d.Categories.NamesByIDs([]string{categoryID})
+	if err != nil {
+		return ""
+	}
+	return names[categoryID]
+}
+
+// @Summary Get subcategories
 // @Tags subcategories
-// @Accept json
 // @Produce json
-// @Param id path string true "Unique identifier for the category"
-// @Param subcategory_id path string true "Unique identifier for the subcategory"
+// @Param page query int false "Page number"
+// @Param page_size query int false "Items per page"
+// @Param category_id query string false "Filter by parent category"
+// @Param search query string false "Filter by name"
+// @Success 200 {object} dto.Response{data=dto.SubCategories}
+// @Security BearerAuth
+// @Router /v1/subcategories [get]
+func listSubcategories(d SubcategoryDeps) gin.HandlerFunc {
+	return func(c *gin.Context) {
+		p := query.PageFromContext(c)
+		categoryID := c.Query("category_id")
+		items, total, err := d.Subcategories.ListAdmin(p, categoryID, c.Query("search"))
+		if err != nil {
+			c.Error(err)
+			return
+		}
+		catIDs := make([]string, 0, len(items))
+		for _, it := range items {
+			catIDs = append(catIDs, it.CategoryID)
+		}
+		catNames, err := d.Categories.NamesByIDs(catIDs)
+		if err != nil {
+			c.Error(err)
+			return
+		}
+		out := make([]dto.SubCategory, len(items))
+		for i, it := range items {
+			out[i] = toSubcategoryDTO(it, catNames[it.CategoryID])
+		}
+		resp := dto.SubCategories{Meta: query.BuildMeta(total, p), SubCategories: out}
+		if categoryID != "" {
+			if cat, _ := d.Categories.FindByID(categoryID); cat != nil {
+				resp.Category = dto.CategoryData{CategoryID: cat.ID, CategoryName: cat.Name}
+			}
+		}
+		ok(c, resp)
+	}
+}
+
+// @Summary Get subcategory by ID
+// @Tags subcategories
+// @Produce json
+// @Param subcategory_id path string true "Subcategory ID"
 // @Success 200 {object} dto.Response{data=dto.SubCategory}
-// @Failure 401 {object} dto.Response{data=string}
-// @Failure 403 {object} dto.Response{data=string}
 // @Failure 404 {object} dto.Response{data=string}
 // @Security BearerAuth
-// @Router /v1/categories/{id}/subcategories/{subcategory_id} [get]
-func getSubcategoryByID() gin.HandlerFunc {
+// @Router /v1/subcategories/{subcategory_id} [get]
+func getSubcategoryByID(d SubcategoryDeps) gin.HandlerFunc {
 	return func(c *gin.Context) {
-		c.JSON(200, dto.Response{
-			Data:    dto.SubCategory{},
-			Message: "Subcategory fetched successfully",
-			Status:  "success",
-		})
+		s, err := d.Subcategories.FindByID(c.Param("subcategory_id"))
+		if err != nil {
+			c.Error(err)
+			return
+		}
+		if s == nil {
+			c.Error(errs.NotFound("SUBCATEGORY_NOT_FOUND", "subcategory not found"))
+			return
+		}
+		ok(c, toSubcategoryDTO(*s, d.categoryName(s.CategoryID)))
 	}
 }
 
@@ -78,34 +128,44 @@ type CreateSubcategoryRequest struct {
 	CategoryID       string `json:"category_id" binding:"required"`
 	ImageURL         string `json:"image_url" binding:"required"`
 	Status           string `json:"status" binding:"required,oneof=active disabled"`
-	IsTopSubCategory bool   `json:"is_top_sub_category" binding:"required"`
+	IsTopSubCategory bool   `json:"is_top_sub_category"`
 }
 
-// @Swagger:route POST /v1/categories/subcategories subcategories createSubcategory
-// @Summary Create a new subcategory
-// @Description Creates a new subcategory. This endpoint is intended for internal use and should be secured appropriately.
+// @Summary Create a subcategory
 // @Tags subcategories
-// @Accept application/json
+// @Accept json
 // @Produce json
 // @Param subcategory body CreateSubcategoryRequest true "Create Subcategory Request"
 // @Success 201 {object} dto.Response{data=dto.SubCategory}
 // @Failure 400 {object} dto.Response{data=string}
-// @Failure 401 {object} dto.Response{data=string}
-// @Failure 403 {object} dto.Response{data=string}
 // @Security BearerAuth
-// @Router /v1/categories/subcategories [post]
-func CreateSubcategory() gin.HandlerFunc {
+// @Router /v1/subcategories [post]
+func createSubcategory(d SubcategoryDeps) gin.HandlerFunc {
 	return func(c *gin.Context) {
-		c.JSON(200, dto.Response{
-			Data:    dto.SubCategory{},
-			Message: "Subcategory created successfully",
-			Status:  "success",
+		var req CreateSubcategoryRequest
+		if err := c.ShouldBindJSON(&req); err != nil {
+			c.Error(errs.BadRequest("VALIDATION", util.ParseValidationError(err).Error()))
+			return
+		}
+		slug := util.Slugify(req.SubCategoryName)
+		created, err := d.Subcategories.Create(&domain.Subcategory{
+			CategoryID:       req.CategoryID,
+			Name:             req.SubCategoryName,
+			Slug:             util.PtrIfSet(slug),
+			ImageURL:         util.PtrIfSet(req.ImageURL),
+			Status:           domain.Status(req.Status),
+			IsTopSubcategory: req.IsTopSubCategory,
 		})
+		if err != nil {
+			c.Error(err)
+			return
+		}
+		c.JSON(201, dto.Response{Status: "success", Data: toSubcategoryDTO(*created, d.categoryName(created.CategoryID)), Message: "Subcategory created successfully"})
 	}
 }
 
 type UpdateSubcategoryRequest struct {
-	SubCategoryID    string `json:"sub_category_id" binding:"required"`
+	SubCategoryID    string `json:"subcategory_id" binding:"required"`
 	SubCategoryName  string `json:"sub_category_name"`
 	CategoryID       string `json:"category_id"`
 	ImageURL         string `json:"image_url"`
@@ -113,52 +173,75 @@ type UpdateSubcategoryRequest struct {
 	IsTopSubCategory *bool  `json:"is_top_sub_category"`
 }
 
-// @Swagger:route PATCH /v1/categories/subcategories subcategories updateSubcategory
-// @Summary Update an existing subcategory (id supplied via form data)
-// @Description Updates an existing subcategory. This endpoint is intended for internal use and should be secured appropriately.
+// @Summary Update a subcategory
 // @Tags subcategories
-// @Accept application/json
+// @Accept json
 // @Produce json
 // @Param subcategory body UpdateSubcategoryRequest true "Update Subcategory Request"
 // @Success 200 {object} dto.Response{data=dto.SubCategory}
-// @Failure 400 {object} dto.Response{data=string}
-// @Failure 401 {object} dto.Response{data=string}
-// @Failure 403 {object} dto.Response{data=string}
+// @Failure 404 {object} dto.Response{data=string}
 // @Security BearerAuth
-// @Router /v1/categories/subcategories [patch]
-func UpdateSubcategory() gin.HandlerFunc {
+// @Router /v1/subcategories [patch]
+func updateSubcategory(d SubcategoryDeps) gin.HandlerFunc {
 	return func(c *gin.Context) {
-		c.JSON(200, dto.Response{
-			Data:    dto.SubCategory{},
-			Message: "Subcategory updated successfully",
-			Status:  "success",
-		})
+		var req UpdateSubcategoryRequest
+		if err := c.ShouldBindJSON(&req); err != nil {
+			c.Error(errs.BadRequest("VALIDATION", util.ParseValidationError(err).Error()))
+			return
+		}
+		fields := map[string]any{}
+		if req.SubCategoryName != "" {
+			fields["name"] = req.SubCategoryName
+			fields["slug"] = util.Slugify(req.SubCategoryName)
+		}
+		if req.CategoryID != "" {
+			fields["category_id"] = req.CategoryID
+		}
+		if req.ImageURL != "" {
+			fields["image_url"] = req.ImageURL
+		}
+		if req.Status != "" {
+			fields["status"] = req.Status
+		}
+		if req.IsTopSubCategory != nil {
+			fields["is_top_subcategory"] = *req.IsTopSubCategory
+		}
+		updated, err := d.Subcategories.Update(req.SubCategoryID, fields)
+		if err != nil {
+			c.Error(err)
+			return
+		}
+		if updated == nil {
+			c.Error(errs.NotFound("SUBCATEGORY_NOT_FOUND", "subcategory not found"))
+			return
+		}
+		ok(c, toSubcategoryDTO(*updated, d.categoryName(updated.CategoryID)))
 	}
 }
 
 type DeleteSubcategoryRequest struct {
-	SubCategoryID string `json:"sub_category_id" binding:"required"`
+	SubCategoryID string `json:"subcategory_id" binding:"required"`
 }
 
-// @Swagger:route DELETE /v1/categories/subcategories subcategories deleteSubcategory
 // @Summary Delete a subcategory
-// @Description Deletes a subcategory. This endpoint is intended for internal use and should be secured appropriately.
 // @Tags subcategories
 // @Accept json
 // @Produce json
 // @Param DeleteSubcategoryRequest body DeleteSubcategoryRequest true "Delete Subcategory Request"
 // @Success 200 {object} dto.Response{data=string}
-// @Failure 400 {object} dto.Response{data=string}
-// @Failure 401 {object} dto.Response{data=string}
-// @Failure 403 {object} dto.Response{data=string}
 // @Security BearerAuth
-// @Router /v1/categories/subcategories [delete]
-func DeleteSubcategory() gin.HandlerFunc {
+// @Router /v1/subcategories [delete]
+func deleteSubcategory(d SubcategoryDeps) gin.HandlerFunc {
 	return func(c *gin.Context) {
-		c.JSON(200, dto.Response{
-			Data:    nil,
-			Message: "Subcategory deleted successfully",
-			Status:  "success",
-		})
+		var req DeleteSubcategoryRequest
+		if err := c.ShouldBindJSON(&req); err != nil {
+			c.Error(errs.BadRequest("VALIDATION", util.ParseValidationError(err).Error()))
+			return
+		}
+		if err := d.Subcategories.SoftDelete(req.SubCategoryID, auth.MustUser(c).ID); err != nil {
+			c.Error(err)
+			return
+		}
+		c.JSON(200, dto.Response{Status: "success", Message: "Subcategory deleted successfully"})
 	}
 }

@@ -11,7 +11,8 @@ type PlatformPrice struct {
 	CityID        string      `gorm:"type:uuid;not null" json:"city_id"`
 	PricePaise    int64       `gorm:"not null" json:"price_paise"`
 	MRPPaise      *int64      `json:"mrp_paise,omitempty"` // for discount display
-	Available     bool        `gorm:"not null;default:true" json:"available"`
+	Available     bool        `gorm:"not null" json:"available"`
+	Inventory     *int        `json:"inventory,omitempty"`
 	Source        PriceSource `gorm:"type:varchar;not null;default:'api'" json:"source"`
 	LastUpdatedAt time.Time   `gorm:"not null;autoUpdateTime" json:"last_updated_at"` // freshness
 	CreatedAt     time.Time   `gorm:"autoCreateTime" json:"created_at"`

@@ -36,26 +36,29 @@ func SeedDemo(db *gorm.DB, env string) {
 	}
 
 	// --- geography ---
-	city := &domain.City{Name: "Delhi", Slug: "delhi", Lat: fptr(28.6139), Lng: fptr(77.2090), Enabled: true, DisplayOrder: 1}
+	// Delhi's QC anchor: the serviceable pincode 110035 and its precise lat/lng
+	// (28.6980/77.1490 responds on all platforms incl. Zepto, which needs a pincode).
+	pincode := "110035"
+	city := &domain.City{Name: "Delhi", Slug: "delhi", Lat: fptr(28.6980), Lng: fptr(77.1490), DefaultPincode: sptr(pincode), Enabled: true, DisplayOrder: 1}
 	if err := db.Create(city).Error; err != nil {
 		zap.S().Warnw("seed: city failed", "error", err)
 		return
 	}
-	pincode := "110035"
 	db.Create(&domain.Pincode{Pincode: pincode, CityID: city.ID, Lat: fptr(28.6980), Lng: fptr(77.1490), Serviceable: true})
 
 	// --- platforms ---
-	platformDefs := []struct{ code, name, eta string }{
-		{"blinkit", "Blinkit", "10 Mins"},
-		{"zepto", "Zepto", "12 Mins"},
-		{"instamart", "Swiggy Instamart", "15 Mins"},
-		{"flipkart", "Flipkart Minutes", "14 Mins"},
-		{"jiomart", "JioMart", "20 Mins"},
-		{"amazon_now", "Amazon Now", "18 Mins"},
+	// qc is the QuickCommerce platform name (empty = not tracked via QC).
+	platformDefs := []struct{ code, name, eta, qc string }{
+		{"blinkit", "Blinkit", "10 Mins", "BlinkIt"},
+		{"zepto", "Zepto", "12 Mins", "Zepto"},
+		{"instamart", "Swiggy Instamart", "15 Mins", "Swiggy"},
+		{"flipkart", "Flipkart Minutes", "14 Mins", "Minutes"},
+		{"jiomart", "JioMart", "20 Mins", "JioMart"},
+		{"amazon_now", "Amazon Now", "18 Mins", "Amazon"},
 	}
 	platforms := make([]domain.Platform, 0, len(platformDefs))
 	for i, d := range platformDefs {
-		p := domain.Platform{Code: d.code, DisplayName: d.name, DeliveryETAText: sptr(d.eta), Enabled: true, DisplayOrder: i + 1}
+		p := domain.Platform{Code: d.code, DisplayName: d.name, QCName: sptr(d.qc), DeliveryETAText: sptr(d.eta), Enabled: true, DisplayOrder: i + 1}
 		if err := db.Create(&p).Error; err != nil {
 			zap.S().Warnw("seed: platform failed", "code", d.code, "error", err)
 			continue

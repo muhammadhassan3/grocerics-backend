@@ -1,72 +1,111 @@
 package v1
 
 import (
+	"time"
+
 	"grocerics-backend/internal/auth"
+	"grocerics-backend/internal/domain"
 	"grocerics-backend/internal/dto"
+	"grocerics-backend/internal/errs"
 	"grocerics-backend/internal/middleware"
+	"grocerics-backend/internal/query"
 	"grocerics-backend/internal/repository"
+	"grocerics-backend/internal/util"
 
 	"github.com/gin-gonic/gin"
 )
 
-func RegisterCategoryRoutes(jwt *auth.JWTService, user *repository.UserRepository, r *gin.Engine) {
-	group := r.Group("/v1")
-	group.Use(middleware.AuthMiddleware(jwt, user))
-	group.GET("/categories", getCategories())
-	group.GET("/categories/:category_id", getCategoryByID())
-
-	adminGroup := group.Group("")
-	adminGroup.Use(middleware.RequireRole("admin"))
-	adminGroup.POST("/categories", CreateCategory())
-	adminGroup.PATCH("/categories", UpdateCategory())
-	adminGroup.DELETE("/categories", DeleteCategory())
+type CategoryDeps struct {
+	JWT        *auth.JWTService
+	Users      *repository.UserRepository
+	Categories *repository.CategoryRepository
 }
 
-// @Swagger:route GET /v1/categories categories getCategories
-// @Summary Get categories
-// @Description Fetches a paginated list of categories.
-// @Tags categories
-// @Accept json
-// @Produce json
-// @Param page query int true "Page number"
-// @Param limit query int true "Number of items per page"
-// @Success 200 {object} dto.Response{data=dto.Categories}
-// @Failure 401 {object} dto.Response{data=string}
-// @Failure 403 {object} dto.Response{data=string}
-// @Security BearerAuth
-// @Router /v1/categories [get]
-func getCategories() gin.HandlerFunc {
-	return func(c *gin.Context) {
-		_ = c.Param("page")
-		_ = c.Param("limit")
-		c.JSON(200, dto.Response{
-			Data:    dto.Categories{},
-			Message: "Categories fetched successfully",
-			Status:  "success",
-		})
+func RegisterCategoryRoutes(r *gin.Engine, d CategoryDeps) {
+	group := r.Group("/v1")
+	group.Use(middleware.AuthMiddleware(d.JWT, d.Users))
+	group.GET("/categories", listCategories(d))
+	group.GET("/categories/:id", getCategoryByID(d))
+
+	admin := group.Group("")
+	admin.Use(middleware.RequireRole(domain.RoleAdmin))
+	admin.POST("/categories", createCategory(d))
+	admin.PATCH("/categories", updateCategory(d))
+	admin.DELETE("/categories", deleteCategory(d))
+}
+
+func toCategoryDTO(c domain.Category, subCount int) dto.Category {
+	return dto.Category{
+		CategoryID:       c.ID,
+		CategoryName:     c.Name,
+		ImageURL:         util.Deref(c.ImageURL),
+		SubCategoryCount: subCount,
+		Status:           string(c.Status),
+		IsTopCategory:    c.IsTopCategory,
+		CreatedAt:        c.CreatedAt.Format(time.RFC3339),
 	}
 }
 
-// @Swagger:route GET /v1/categories/{category_id} categories getCategoryByID
-// @Summary Get category by ID
-// @Description Fetches a category by its unique identifier.
+// @Summary Get categories
+// @Description Paginated list of categories (admin sees all, including disabled).
 // @Tags categories
-// @Accept json
 // @Produce json
-// @Param category_id path string true "Unique identifier for the category"
+// @Param page query int false "Page number"
+// @Param page_size query int false "Items per page"
+// @Param search query string false "Filter by name"
+// @Success 200 {object} dto.Response{data=dto.Categories}
+// @Security BearerAuth
+// @Router /v1/categories [get]
+func listCategories(d CategoryDeps) gin.HandlerFunc {
+	return func(c *gin.Context) {
+		p := query.PageFromContext(c)
+		items, total, err := d.Categories.ListAdmin(p, c.Query("search"))
+		if err != nil {
+			c.Error(err)
+			return
+		}
+		ids := make([]string, len(items))
+		for i, it := range items {
+			ids[i] = it.ID
+		}
+		counts, err := d.Categories.CountSubcategories(ids)
+		if err != nil {
+			c.Error(err)
+			return
+		}
+		out := make([]dto.Category, len(items))
+		for i, it := range items {
+			out[i] = toCategoryDTO(it, counts[it.ID])
+		}
+		ok(c, dto.Categories{Meta: query.BuildMeta(total, p), Categories: out})
+	}
+}
+
+// @Summary Get category by ID
+// @Tags categories
+// @Produce json
+// @Param id path string true "Category ID"
 // @Success 200 {object} dto.Response{data=dto.Category}
-// @Failure 401 {object} dto.Response{data=string}
-// @Failure 403 {object} dto.Response{data=string}
 // @Failure 404 {object} dto.Response{data=string}
 // @Security BearerAuth
-// @Router /v1/categories/{category_id} [get]
-func getCategoryByID() gin.HandlerFunc {
+// @Router /v1/categories/{id} [get]
+func getCategoryByID(d CategoryDeps) gin.HandlerFunc {
 	return func(c *gin.Context) {
-		c.JSON(200, dto.Response{
-			Data:    dto.Category{},
-			Message: "Category fetched successfully",
-			Status:  "success",
-		})
+		cat, err := d.Categories.FindByID(c.Param("id"))
+		if err != nil {
+			c.Error(err)
+			return
+		}
+		if cat == nil {
+			c.Error(errs.NotFound("CATEGORY_NOT_FOUND", "category not found"))
+			return
+		}
+		counts, err := d.Categories.CountSubcategories([]string{cat.ID})
+		if err != nil {
+			c.Error(err)
+			return
+		}
+		ok(c, toCategoryDTO(*cat, counts[cat.ID]))
 	}
 }
 
@@ -74,29 +113,37 @@ type CreateCategoryRequest struct {
 	CategoryName  string `json:"category_name" binding:"required"`
 	ImageURL      string `json:"image_url" binding:"required"`
 	Status        string `json:"status" binding:"required,oneof=active disabled"`
-	IsTopCategory bool   `json:"is_top_category" binding:"required"`
+	IsTopCategory bool   `json:"is_top_category"`
 }
 
-// @Swagger:route POST /v1/categories categories createCategory
-// @Summary Create a new category
-// @Description Creates a new category. This endpoint is intended for internal use and should be secured appropriately.
+// @Summary Create a category
 // @Tags categories
-// @Accept application/json
+// @Accept json
 // @Produce json
 // @Param category body CreateCategoryRequest true "Create Category Request"
 // @Success 201 {object} dto.Response{data=dto.Category}
 // @Failure 400 {object} dto.Response{data=string}
-// @Failure 401 {object} dto.Response{data=string}
-// @Failure 403 {object} dto.Response{data=string}
 // @Security BearerAuth
 // @Router /v1/categories [post]
-func CreateCategory() gin.HandlerFunc {
+func createCategory(d CategoryDeps) gin.HandlerFunc {
 	return func(c *gin.Context) {
-		c.JSON(200, dto.Response{
-			Data:    dto.Category{},
-			Message: "Category created successfully",
-			Status:  "success",
+		var req CreateCategoryRequest
+		if err := c.ShouldBindJSON(&req); err != nil {
+			c.Error(errs.BadRequest("VALIDATION", util.ParseValidationError(err).Error()))
+			return
+		}
+		created, err := d.Categories.Create(&domain.Category{
+			Name:          req.CategoryName,
+			Slug:          util.Slugify(req.CategoryName),
+			ImageURL:      util.PtrIfSet(req.ImageURL),
+			Status:        domain.Status(req.Status),
+			IsTopCategory: req.IsTopCategory,
 		})
+		if err != nil {
+			c.Error(err)
+			return
+		}
+		c.JSON(201, dto.Response{Status: "success", Data: toCategoryDTO(*created, 0), Message: "Category created successfully"})
 	}
 }
 
@@ -108,26 +155,47 @@ type UpdateCategoryRequest struct {
 	IsTopCategory *bool  `json:"is_top_category"`
 }
 
-// @Swagger:route PATCH /v1/categories categories updateCategory
-// @Summary Update an existing category
-// @Description Updates an existing category. This endpoint is intended for internal use and should be secured appropriately.
+// @Summary Update a category
 // @Tags categories
-// @Accept application/json
+// @Accept json
 // @Produce json
 // @Param category body UpdateCategoryRequest true "Update Category Request"
 // @Success 200 {object} dto.Response{data=dto.Category}
 // @Failure 400 {object} dto.Response{data=string}
-// @Failure 401 {object} dto.Response{data=string}
-// @Failure 403 {object} dto.Response{data=string}
+// @Failure 404 {object} dto.Response{data=string}
 // @Security BearerAuth
 // @Router /v1/categories [patch]
-func UpdateCategory() gin.HandlerFunc {
+func updateCategory(d CategoryDeps) gin.HandlerFunc {
 	return func(c *gin.Context) {
-		c.JSON(200, dto.Response{
-			Data:    dto.Category{},
-			Message: "Category updated successfully",
-			Status:  "success",
-		})
+		var req UpdateCategoryRequest
+		if err := c.ShouldBindJSON(&req); err != nil {
+			c.Error(errs.BadRequest("VALIDATION", util.ParseValidationError(err).Error()))
+			return
+		}
+		fields := map[string]any{}
+		if req.CategoryName != "" {
+			fields["name"] = req.CategoryName
+			fields["slug"] = util.Slugify(req.CategoryName)
+		}
+		if req.ImageURL != "" {
+			fields["image_url"] = req.ImageURL
+		}
+		if req.Status != "" {
+			fields["status"] = req.Status
+		}
+		if req.IsTopCategory != nil {
+			fields["is_top_category"] = *req.IsTopCategory
+		}
+		updated, err := d.Categories.Update(req.CategoryID, fields)
+		if err != nil {
+			c.Error(err)
+			return
+		}
+		if updated == nil {
+			c.Error(errs.NotFound("CATEGORY_NOT_FOUND", "category not found"))
+			return
+		}
+		ok(c, toCategoryDTO(*updated, 0))
 	}
 }
 
@@ -135,25 +203,26 @@ type DeleteCategoryRequest struct {
 	CategoryID string `json:"category_id" binding:"required"`
 }
 
-// @Swagger:route DELETE /v1/categories categories deleteCategory
-// @Summary Delete an existing category
-// @Description Deletes an existing category. This endpoint is intended for internal use and should be secured appropriately.
+// @Summary Delete a category
 // @Tags categories
 // @Accept json
 // @Produce json
-// @Param DeleteCategoryRequest body DeleteCategoryRequest true "Unique identifier for the category"
+// @Param DeleteCategoryRequest body DeleteCategoryRequest true "Delete Category Request"
 // @Success 200 {object} dto.Response{data=string}
 // @Failure 400 {object} dto.Response{data=string}
-// @Failure 401 {object} dto.Response{data=string}
-// @Failure 403 {object} dto.Response{data=string}
 // @Security BearerAuth
 // @Router /v1/categories [delete]
-func DeleteCategory() gin.HandlerFunc {
+func deleteCategory(d CategoryDeps) gin.HandlerFunc {
 	return func(c *gin.Context) {
-		c.JSON(200, dto.Response{
-			Data:    nil,
-			Message: "Category deleted successfully",
-			Status:  "success",
-		})
+		var req DeleteCategoryRequest
+		if err := c.ShouldBindJSON(&req); err != nil {
+			c.Error(errs.BadRequest("VALIDATION", util.ParseValidationError(err).Error()))
+			return
+		}
+		if err := d.Categories.SoftDelete(req.CategoryID, auth.MustUser(c).ID); err != nil {
+			c.Error(err)
+			return
+		}
+		c.JSON(200, dto.Response{Status: "success", Message: "Category deleted successfully"})
 	}
 }

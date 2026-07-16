@@ -13,7 +13,7 @@ import "grocerics-backend/internal/query"
 // @Description A subcategory nested under a product category.
 type SubCategory struct {
 	// Unique identifier for the subcategory
-	SubCategoryID string `json:"sub_category_id"`
+	SubCategoryID string `json:"subcategory_id"`
 	// Display name of the subcategory
 	SubCategoryName string `json:"sub_category_name"`
 	// URL of the subcategory's display image
@@ -24,6 +24,8 @@ type SubCategory struct {
 	IsTopSubCategory bool `json:"is_top_sub_category"`
 	// Identifier of the parent category
 	CategoryID string `json:"category_id"`
+	// Display name of the parent category
+	CategoryName string `json:"category_name"`
 	// Creation timestamp, RFC3339
 	CreatedAt string `json:"created_at"`
 }
