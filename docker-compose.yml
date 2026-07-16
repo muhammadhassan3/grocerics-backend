@@ -1,48 +1,57 @@
+# One compose file for local dev AND the box.
+#
+# Local dev: `docker compose up -d` — every value has a safe default, no .env needed.
+# On a server: drop a `.env` next to this file (Docker auto-loads it) with real
+# secrets + host ports, then the same `docker compose up -d`. No -f, no --env-file.
+#
+# Ports bind to 127.0.0.1 so nothing is exposed publicly; on a server, nginx
+# reverse-proxies to the API. Override the host ports via .env when the defaults
+# collide with other stacks (e.g. API_HOST_PORT=8090, DB_HOST_PORT=5433).
 services:
   db:
     image: postgres:16-alpine
+    restart: unless-stopped
     environment:
-      POSTGRES_USER: postgres
-      POSTGRES_PASSWORD: password
-      POSTGRES_DB: grocerics
+      POSTGRES_USER: ${DB_USER:-postgres}
+      POSTGRES_PASSWORD: ${DB_PASSWORD:-password}
+      POSTGRES_DB: ${DB_NAME:-grocerics}
     ports:
-      - "5432:5432"
+      - "127.0.0.1:${DB_HOST_PORT:-5432}:5432"
     volumes:
       - pgdata:/var/lib/postgresql/data
     healthcheck:
-      test: ["CMD-SHELL", "pg_isready -U postgres -d grocerics"]
+      test: ["CMD-SHELL", "pg_isready -U ${DB_USER:-postgres} -d ${DB_NAME:-grocerics}"]
       interval: 3s
       timeout: 3s
       retries: 15
 
   api:
     build: .
+    restart: unless-stopped
     depends_on:
       db:
         condition: service_healthy
     environment:
-      ENV: development
+      ENV: ${ENV:-development}
       PORT: "8080"
       DB_HOST: db
       DB_PORT: "5432"
-      DB_USER: postgres
-      DB_PASSWORD: password
-      DB_NAME: grocerics
+      DB_USER: ${DB_USER:-postgres}
+      DB_PASSWORD: ${DB_PASSWORD:-password}
+      DB_NAME: ${DB_NAME:-grocerics}
       DB_SSLMODE: disable
-      JWT_SECRET_KEY: dev-secret-change-me
-      FRONTEND_ORIGINS: http://localhost:3000
-      SEED_ADMIN_EMAIL: admin@example.com
-      SEED_ADMIN_PASSWORD: adminpassword
-      # QuickCommerce: blank -> mock client
-      QC_API_KEY: "cf0fed25-4bac-44b4-a5ad-ec2b3f9aee79"
-      QC_BASE_URL: ""
-      # AWS S3 (dummy values so config.Load passes locally; real creds for uploads)
-      AWS_ACCESS_KEY_ID: dummy
-      AWS_SECRET_ACCESS_KEY: dummy
-      AWS_REGION: us-east-1
-      AWS_BUCKET_NAME: grocerics-dev
+      JWT_SECRET_KEY: ${JWT_SECRET_KEY:-dev-secret-change-me}
+      FRONTEND_ORIGINS: ${FRONTEND_ORIGINS:-http://localhost:3000}
+      SEED_ADMIN_EMAIL: ${SEED_ADMIN_EMAIL:-admin@example.com}
+      SEED_ADMIN_PASSWORD: ${SEED_ADMIN_PASSWORD:-adminpassword}
+      QC_API_KEY: ${QC_API_KEY:-}
+      QC_BASE_URL: ${QC_BASE_URL:-}
+      AWS_ACCESS_KEY_ID: ${AWS_ACCESS_KEY_ID:-dummy}
+      AWS_SECRET_ACCESS_KEY: ${AWS_SECRET_ACCESS_KEY:-dummy}
+      AWS_REGION: ${AWS_REGION:-us-east-1}
+      AWS_BUCKET_NAME: ${AWS_BUCKET_NAME:-grocerics-dev}
     ports:
-      - "8080:8080"
+      - "127.0.0.1:${API_HOST_PORT:-8080}:8080"
 
 volumes:
   pgdata:
