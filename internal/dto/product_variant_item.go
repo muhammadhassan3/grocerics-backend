@@ -5,8 +5,10 @@ package dto
 // @Property unit: Unit of measurement
 // @Description Volume/weight of a product variant, e.g. "500 gm".
 type ProductVariantUnit struct {
-	// Numeric quantity of the unit
-	Value int `json:"value"`
+	// Numeric quantity of the unit. Float, not int: 2.25 ltr and 1.5 ltr are real
+	// pack sizes, and domain.ProductVariant.VolumeValue is float64 over a numeric
+	// column. Whole numbers still serialise as 2, not 2.0.
+	Value float64 `json:"value"`
 	// Unit of measurement
 	Unit string `json:"unit" enums:"kg,gm,ltr,ml,pcs"`
 }

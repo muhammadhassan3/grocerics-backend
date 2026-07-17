@@ -7211,8 +7211,8 @@ const docTemplate = `{
                     ]
                 },
                 "value": {
-                    "description": "Numeric quantity of the unit",
-                    "type": "integer"
+                    "description": "Numeric quantity of the unit. Float, not int: 2.25 ltr and 1.5 ltr are real\npack sizes, and domain.ProductVariant.VolumeValue is float64 over a numeric\ncolumn. Whole numbers still serialise as 2, not 2.0.",
+                    "type": "number"
                 }
             }
         },

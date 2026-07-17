@@ -99,7 +99,7 @@ func toVariantItemDTO(v domain.ProductVariant) dto.ProductVariantItem {
 		ProductID:        v.ProductID,
 		ProductVariantID: v.ID,
 		VariantCustomID:  util.Deref(v.CustomVariantID),
-		ProductVolume:    dto.ProductVariantUnit{Value: int(v.VolumeValue), Unit: string(v.VolumeUnit)},
+		ProductVolume:    dto.ProductVariantUnit{Value: v.VolumeValue, Unit: string(v.VolumeUnit)},
 	}
 }
 
@@ -447,7 +447,7 @@ func createVariant(d InventoryDeps) gin.HandlerFunc {
 		}
 		created, err := d.Variants.Create(&domain.ProductVariant{
 			ProductID:       req.ProductID,
-			VolumeValue:     float64(req.Volume.Value),
+			VolumeValue:     req.Volume.Value,
 			VolumeUnit:      domain.VolumeUnit(req.Volume.Unit),
 			CustomVariantID: util.PtrIfSet(req.CustomProductVariantID),
 		})
@@ -483,7 +483,7 @@ func updateVariant(d InventoryDeps) gin.HandlerFunc {
 		}
 		fields := map[string]any{}
 		if req.Volume.Value != 0 {
-			fields["volume_value"] = float64(req.Volume.Value)
+			fields["volume_value"] = req.Volume.Value
 		}
 		if req.Volume.Unit != "" {
 			fields["volume_unit"] = req.Volume.Unit
