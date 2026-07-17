@@ -56,7 +56,11 @@ func New(cfg *config.Config) (*App, error) {
 
 	jwt := auth.NewJWTService(cfg.JWT.SecretKey)
 	userRepo := repository.NewUserRepository(db)
-	qc := quickcommerce.New(quickcommerce.Config{APIKey: cfg.QC.APIKey, BaseURL: cfg.QC.BaseURL})
+	qc := quickcommerce.New(quickcommerce.Config{
+		APIKey:  cfg.QC.APIKey,
+		BaseURL: cfg.QC.BaseURL,
+		Record:  qcRecorder(db),
+	})
 
 	authService := service.NewAuthService(
 		userRepo,
