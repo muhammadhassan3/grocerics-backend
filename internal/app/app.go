@@ -70,8 +70,10 @@ func New(cfg *config.Config) (*App, error) {
 		"",
 	)
 
+	// Reference data (cities, platforms, categories, subcategories, brands) is not
+	// seeded on boot -- run `api -seed` deliberately. The old demo seeder that
+	// invented a fake catalog here is gone.
 	config.SeedAdmin(db, cfg.Seed, cfg.Env)
-	config.SeedDemo(db, cfg.Env)
 
 	a := &App{
 		Cfg:         cfg,
