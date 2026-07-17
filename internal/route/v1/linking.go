@@ -133,10 +133,39 @@ type ConfirmLinkRequest struct {
 	QCItemID     string `json:"qc_item_id" binding:"required"`
 	CityID       string `json:"city_id" binding:"required"`
 	DeepLink     string `json:"deep_link"`
+	PricePaise   *int64 `json:"price_paise"`
+	MRPPaise     *int64 `json:"mrp_paise"`
+	Available    *bool  `json:"available"`
+	Inventory    *int   `json:"inventory"`
+}
+
+func (r ConfirmLinkRequest) seed() (*service.LinkSeed, error) {
+	if r.PricePaise == nil && r.Available == nil {
+		return nil, nil
+	}
+	if r.PricePaise == nil || r.Available == nil {
+		return nil, errs.BadRequest("VALIDATION", "price_paise and available must be sent together")
+	}
+	if *r.PricePaise < 0 {
+		return nil, errs.BadRequest("VALIDATION", "price_paise must not be negative")
+	}
+	s := &service.LinkSeed{
+		PricePaise: *r.PricePaise,
+		Available:  *r.Available,
+		Inventory:  r.Inventory,
+		DeepLink:   r.DeepLink,
+	}
+	if r.MRPPaise != nil {
+		if *r.MRPPaise < 0 {
+			return nil, errs.BadRequest("VALIDATION", "mrp_paise must not be negative")
+		}
+		s.MRPPaise = *r.MRPPaise
+	}
+	return s, nil
 }
 
 // @Summary Confirm a platform link for a variant
-// @Description Pins a (variant, platform) to the chosen QC item id and seeds its price/stock via GetItem. The link is city-independent; the price is stored per city.
+// @Description Pins a (variant, platform) to the chosen QC item id and seeds its price/stock. Send price_paise + available from the search response you're already showing and this costs 0 credits; omit them and the server re-fetches via GetItem for 1 credit. The link is city-independent; the price is stored per city and is a reference only — mobile re-fetches live prices for the user's own pincode at cart time.
 // @Tags linking
 // @Accept json
 // @Produce json
@@ -153,7 +182,12 @@ func confirmLink(d LinkingDeps) gin.HandlerFunc {
 			c.Error(errs.BadRequest("VALIDATION", util.ParseValidationError(err).Error()))
 			return
 		}
-		if err := d.Linking.ConfirmLink(c.Param("variant_id"), req.PlatformCode, req.CityID, req.QCItemID, req.DeepLink); err != nil {
+		seed, err := req.seed()
+		if err != nil {
+			c.Error(err)
+			return
+		}
+		if err := d.Linking.ConfirmLink(c.Param("variant_id"), req.PlatformCode, req.CityID, req.QCItemID, req.DeepLink, seed); err != nil {
 			c.Error(err)
 			return
 		}
