@@ -4,6 +4,7 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
+	"io"
 	"net/http"
 	"net/url"
 	"strconv"
@@ -11,6 +12,8 @@ import (
 	"time"
 
 	"grocerics-backend/internal/util"
+
+	"go.uber.org/zap"
 )
 
 const defaultBaseURL = "https://api.quickcommerceapi.com/v1"
@@ -19,6 +22,7 @@ type httpClient struct {
 	apiKey  string
 	baseURL string
 	http    *http.Client
+	record  func(RawCall)
 }
 
 func NewHTTPClient(cfg Config) Client {
@@ -30,16 +34,39 @@ func NewHTTPClient(cfg Config) Client {
 		apiKey:  cfg.APIKey,
 		baseURL: strings.TrimRight(base, "/"),
 		http:    &http.Client{Timeout: 20 * time.Second},
+		record:  cfg.Record,
 	}
+}
+
+func (c *httpClient) emit(call RawCall) {
+	if c.record == nil {
+		return
+	}
+	defer func() {
+		if r := recover(); r != nil {
+			zap.S().Warnw("qc: raw response recorder panicked", "endpoint", call.Endpoint, "panic", r)
+		}
+	}()
+	c.record(call)
 }
 
 func ftoa(f float64) string { return strconv.FormatFloat(f, 'f', 6, 64) }
 
-func (c *httpClient) doGet(ctx context.Context, path string, q url.Values, out any) error {
+func (c *httpClient) doGet(ctx context.Context, path string, q url.Values, out any) (err error) {
 	u := c.baseURL + path
 	if len(q) > 0 {
 		u += "?" + q.Encode()
 	}
+	start := time.Now()
+	call := RawCall{Endpoint: path, Params: q}
+	defer func() {
+		if err != nil {
+			call.Err = err.Error()
+		}
+		call.DurationMs = int(time.Since(start).Milliseconds())
+		c.emit(call)
+	}()
+
 	req, err := http.NewRequestWithContext(ctx, http.MethodGet, u, nil)
 	if err != nil {
 		return err
@@ -50,10 +77,15 @@ func (c *httpClient) doGet(ctx context.Context, path string, q url.Values, out a
 		return err
 	}
 	defer resp.Body.Close()
+	body, err := io.ReadAll(resp.Body)
+	call.StatusCode, call.Body = resp.StatusCode, body
+	if err != nil {
+		return err
+	}
 	if resp.StatusCode < 200 || resp.StatusCode >= 300 {
 		return fmt.Errorf("quickcommerce: GET %s -> %d", path, resp.StatusCode)
 	}
-	return json.NewDecoder(resp.Body).Decode(out)
+	return json.Unmarshal(body, out)
 }
 
 func (c *httpClient) locQuery(loc Location) url.Values {

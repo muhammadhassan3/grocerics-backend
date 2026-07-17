@@ -36,6 +36,14 @@ func NewLinkingService(db *gorm.DB, qc quickcommerce.Client, pricing *PricingSer
 	}
 }
 
+type LinkSeed struct {
+	PricePaise int64
+	MRPPaise   int64
+	Available  bool
+	Inventory  *int
+	DeepLink   string
+}
+
 type Candidate struct {
 	QCItemID    string `json:"qc_item_id"`
 	Name        string `json:"name"`
@@ -154,7 +162,7 @@ func sortCandidates(cs []Candidate) {
 	sort.SliceStable(cs, func(i, j int) bool { return rank(cs[i]) < rank(cs[j]) })
 }
 
-func (s *LinkingService) ConfirmLink(variantID, platformCode, cityID, qcItemID, deepLink string) error {
+func (s *LinkingService) ConfirmLink(variantID, platformCode, cityID, qcItemID, deepLink string, seed *LinkSeed) error {
 	pl, err := s.platforms.FindByCode(platformCode)
 	if err != nil {
 		return err
@@ -165,16 +173,12 @@ func (s *LinkingService) ConfirmLink(variantID, platformCode, cityID, qcItemID, 
 	if pl.QCName == nil || *pl.QCName == "" {
 		return errs.BadRequest("PLATFORM_NO_QC", "platform has no QuickCommerce mapping")
 	}
-	loc, err := s.qcLocation(cityID)
+	price, itemDeepLink, err := s.seedPrice(variantID, pl, cityID, qcItemID, seed)
 	if err != nil {
 		return err
 	}
-	item, err := s.qc.GetItem(context.Background(), qcItemID, *pl.QCName, loc)
-	if err != nil {
-		return errs.Internal("QC_GET_ITEM_FAILED", err)
-	}
 	if deepLink == "" {
-		deepLink = item.DeepLink
+		deepLink = itemDeepLink
 	}
 	sku := qcItemID
 	if _, err := s.links.Upsert(&domain.ProductPlatformLink{
@@ -185,10 +189,43 @@ func (s *LinkingService) ConfirmLink(variantID, platformCode, cityID, qcItemID, 
 	}); err != nil {
 		return err
 	}
-	if err := s.platformPrices.Upsert(itemToPrice(variantID, pl.ID, cityID, item)); err != nil {
+	if err := s.platformPrices.Upsert(price); err != nil {
 		return err
 	}
 	return s.pricing.RecomputeVariantSummary(variantID, cityID)
+}
+
+func (s *LinkingService) seedPrice(variantID string, pl *domain.Platform, cityID, qcItemID string, seed *LinkSeed) (*domain.PlatformPrice, string, error) {
+	if seed != nil {
+		if err := s.requireCity(cityID); err != nil {
+			return nil, "", err
+		}
+		item := &quickcommerce.ItemDetail{
+			ID: qcItemID, PricePaise: seed.PricePaise, MRPPaise: seed.MRPPaise,
+			Available: seed.Available, Inventory: seed.Inventory, DeepLink: seed.DeepLink,
+		}
+		return itemToPrice(variantID, pl.ID, cityID, item), item.DeepLink, nil
+	}
+	loc, err := s.qcLocation(cityID)
+	if err != nil {
+		return nil, "", err
+	}
+	item, err := s.qc.GetItem(context.Background(), qcItemID, *pl.QCName, loc)
+	if err != nil {
+		return nil, "", errs.Internal("QC_GET_ITEM_FAILED", err)
+	}
+	return itemToPrice(variantID, pl.ID, cityID, item), item.DeepLink, nil
+}
+
+func (s *LinkingService) requireCity(cityID string) error {
+	c, err := s.cities.FindByID(cityID)
+	if err != nil {
+		return err
+	}
+	if c == nil {
+		return errs.NotFound("CITY_NOT_FOUND", "city not found")
+	}
+	return nil
 }
 
 type RefreshResult struct {
