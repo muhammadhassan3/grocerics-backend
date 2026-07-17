@@ -20,5 +20,8 @@ vendor/
 .vscode/
 .idea/
 
+# Brainstorming scratch (mockups, session state)
+.superpowers/
+
 #Service Account
 grocerics-firebase-adminsdk.json
