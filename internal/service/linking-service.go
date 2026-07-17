@@ -4,6 +4,7 @@ import (
 	"context"
 	"sort"
 	"strings"
+	"sync"
 
 	"grocerics-backend/internal/domain"
 	"grocerics-backend/internal/errs"
@@ -11,6 +12,7 @@ import (
 	"grocerics-backend/internal/repository"
 	"grocerics-backend/internal/util"
 
+	"go.uber.org/zap"
 	"gorm.io/gorm"
 )
 
@@ -162,17 +164,76 @@ func sortCandidates(cs []Candidate) {
 	sort.SliceStable(cs, func(i, j int) bool { return rank(cs[i]) < rank(cs[j]) })
 }
 
-func (s *LinkingService) ConfirmLink(variantID, platformCode, cityID, qcItemID, deepLink string, seed *LinkSeed) error {
+type BatchLinkItem struct {
+	VariantID    string
+	PlatformCode string
+	QCItemID     string
+	DeepLink     string
+	Seed         *LinkSeed
+}
+
+type BatchLinkFailure struct {
+	VariantID    string `json:"variant_id"`
+	PlatformCode string `json:"platform_code"`
+	Error        string `json:"error"`
+}
+
+type BatchLinkResult struct {
+	Mapped int                `json:"mapped"`
+	Failed []BatchLinkFailure `json:"failed,omitempty"`
+}
+
+func (s *LinkingService) resolvePlatform(platformCode string) (*domain.Platform, error) {
 	pl, err := s.platforms.FindByCode(platformCode)
+	if err != nil {
+		return nil, err
+	}
+	if pl == nil {
+		return nil, errs.NotFound("PLATFORM_NOT_FOUND", "platform not found")
+	}
+	if pl.QCName == nil || *pl.QCName == "" {
+		return nil, errs.BadRequest("PLATFORM_NO_QC", "platform has no QuickCommerce mapping")
+	}
+	return pl, nil
+}
+
+func (s *LinkingService) ConfirmLink(variantID, platformCode, cityID, qcItemID, deepLink string, seed *LinkSeed) error {
+	pl, err := s.resolvePlatform(platformCode)
 	if err != nil {
 		return err
 	}
-	if pl == nil {
-		return errs.NotFound("PLATFORM_NOT_FOUND", "platform not found")
+	if err := s.linkOne(variantID, cityID, qcItemID, deepLink, pl, seed); err != nil {
+		return err
 	}
-	if pl.QCName == nil || *pl.QCName == "" {
-		return errs.BadRequest("PLATFORM_NO_QC", "platform has no QuickCommerce mapping")
+	s.startFanOut(cityID, []fanOutTarget{{variantID: variantID, platform: pl, qcItemID: qcItemID}})
+	return nil
+}
+
+func (s *LinkingService) ConfirmLinks(cityID string, items []BatchLinkItem) (BatchLinkResult, error) {
+	var res BatchLinkResult
+	if err := s.requireCity(cityID); err != nil {
+		return res, err
 	}
+	targets := make([]fanOutTarget, 0, len(items))
+	for _, it := range items {
+		pl, err := s.resolvePlatform(it.PlatformCode)
+		if err == nil {
+			err = s.linkOne(it.VariantID, cityID, it.QCItemID, it.DeepLink, pl, it.Seed)
+		}
+		if err != nil {
+			res.Failed = append(res.Failed, BatchLinkFailure{
+				VariantID: it.VariantID, PlatformCode: it.PlatformCode, Error: err.Error(),
+			})
+			continue
+		}
+		res.Mapped++
+		targets = append(targets, fanOutTarget{variantID: it.VariantID, platform: pl, qcItemID: it.QCItemID})
+	}
+	s.startFanOut(cityID, targets)
+	return res, nil
+}
+
+func (s *LinkingService) linkOne(variantID, cityID, qcItemID, deepLink string, pl *domain.Platform, seed *LinkSeed) error {
 	price, itemDeepLink, err := s.seedPrice(variantID, pl, cityID, qcItemID, seed)
 	if err != nil {
 		return err
@@ -226,6 +287,98 @@ func (s *LinkingService) requireCity(cityID string) error {
 		return errs.NotFound("CITY_NOT_FOUND", "city not found")
 	}
 	return nil
+}
+
+const fanOutConcurrency = 4
+
+type fanOutTarget struct {
+	variantID string
+	platform  *domain.Platform
+	qcItemID  string
+}
+
+func (s *LinkingService) startFanOut(seededCityID string, targets []fanOutTarget) {
+	if len(targets) == 0 {
+		return
+	}
+	go func() {
+		defer func() {
+			if r := recover(); r != nil {
+				zap.S().Errorw("linking: fan-out panicked", "panic", r)
+			}
+		}()
+		s.fanOut(seededCityID, targets)
+	}()
+}
+
+func (s *LinkingService) fanOut(seededCityID string, targets []fanOutTarget) {
+	cities, err := s.cities.ListEnabled()
+	if err != nil {
+		zap.S().Warnw("linking: fan-out could not list cities", "error", err)
+		return
+	}
+	type job struct {
+		city domain.City
+		loc  quickcommerce.Location
+		t    fanOutTarget
+	}
+	jobs := make([]job, 0, len(cities)*len(targets))
+	for _, city := range cities {
+		if city.ID == seededCityID {
+			continue
+		}
+		loc, err := s.qcLocation(city.ID)
+		if err != nil {
+			zap.S().Warnw("linking: fan-out skipping city", "city", city.Slug, "error", err)
+			continue
+		}
+		for _, t := range targets {
+			jobs = append(jobs, job{city: city, loc: loc, t: t})
+		}
+	}
+	if len(jobs) == 0 {
+		return
+	}
+
+	var wg sync.WaitGroup
+	sem := make(chan struct{}, fanOutConcurrency)
+	for _, j := range jobs {
+		wg.Add(1)
+		go func(j job) {
+			defer wg.Done()
+			defer func() {
+				if r := recover(); r != nil {
+					zap.S().Errorw("linking: fan-out job panicked", "panic", r)
+				}
+			}()
+			sem <- struct{}{}
+			defer func() { <-sem }()
+
+			item, err := s.qc.GetItem(context.Background(), j.t.qcItemID, *j.t.platform.QCName, j.loc)
+			if err != nil {
+				zap.S().Warnw("linking: fan-out GetItem failed",
+					"city", j.city.Slug, "item", j.t.qcItemID, "error", err)
+				return
+			}
+			if err := s.platformPrices.Upsert(itemToPrice(j.t.variantID, j.t.platform.ID, j.city.ID, item)); err != nil {
+				zap.S().Warnw("linking: fan-out price upsert failed", "city", j.city.Slug, "error", err)
+			}
+		}(j)
+	}
+	wg.Wait()
+
+	done := make(map[string]bool, len(jobs))
+	for _, j := range jobs {
+		key := j.t.variantID + "\x00" + j.city.ID
+		if done[key] {
+			continue
+		}
+		done[key] = true
+		if err := s.pricing.RecomputeVariantSummary(j.t.variantID, j.city.ID); err != nil {
+			zap.S().Warnw("linking: fan-out recompute failed",
+				"variant", j.t.variantID, "city", j.city.Slug, "error", err)
+		}
+	}
 }
 
 type RefreshResult struct {

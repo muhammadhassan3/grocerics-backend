@@ -30,6 +30,7 @@ func RegisterLinkingRoutes(r *gin.Engine, d LinkingDeps) {
 
 	group.GET("/platforms", listPlatforms(d))
 	group.GET("/inventory-management/link/search", searchLinkCandidates(d))
+	group.POST("/inventory-management/link/batch", confirmLinksBatch(d))
 	group.POST("/inventory-management/variants/:variant_id/links", confirmLink(d))
 	group.GET("/inventory-management/variants/:variant_id/prices", variantPrices(d))
 	group.POST("/inventory-management/variants/manual-price", setManualPrice(d))
@@ -162,6 +163,66 @@ func (r ConfirmLinkRequest) seed() (*service.LinkSeed, error) {
 		s.MRPPaise = *r.MRPPaise
 	}
 	return s, nil
+}
+
+type BatchLinkEntry struct {
+	VariantID    string `json:"variant_id" binding:"required"`
+	PlatformCode string `json:"platform_code" binding:"required"`
+	QCItemID     string `json:"qc_item_id" binding:"required"`
+	DeepLink     string `json:"deep_link"`
+	PricePaise   *int64 `json:"price_paise"`
+	MRPPaise     *int64 `json:"mrp_paise"`
+	Available    *bool  `json:"available"`
+	Inventory    *int   `json:"inventory"`
+}
+
+type BatchLinkRequest struct {
+	CityID string           `json:"city_id" binding:"required"`
+	Links  []BatchLinkEntry `json:"links" binding:"required,min=1,dive"`
+}
+
+// @Summary Map many variants to platforms from one search response
+// @Description Batch form of confirm-link: one search response yields every (variant, platform) mapping the admin picked, sent in one call. Send price_paise + available per entry (from the response you're showing) and it costs 0 credits. Entries are independent — a bad entry is reported in `failed` and the rest still map, since every write is an idempotent upsert; re-send just the failures. Afterwards the backend fetches these same item ids in every OTHER enabled city in the background, so each city gets its own real price (1 credit per item per city).
+// @Tags linking
+// @Accept json
+// @Produce json
+// @Param request body BatchLinkRequest true "Batch link request"
+// @Success 200 {object} dto.Response{data=service.BatchLinkResult}
+// @Failure 400 {object} dto.Response{data=string}
+// @Security BearerAuth
+// @Router /v1/inventory-management/link/batch [post]
+func confirmLinksBatch(d LinkingDeps) gin.HandlerFunc {
+	return func(c *gin.Context) {
+		var req BatchLinkRequest
+		if err := c.ShouldBindJSON(&req); err != nil {
+			c.Error(errs.BadRequest("VALIDATION", util.ParseValidationError(err).Error()))
+			return
+		}
+		items := make([]service.BatchLinkItem, 0, len(req.Links))
+		for _, l := range req.Links {
+			seed, err := ConfirmLinkRequest{
+				PricePaise: l.PricePaise, MRPPaise: l.MRPPaise,
+				Available: l.Available, Inventory: l.Inventory, DeepLink: l.DeepLink,
+			}.seed()
+			if err != nil {
+				c.Error(err)
+				return
+			}
+			items = append(items, service.BatchLinkItem{
+				VariantID:    l.VariantID,
+				PlatformCode: l.PlatformCode,
+				QCItemID:     l.QCItemID,
+				DeepLink:     l.DeepLink,
+				Seed:         seed,
+			})
+		}
+		res, err := d.Linking.ConfirmLinks(req.CityID, items)
+		if err != nil {
+			c.Error(err)
+			return
+		}
+		ok(c, res)
+	}
 }
 
 // @Summary Confirm a platform link for a variant
