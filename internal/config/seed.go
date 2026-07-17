@@ -1,10 +1,10 @@
 package config
 
 import (
+	"errors"
 	"fmt"
 
 	"grocerics-backend/internal/domain"
-	"grocerics-backend/internal/util"
 
 	"go.uber.org/zap"
 	"gorm.io/gorm"
@@ -12,157 +12,169 @@ import (
 
 func sptr(v string) *string   { return &v }
 func fptr(v float64) *float64 { return &v }
-func i64ptr(v int64) *int64   { return &v }
 
-var seedPlatformOffset = map[string]int64{
-	"blinkit": 0, "zepto": 500, "instamart": 1000,
-	"flipkart": -500, "jiomart": 1500, "amazon_now": 2000,
+// ensure inserts row unless a live one already matches the natural key, and
+// returns whichever exists now. Insert-only by design: admins reorder and disable
+// things through the admin UI, and re-running the seeder must never undo that.
+func ensure[T any](db *gorm.DB, row *T, where string, args ...any) (found *T, created bool, err error) {
+	var existing T
+	err = db.Where(where+" AND deleted_at IS NULL", args...).First(&existing).Error
+	if err == nil {
+		return &existing, false, nil
+	}
+	if !errors.Is(err, gorm.ErrRecordNotFound) {
+		return nil, false, err
+	}
+	if err := db.Create(row).Error; err != nil {
+		return nil, false, err
+	}
+	return row, true, nil
 }
 
-// SeedDemo populates reference data (city, platforms, a small catalog, links,
-// prices, ETAs) so the consumer endpoints render end-to-end. Dev/staging only,
-// and idempotent — it no-ops once a city exists.
-func SeedDemo(db *gorm.DB, env string) {
-	if env == "production" {
-		return
-	}
-	var cityCount int64
-	if err := db.Model(&domain.City{}).Count(&cityCount).Error; err != nil {
-		zap.S().Warnw("seed: city count failed", "error", err)
-		return
-	}
-	if cityCount > 0 {
-		return // already seeded
+// SeedReference seeds configuration data only: cities, platforms, categories,
+// subcategories, brands. It deliberately creates no products, variants, links or
+// prices -- the catalog is built by admins through the linker against real
+// QuickCommerce data, not invented here.
+//
+// Runs only via `api -seed`, so it carries no ENV guard: invoking it IS the
+// intent. That is what lets it configure a production box, which the old
+// env-gated demo seeder could never do.
+func SeedReference(db *gorm.DB) error {
+	created := 0
+	note := func(kind, name string, made bool) {
+		if made {
+			created++
+			zap.S().Infow("seed: created", "kind", kind, "name", name)
+		}
 	}
 
-	// --- geography ---
-	// Delhi's QC anchor: the serviceable pincode 110035 and its precise lat/lng
-	// (28.6980/77.1490 responds on all platforms incl. Zepto, which needs a pincode).
-	pincode := "110035"
-	city := &domain.City{Name: "Delhi", Slug: "delhi", Lat: fptr(28.6980), Lng: fptr(77.1490), DefaultPincode: sptr(pincode), Enabled: true}
-	if err := db.Create(city).Error; err != nil {
-		zap.S().Warnw("seed: city failed", "error", err)
-		return
+	// --- cities ---
+	// lat/lng/default_pincode are the QuickCommerce search anchor for the city.
+	// Each was verified live to return real results on BlinkIt/Zepto/Swiggy; a city
+	// without them is unusable by the linker (qcLocation returns CITY_NO_LOCATION).
+	// enabled=false would mean "seeding lens only": usable to harvest item ids, but
+	// hidden from users and skipped by the price fan-out.
+	cityDefs := []struct {
+		name, slug, state, pincode string
+		lat, lng                   float64
+	}{
+		{"Delhi", "delhi", "Delhi", "110035", 28.6980, 77.1490},
+		{"Mumbai", "mumbai", "Maharashtra", "400050", 19.0596, 72.8295},
+		{"Bangalore", "bangalore", "Karnataka", "560034", 12.9352, 77.6245},
 	}
-	db.Create(&domain.Pincode{Pincode: pincode, CityID: city.ID, Lat: fptr(28.6980), Lng: fptr(77.1490), Serviceable: true})
+	for _, d := range cityDefs {
+		_, made, err := ensure(db, &domain.City{
+			Name: d.name, Slug: d.slug, State: sptr(d.state),
+			Lat: fptr(d.lat), Lng: fptr(d.lng), DefaultPincode: sptr(d.pincode),
+			Enabled: true,
+		}, "slug = ?", d.slug)
+		if err != nil {
+			return fmt.Errorf("city %s: %w", d.slug, err)
+		}
+		note("city", d.name, made)
+	}
 
 	// --- platforms ---
-	// qc is the QuickCommerce platform name (empty = not tracked via QC).
-	platformDefs := []struct{ code, name, eta, qc string }{
-		{"blinkit", "Blinkit", "10 Mins", "BlinkIt"},
-		{"zepto", "Zepto", "12 Mins", "Zepto"},
-		{"instamart", "Swiggy Instamart", "15 Mins", "Swiggy"},
-		{"flipkart", "Flipkart Minutes", "14 Mins", "Minutes"},
-		{"jiomart", "JioMart", "20 Mins", "JioMart"},
-		{"amazon_now", "Amazon Now", "18 Mins", "Amazon"},
+	// qc is the QuickCommerce platform name; blank makes a platform unsearchable.
+	// All six verified against GET /supported-platforms.
+	platformDefs := []struct {
+		code, name, qc, eta string
+		enabled             bool
+		order               int
+	}{
+		{"zepto", "Zepto", "Zepto", "12 Mins", true, 0},
+		{"blinkit", "Blinkit", "BlinkIt", "10 Mins", true, 1},
+		{"instamart", "Swiggy Instamart", "Swiggy", "15 Mins", true, 2},
+		{"flipkart", "Flipkart Minutes", "Minutes", "14 Mins", false, 3},
+		{"jiomart", "JioMart", "JioMart", "20 Mins", false, 4},
+		{"amazon_now", "Amazon Now", "Amazon", "18 Mins", false, 5},
 	}
-	platforms := make([]domain.Platform, 0, len(platformDefs))
-	for i, d := range platformDefs {
-		p := domain.Platform{Code: d.code, DisplayName: d.name, QCName: sptr(d.qc), DeliveryETAText: sptr(d.eta), Enabled: true, DisplayOrder: i + 1}
-		if err := db.Create(&p).Error; err != nil {
-			zap.S().Warnw("seed: platform failed", "code", d.code, "error", err)
-			continue
+	for _, d := range platformDefs {
+		_, made, err := ensure(db, &domain.Platform{
+			Code: d.code, DisplayName: d.name, QCName: sptr(d.qc),
+			DeliveryETAText: sptr(d.eta), Enabled: d.enabled, DisplayOrder: d.order,
+		}, "code = ?", d.code)
+		if err != nil {
+			return fmt.Errorf("platform %s: %w", d.code, err)
 		}
-		platforms = append(platforms, p)
-		// pincode-level ETA
-		eta := 10 + i*2
-		db.Create(&domain.PlatformDeliveryETA{PlatformID: p.ID, Pincode: pincode, ETAMinutes: &eta, Serviceable: true})
+		note("platform", d.code, made)
 	}
 
-	// --- catalog ---
+	// --- categories ---
 	catDefs := []struct {
 		name, slug string
 		top        bool
+		order      int
 	}{
-		{"Snacks", "snacks", true}, {"Beverages", "beverages", true},
-		{"Groceries", "groceries", true}, {"Dairy", "dairy", false},
+		{"Groceries", "groceries", true, 0},
+		{"Snacks", "snacks", true, 1},
+		{"Dairy", "dairy", false, 2},
+		{"Beverages", "beverages", true, 3},
 	}
-	cats := map[string]domain.Category{}
-	for i, d := range catDefs {
-		c := domain.Category{Name: d.name, Slug: d.slug, IsTopCategory: d.top, Status: domain.StatusActive, DisplayOrder: i + 1}
-		db.Create(&c)
-		cats[d.slug] = c
-	}
-	brandDefs := []string{"Sunfeast", "Amul", "Britannia"}
-	brands := map[string]domain.Brand{}
-	for _, name := range brandDefs {
-		b := domain.Brand{Name: name, IsTopBrand: true, Status: domain.StatusActive}
-		db.Create(&b)
-		brands[name] = b
+	cats := make(map[string]*domain.Category, len(catDefs))
+	for _, d := range catDefs {
+		row, made, err := ensure(db, &domain.Category{
+			Name: d.name, Slug: d.slug, IsTopCategory: d.top,
+			Status: domain.StatusActive, DisplayOrder: d.order,
+		}, "slug = ?", d.slug)
+		if err != nil {
+			return fmt.Errorf("category %s: %w", d.slug, err)
+		}
+		cats[d.slug] = row
+		note("category", d.name, made)
 	}
 
-	// products with variants and a base price (paise) per variant
-	type variantDef struct {
-		vol   float64
-		unit  domain.VolumeUnit
-		price int64
-	}
-	prodDefs := []struct {
-		name, cat, brand string
-		top              bool
-		variants         []variantDef
+	// --- subcategories ---
+	// No unique index exists beyond the PK, so the natural key (category_id, name)
+	// is enforced here rather than by the database.
+	subDefs := []struct {
+		name, slug, cat string
+		top             bool
+		order           int
 	}{
-		{"Sunfeast Whole Grain Bread", "snacks", "Sunfeast", true, []variantDef{{250, domain.VolumeUnitGm, 25000}, {500, domain.VolumeUnitGm, 30000}}},
-		{"Amul Taaza Toned Milk", "dairy", "Amul", true, []variantDef{{500, domain.VolumeUnitMl, 3300}, {1000, domain.VolumeUnitMl, 6600}}},
-		{"Britannia Bourbon Biscuits", "snacks", "Britannia", false, []variantDef{{120, domain.VolumeUnitGm, 4000}}},
-		{"Coca-Cola Soft Drink", "beverages", "Sunfeast", true, []variantDef{{750, domain.VolumeUnitMl, 4000}, {2000, domain.VolumeUnitMl, 9500}}},
+		{"Soft Drink", "soft-drink", "beverages", true, 0},
+	}
+	for _, d := range subDefs {
+		parent, ok := cats[d.cat]
+		if !ok {
+			return fmt.Errorf("subcategory %s: parent category %q missing", d.name, d.cat)
+		}
+		_, made, err := ensure(db, &domain.Subcategory{
+			CategoryID: parent.ID, Name: d.name, Slug: sptr(d.slug),
+			IsTopSubcategory: d.top, Status: domain.StatusActive, DisplayOrder: d.order,
+		}, "category_id = ? AND name = ?", parent.ID, d.name)
+		if err != nil {
+			return fmt.Errorf("subcategory %s: %w", d.name, err)
+		}
+		note("subcategory", d.name, made)
 	}
 
-	for _, pd := range prodDefs {
-		cat := cats[pd.cat]
-		brand := brands[pd.brand]
-		bid := brand.ID
-		prod := domain.Product{
-			CategoryID: cat.ID, BrandID: &bid, Name: pd.name,
-			ImageURL:  sptr("https://picsum.photos/seed/" + cat.Slug + "/400"),
-			IsTopItem: pd.top, Status: domain.StatusActive,
+	// --- brands ---
+	// No unique index here either, so name is the natural key.
+	brandDefs := []struct {
+		name, slug string
+		top        bool
+		order      int
+	}{
+		{"Amul", "amul", true, 0},
+		{"Britannia", "britannia", true, 1},
+		{"Sunfeast", "sunfeast", true, 2},
+		{"Coca-Cola", "coca-cola", true, 3},
+		{"Thums Up", "thums-up", true, 4},
+	}
+	for _, d := range brandDefs {
+		_, made, err := ensure(db, &domain.Brand{
+			Name: d.name, Slug: sptr(d.slug), IsTopBrand: d.top,
+			Status: domain.StatusActive, DisplayOrder: d.order,
+		}, "name = ?", d.name)
+		if err != nil {
+			return fmt.Errorf("brand %s: %w", d.name, err)
 		}
-		db.Create(&prod)
-		db.Create(&domain.ProductImage{ProductID: prod.ID, ImageURL: *prod.ImageURL, DisplayOrder: 0})
-
-		for vi, vd := range pd.variants {
-			variant := domain.ProductVariant{
-				ProductID: prod.ID, VolumeValue: vd.vol, VolumeUnit: vd.unit, DisplayOrder: vi,
-			}
-			db.Create(&variant)
-
-			var prices []int64
-			var minPrice int64
-			var minPlatformID string
-			for _, plat := range platforms {
-				price := vd.price + seedPlatformOffset[plat.Code]
-				// link + price per platform × city
-				db.Create(&domain.ProductPlatformLink{
-					VariantID: variant.ID, PlatformID: plat.ID,
-					PlatformSKU: sptr(fmt.Sprintf("%s-%s", plat.Code, variant.ID[:8])),
-					DeepLink:    sptr(fmt.Sprintf("https://%s.example/item/%s", plat.Code, variant.ID[:8])),
-				})
-				db.Create(&domain.PlatformPrice{
-					VariantID: variant.ID, PlatformID: plat.ID, CityID: city.ID,
-					PricePaise: price, MRPPaise: i64ptr(price + 5000), Available: true, Source: domain.PriceSourceManual,
-				})
-				prices = append(prices, price)
-				if minPlatformID == "" || price < minPrice {
-					minPrice = price
-					minPlatformID = plat.ID
-				}
-			}
-			avg, _ := util.AveragePaise(prices)
-			mpid := minPlatformID
-			db.Create(&domain.VariantPriceSummary{
-				VariantID: variant.ID, CityID: city.ID,
-				AvgPricePaise: i64ptr(avg), MinPricePaise: i64ptr(minPrice), MinPlatformID: &mpid,
-				AvailablePlatformCount: len(prices),
-			})
-		}
+		note("brand", d.name, made)
 	}
 
-	// --- a home banner ---
-	snacks := cats["beverages"]
-	db.Create(&domain.Banner{
-		ImageURL: "https://picsum.photos/seed/banner/800/300", TargetType: domain.BannerTargetCategory,
-		TargetID: &snacks.ID, IsActive: true,
-	})
-
-	zap.S().Infow("seed: demo data created", "city", city.Name, "platforms", len(platforms))
+	zap.S().Infow("seed: reference data ready",
+		"created", created,
+		"unchanged", len(cityDefs)+len(platformDefs)+len(catDefs)+len(subDefs)+len(brandDefs)-created)
+	return nil
 }

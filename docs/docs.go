@@ -2240,6 +2240,43 @@ const docTemplate = `{
                 }
             }
         },
+        "/v1/credits": {
+            "get": {
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
+                "description": "Live QuickCommerce balance, for the admin navbar. Asking is free — it costs no credit itself. Every search costs 1 credit per platform; linking costs 0 when the candidate is relayed, and the fan-out to other enabled cities costs 1 per item per city.",
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "linking"
+                ],
+                "summary": "QuickCommerce credits remaining",
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "allOf": [
+                                {
+                                    "$ref": "#/definitions/dto.Response"
+                                },
+                                {
+                                    "type": "object",
+                                    "properties": {
+                                        "data": {
+                                            "$ref": "#/definitions/v1.CreditsResponse"
+                                        }
+                                    }
+                                }
+                            ]
+                        }
+                    }
+                }
+            }
+        },
         "/v1/dashboard": {
             "get": {
                 "security": [
@@ -2942,6 +2979,75 @@ const docTemplate = `{
                 }
             }
         },
+        "/v1/inventory-management/link/batch": {
+            "post": {
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
+                "description": "Batch form of confirm-link: one search response yields every (variant, platform) mapping the admin picked, sent in one call. Send price_paise + available per entry (from the response you're showing) and it costs 0 credits. Entries are independent — a bad entry is reported in ` + "`" + `failed` + "`" + ` and the rest still map, since every write is an idempotent upsert; re-send just the failures. Afterwards the backend fetches these same item ids in every OTHER enabled city in the background, so each city gets its own real price (1 credit per item per city).",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "linking"
+                ],
+                "summary": "Map many variants to platforms from one search response",
+                "parameters": [
+                    {
+                        "description": "Batch link request",
+                        "name": "request",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/v1.BatchLinkRequest"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "allOf": [
+                                {
+                                    "$ref": "#/definitions/dto.Response"
+                                },
+                                {
+                                    "type": "object",
+                                    "properties": {
+                                        "data": {
+                                            "$ref": "#/definitions/service.BatchLinkResult"
+                                        }
+                                    }
+                                }
+                            ]
+                        }
+                    },
+                    "400": {
+                        "description": "Bad Request",
+                        "schema": {
+                            "allOf": [
+                                {
+                                    "$ref": "#/definitions/dto.Response"
+                                },
+                                {
+                                    "type": "object",
+                                    "properties": {
+                                        "data": {
+                                            "type": "string"
+                                        }
+                                    }
+                                }
+                            ]
+                        }
+                    }
+                }
+            }
+        },
         "/v1/inventory-management/link/search": {
             "get": {
                 "security": [
@@ -3485,7 +3591,7 @@ const docTemplate = `{
                         "BearerAuth": []
                     }
                 ],
-                "description": "Pins a (variant, platform) to the chosen QC item id and seeds its price/stock via GetItem. The link is city-independent; the price is stored per city.",
+                "description": "Pins a (variant, platform) to the chosen QC item id and seeds its price/stock. Send price_paise + available from the search response you're already showing and this costs 0 credits; omit them and the server re-fetches via GetItem for 1 credit. The link is city-independent; the price is stored per city and is a reference only — mobile re-fetches live prices for the user's own pincode at cart time.",
                 "consumes": [
                     "application/json"
                 ],
@@ -7105,8 +7211,8 @@ const docTemplate = `{
                     ]
                 },
                 "value": {
-                    "description": "Numeric quantity of the unit",
-                    "type": "integer"
+                    "description": "Numeric quantity of the unit. Float, not int: 2.25 ltr and 1.5 ltr are real\npack sizes, and domain.ProductVariant.VolumeValue is float64 over a numeric\ncolumn. Whole numbers still serialise as 2, not 2.0.",
+                    "type": "number"
                 }
             }
         },
@@ -7592,6 +7698,34 @@ const docTemplate = `{
                 }
             }
         },
+        "service.BatchLinkFailure": {
+            "type": "object",
+            "properties": {
+                "error": {
+                    "type": "string"
+                },
+                "platform_code": {
+                    "type": "string"
+                },
+                "variant_id": {
+                    "type": "string"
+                }
+            }
+        },
+        "service.BatchLinkResult": {
+            "type": "object",
+            "properties": {
+                "failed": {
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/service.BatchLinkFailure"
+                    }
+                },
+                "mapped": {
+                    "type": "integer"
+                }
+            }
+        },
         "service.Candidate": {
             "type": "object",
             "properties": {
@@ -7664,6 +7798,59 @@ const docTemplate = `{
                 }
             }
         },
+        "v1.BatchLinkEntry": {
+            "type": "object",
+            "required": [
+                "platform_code",
+                "qc_item_id",
+                "variant_id"
+            ],
+            "properties": {
+                "available": {
+                    "type": "boolean"
+                },
+                "deep_link": {
+                    "type": "string"
+                },
+                "inventory": {
+                    "type": "integer"
+                },
+                "mrp_paise": {
+                    "type": "integer"
+                },
+                "platform_code": {
+                    "type": "string"
+                },
+                "price_paise": {
+                    "type": "integer"
+                },
+                "qc_item_id": {
+                    "type": "string"
+                },
+                "variant_id": {
+                    "type": "string"
+                }
+            }
+        },
+        "v1.BatchLinkRequest": {
+            "type": "object",
+            "required": [
+                "city_id",
+                "links"
+            ],
+            "properties": {
+                "city_id": {
+                    "type": "string"
+                },
+                "links": {
+                    "type": "array",
+                    "minItems": 1,
+                    "items": {
+                        "$ref": "#/definitions/v1.BatchLinkEntry"
+                    }
+                }
+            }
+        },
         "v1.ConfirmLinkRequest": {
             "type": "object",
             "required": [
@@ -7672,14 +7859,26 @@ const docTemplate = `{
                 "qc_item_id"
             ],
             "properties": {
+                "available": {
+                    "type": "boolean"
+                },
                 "city_id": {
                     "type": "string"
                 },
                 "deep_link": {
                     "type": "string"
                 },
+                "inventory": {
+                    "type": "integer"
+                },
+                "mrp_paise": {
+                    "type": "integer"
+                },
                 "platform_code": {
                     "type": "string"
+                },
+                "price_paise": {
+                    "type": "integer"
                 },
                 "qc_item_id": {
                     "type": "string"
@@ -7903,6 +8102,14 @@ const docTemplate = `{
                 },
                 "volume": {
                     "$ref": "#/definitions/dto.ProductVariantUnit"
+                }
+            }
+        },
+        "v1.CreditsResponse": {
+            "type": "object",
+            "properties": {
+                "credits_remaining": {
+                    "type": "integer"
                 }
             }
         },

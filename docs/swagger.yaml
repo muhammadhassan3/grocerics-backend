@@ -916,8 +916,11 @@ definitions:
         - pcs
         type: string
       value:
-        description: Numeric quantity of the unit
-        type: integer
+        description: |-
+          Numeric quantity of the unit. Float, not int: 2.25 ltr and 1.5 ltr are real
+          pack sizes, and domain.ProductVariant.VolumeValue is float64 over a numeric
+          column. Whole numbers still serialise as 2, not 2.0.
+        type: number
     type: object
   dto.Response:
     description: Generic response envelope wrapping every API response.
@@ -1258,6 +1261,24 @@ definitions:
       total:
         type: integer
     type: object
+  service.BatchLinkFailure:
+    properties:
+      error:
+        type: string
+      platform_code:
+        type: string
+      variant_id:
+        type: string
+    type: object
+  service.BatchLinkResult:
+    properties:
+      failed:
+        items:
+          $ref: '#/definitions/service.BatchLinkFailure'
+        type: array
+      mapped:
+        type: integer
+    type: object
   service.Candidate:
     properties:
       available:
@@ -1305,14 +1326,58 @@ definitions:
     required:
     - user_id
     type: object
+  v1.BatchLinkEntry:
+    properties:
+      available:
+        type: boolean
+      deep_link:
+        type: string
+      inventory:
+        type: integer
+      mrp_paise:
+        type: integer
+      platform_code:
+        type: string
+      price_paise:
+        type: integer
+      qc_item_id:
+        type: string
+      variant_id:
+        type: string
+    required:
+    - platform_code
+    - qc_item_id
+    - variant_id
+    type: object
+  v1.BatchLinkRequest:
+    properties:
+      city_id:
+        type: string
+      links:
+        items:
+          $ref: '#/definitions/v1.BatchLinkEntry'
+        minItems: 1
+        type: array
+    required:
+    - city_id
+    - links
+    type: object
   v1.ConfirmLinkRequest:
     properties:
+      available:
+        type: boolean
       city_id:
         type: string
       deep_link:
         type: string
+      inventory:
+        type: integer
+      mrp_paise:
+        type: integer
       platform_code:
         type: string
+      price_paise:
+        type: integer
       qc_item_id:
         type: string
     required:
@@ -1470,6 +1535,11 @@ definitions:
     required:
     - product_id
     - volume
+    type: object
+  v1.CreditsResponse:
+    properties:
+      credits_remaining:
+        type: integer
     type: object
   v1.DeleteBannerRequest:
     properties:
@@ -3202,6 +3272,29 @@ paths:
       summary: List all cities (admin)
       tags:
       - cities
+  /v1/credits:
+    get:
+      description: Live QuickCommerce balance, for the admin navbar. Asking is free
+        — it costs no credit itself. Every search costs 1 credit per platform; linking
+        costs 0 when the candidate is relayed, and the fan-out to other enabled cities
+        costs 1 per item per city.
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            allOf:
+            - $ref: '#/definitions/dto.Response'
+            - properties:
+                data:
+                  $ref: '#/definitions/v1.CreditsResponse'
+              type: object
+      security:
+      - BearerAuth: []
+      summary: QuickCommerce credits remaining
+      tags:
+      - linking
   /v1/dashboard:
     get:
       description: Fetches the data needed to populate the admin dashboard, including
@@ -3691,6 +3784,50 @@ paths:
       summary: Get a single variant
       tags:
       - inventory-management
+  /v1/inventory-management/link/batch:
+    post:
+      consumes:
+      - application/json
+      description: 'Batch form of confirm-link: one search response yields every (variant,
+        platform) mapping the admin picked, sent in one call. Send price_paise + available
+        per entry (from the response you''re showing) and it costs 0 credits. Entries
+        are independent — a bad entry is reported in `failed` and the rest still map,
+        since every write is an idempotent upsert; re-send just the failures. Afterwards
+        the backend fetches these same item ids in every OTHER enabled city in the
+        background, so each city gets its own real price (1 credit per item per city).'
+      parameters:
+      - description: Batch link request
+        in: body
+        name: request
+        required: true
+        schema:
+          $ref: '#/definitions/v1.BatchLinkRequest'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            allOf:
+            - $ref: '#/definitions/dto.Response'
+            - properties:
+                data:
+                  $ref: '#/definitions/service.BatchLinkResult'
+              type: object
+        "400":
+          description: Bad Request
+          schema:
+            allOf:
+            - $ref: '#/definitions/dto.Response'
+            - properties:
+                data:
+                  type: string
+              type: object
+      security:
+      - BearerAuth: []
+      summary: Map many variants to platforms from one search response
+      tags:
+      - linking
   /v1/inventory-management/link/search:
     get:
       description: 'Discovery step: groupsearch across platforms so the admin can
@@ -3934,8 +4071,11 @@ paths:
       consumes:
       - application/json
       description: Pins a (variant, platform) to the chosen QC item id and seeds its
-        price/stock via GetItem. The link is city-independent; the price is stored
-        per city.
+        price/stock. Send price_paise + available from the search response you're
+        already showing and this costs 0 credits; omit them and the server re-fetches
+        via GetItem for 1 credit. The link is city-independent; the price is stored
+        per city and is a reference only — mobile re-fetches live prices for the user's
+        own pincode at cart time.
       parameters:
       - description: Variant ID
         in: path
