@@ -1533,6 +1533,11 @@ definitions:
     - product_id
     - volume
     type: object
+  v1.CreditsResponse:
+    properties:
+      credits_remaining:
+        type: integer
+    type: object
   v1.DeleteBannerRequest:
     properties:
       banner_id:
@@ -3264,6 +3269,29 @@ paths:
       summary: List all cities (admin)
       tags:
       - cities
+  /v1/credits:
+    get:
+      description: Live QuickCommerce balance, for the admin navbar. Asking is free
+        — it costs no credit itself. Every search costs 1 credit per platform; linking
+        costs 0 when the candidate is relayed, and the fan-out to other enabled cities
+        costs 1 per item per city.
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            allOf:
+            - $ref: '#/definitions/dto.Response'
+            - properties:
+                data:
+                  $ref: '#/definitions/v1.CreditsResponse'
+              type: object
+      security:
+      - BearerAuth: []
+      summary: QuickCommerce credits remaining
+      tags:
+      - linking
   /v1/dashboard:
     get:
       description: Fetches the data needed to populate the admin dashboard, including

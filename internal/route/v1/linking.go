@@ -29,6 +29,7 @@ func RegisterLinkingRoutes(r *gin.Engine, d LinkingDeps) {
 	group.Use(middleware.RequireRole(domain.RoleAdmin))
 
 	group.GET("/platforms", listPlatforms(d))
+	group.GET("/credits", qcCredits(d))
 	group.GET("/inventory-management/link/search", searchLinkCandidates(d))
 	group.POST("/inventory-management/link/batch", confirmLinksBatch(d))
 	group.POST("/inventory-management/variants/:variant_id/links", confirmLink(d))
@@ -96,6 +97,28 @@ func listPlatforms(d LinkingDeps) gin.HandlerFunc {
 			}
 		}
 		ok(c, out)
+	}
+}
+
+type CreditsResponse struct {
+	CreditsRemaining int `json:"credits_remaining"`
+}
+
+// @Summary QuickCommerce credits remaining
+// @Description Live QuickCommerce balance, for the admin navbar. Asking is free — it costs no credit itself. Every search costs 1 credit per platform; linking costs 0 when the candidate is relayed, and the fan-out to other enabled cities costs 1 per item per city.
+// @Tags linking
+// @Produce json
+// @Success 200 {object} dto.Response{data=v1.CreditsResponse}
+// @Security BearerAuth
+// @Router /v1/credits [get]
+func qcCredits(d LinkingDeps) gin.HandlerFunc {
+	return func(c *gin.Context) {
+		n, err := d.Linking.Credits()
+		if err != nil {
+			c.Error(err)
+			return
+		}
+		ok(c, CreditsResponse{CreditsRemaining: n})
 	}
 }
 

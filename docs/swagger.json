@@ -2232,6 +2232,43 @@
                 }
             }
         },
+        "/v1/credits": {
+            "get": {
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
+                "description": "Live QuickCommerce balance, for the admin navbar. Asking is free — it costs no credit itself. Every search costs 1 credit per platform; linking costs 0 when the candidate is relayed, and the fan-out to other enabled cities costs 1 per item per city.",
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "linking"
+                ],
+                "summary": "QuickCommerce credits remaining",
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "allOf": [
+                                {
+                                    "$ref": "#/definitions/dto.Response"
+                                },
+                                {
+                                    "type": "object",
+                                    "properties": {
+                                        "data": {
+                                            "$ref": "#/definitions/v1.CreditsResponse"
+                                        }
+                                    }
+                                }
+                            ]
+                        }
+                    }
+                }
+            }
+        },
         "/v1/dashboard": {
             "get": {
                 "security": [
@@ -8057,6 +8094,14 @@
                 },
                 "volume": {
                     "$ref": "#/definitions/dto.ProductVariantUnit"
+                }
+            }
+        },
+        "v1.CreditsResponse": {
+            "type": "object",
+            "properties": {
+                "credits_remaining": {
+                    "type": "integer"
                 }
             }
         },
