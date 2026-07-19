@@ -3,6 +3,7 @@ package service
 import (
 	"strconv"
 	"strings"
+	"time"
 
 	"grocerics-backend/internal/domain"
 	"grocerics-backend/internal/dto"
@@ -201,6 +202,106 @@ func (s *CatalogService) Search(term, cityID string, page query.Page) ([]dto.Pro
 	}
 	cards, err := s.productCards(products, cityID)
 	return cards, query.BuildMeta(total, page), err
+}
+
+func (s *CatalogService) SearchVariants(term, cityID string, platformCodes []string, page query.Page) ([]dto.VariantSearchItemDTO, query.Meta, error) {
+	products, total, err := s.product.SearchByNameOrBrand(term, page)
+	if err != nil {
+		return nil, query.Meta{}, err
+	}
+	if len(products) == 0 {
+		return []dto.VariantSearchItemDTO{}, query.BuildMeta(0, page), nil
+	}
+
+	plats, err := s.platforms.ListEnabled()
+	if err != nil {
+		return nil, query.Meta{}, err
+	}
+	platByID := make(map[string]domain.Platform, len(plats))
+	want := make(map[string]bool, len(platformCodes))
+	for _, code := range platformCodes {
+		want[code] = true
+	}
+	for _, p := range plats {
+		platByID[p.ID] = p
+	}
+
+	productIDs := make([]string, 0, len(products))
+	brandIDs := make([]string, 0, len(products))
+	prodByID := make(map[string]domain.Product, len(products))
+	for _, p := range products {
+		productIDs = append(productIDs, p.ID)
+		prodByID[p.ID] = p
+		if p.BrandID != nil {
+			brandIDs = append(brandIDs, *p.BrandID)
+		}
+	}
+	brands, err := s.brand.FindByIDs(brandIDs)
+	if err != nil {
+		return nil, query.Meta{}, err
+	}
+	variants, err := s.variant.ListByProducts(productIDs)
+	if err != nil {
+		return nil, query.Meta{}, err
+	}
+	variantIDs := make([]string, 0, len(variants))
+	for _, v := range variants {
+		variantIDs = append(variantIDs, v.ID)
+	}
+	prices, err := s.price.ListByVariantsCity(variantIDs, cityID)
+	if err != nil {
+		return nil, query.Meta{}, err
+	}
+	priceByVariant := make(map[string][]domain.PlatformPrice, len(variantIDs))
+	for _, pr := range prices {
+		priceByVariant[pr.VariantID] = append(priceByVariant[pr.VariantID], pr)
+	}
+
+	items := make([]dto.VariantSearchItemDTO, 0, len(variants))
+	for _, v := range variants {
+		prod := prodByID[v.ProductID]
+		row := dto.VariantSearchItemDTO{
+			VariantID: v.ID, ProductID: v.ProductID, ProductName: prod.Name,
+			ImageURL: strPtr(prod.ImageURL), PackLabel: packLabel(v),
+			ReferencePrices: []dto.ReferencePriceDTO{},
+		}
+		if prod.BrandID != nil {
+			if b, ok := brands[*prod.BrandID]; ok {
+				row.BrandName = b.Name
+			}
+		}
+		var minPaise *int64
+		for _, pr := range priceByVariant[v.ID] {
+			pl, ok := platByID[pr.PlatformID]
+			if !ok {
+				continue
+			}
+			if len(want) > 0 && !want[pl.Code] {
+				continue
+			}
+			mrp := int64(0)
+			if pr.MRPPaise != nil {
+				mrp = *pr.MRPPaise
+			}
+			row.ReferencePrices = append(row.ReferencePrices, dto.ReferencePriceDTO{
+				PlatformCode: pl.Code, PlatformName: pl.DisplayName,
+				PricePaise: pr.PricePaise, MRPPaise: mrp, Available: pr.Available,
+				LastUpdatedAt: pr.LastUpdatedAt.Format(time.RFC3339),
+			})
+			if pr.Available && (minPaise == nil || pr.PricePaise < *minPaise) {
+				m := pr.PricePaise
+				minPaise = &m
+			}
+		}
+		row.ReferenceFromPaise = minPaise
+		if minPaise != nil {
+			if per, label, ok := util.UnitPricePaise(*minPaise, v.VolumeValue, v.VolumeUnit); ok {
+				row.UnitPrice = util.FormatPaise(per) + "/" + label
+			}
+		}
+		items = append(items, row)
+	}
+	return items, query.BuildMeta(total, page), nil
 }
 
 func (s *CatalogService) Deals(cityID string) ([]dto.ProductCardDTO, error) {

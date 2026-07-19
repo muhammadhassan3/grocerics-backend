@@ -38,6 +38,7 @@ func RegisterConsumerRoutes(r *gin.Engine, d ConsumerDeps) {
 	g.GET("/home", getHome(d))
 	g.GET("/categories/:id/products", getCategoryProducts(d))
 	g.GET("/search", search(d))
+	g.GET("/search/variants", searchVariants(d))
 	g.GET("/deals", getDeals(d))
 	g.GET("/products/:id", getProduct(d))
 
@@ -180,6 +181,43 @@ func search(d ConsumerDeps) gin.HandlerFunc {
 			_ = d.Analytics.LogSearch(&domain.SearchEvent{UserID: &uid, Query: term, ResultProductID: pid, CityID: &cid})
 		}()
 		ok(c, dto.ProductCardListDTO{Items: cards, Meta: meta})
+	}
+}
+
+// @Summary Variant search (reference prices)
+// @Description Variant-level search: matches products by name/brand, flattens to one row per variant, attaches stored REFERENCE prices for the user's city filtered to the selected platforms. Zero QuickCommerce calls. City defaults to the user's current city; pass ?city_id= to override.
+// @Tags consumer
+// @Produce json
+// @Security BearerAuth
+// @Param q query string true "search term (min 2 chars)"
+// @Param platforms query string false "comma-separated platform codes; omitted = all enabled"
+// @Param city_id query string false "override city (defaults to the user's current city)"
+// @Param page query int false "page number (default 1)"
+// @Param page_size query int false "page size, max 100 (default 20)"
+// @Success 200 {object} dto.Response{data=dto.VariantSearchListDTO}
+// @Failure 400 {object} dto.Response
+// @Router /v1/search/variants [get]
+func searchVariants(d ConsumerDeps) gin.HandlerFunc {
+	return func(c *gin.Context) {
+		term := c.Query("q")
+		if len([]rune(term)) < 2 {
+			c.Error(errs.BadRequest("VALIDATION", "search query must be at least 2 characters"))
+			return
+		}
+		cityID := c.Query("city_id")
+		if cityID == "" {
+			var good bool
+			if cityID, _, good = resolveCity(c, d); !good {
+				return
+			}
+		}
+		codes := util.SplitCSV(c.Query("platforms"))
+		items, meta, err := d.Catalog.SearchVariants(term, cityID, codes, query.PageFromContext(c))
+		if err != nil {
+			c.Error(err)
+			return
+		}
+		ok(c, dto.VariantSearchListDTO{Items: items, Meta: meta})
 	}
 }
 
