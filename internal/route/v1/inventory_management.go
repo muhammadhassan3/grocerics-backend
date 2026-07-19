@@ -17,6 +17,7 @@ import (
 
 type InventoryDeps struct {
 	JWT           *auth.JWTService
+	Auth          *middleware.AuthDeps
 	Users         *repository.UserRepository
 	Products      *repository.ProductRepository
 	Variants      *repository.ProductVariantRepository
@@ -27,8 +28,8 @@ type InventoryDeps struct {
 
 func RegisterInventoryManagementRoutes(r *gin.Engine, d InventoryDeps) {
 	group := r.Group("/v1")
-	group.Use(middleware.AuthMiddleware(d.JWT, d.Users))
-	group.Use(middleware.RequireRole(domain.RoleAdmin))
+	group.Use(middleware.AuthMiddleware(d.Auth))
+	group.Use(middleware.AdminOnly())
 
 	group.GET("/inventory-management", listInventory(d))
 	group.GET("/inventory-management/stats", inventoryStats(d))

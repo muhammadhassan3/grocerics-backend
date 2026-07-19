@@ -11,9 +11,13 @@ import (
 	"github.com/gin-gonic/gin"
 )
 
-// AuthMiddleware validates the Bearer JWT and stashes a typed
-// auth.UserContext on the gin context for downstream handlers.
-func AuthMiddleware(jwt *auth.JWTService, users *repository.UserRepository) gin.HandlerFunc {
+type AuthDeps struct {
+	JWT    *auth.JWTService
+	Users  *repository.UserRepository
+	Admins *repository.AdminRepository
+}
+
+func AuthMiddleware(d *AuthDeps) gin.HandlerFunc {
 	return func(c *gin.Context) {
 		authHeader := c.GetHeader("Authorization")
 		if authHeader == "" || !strings.HasPrefix(authHeader, "Bearer ") {
@@ -21,19 +25,33 @@ func AuthMiddleware(jwt *auth.JWTService, users *repository.UserRepository) gin.
 			c.Abort()
 			return
 		}
-
-		tokenStr := strings.TrimPrefix(authHeader, "Bearer ")
-		claims, err := jwt.Validate(tokenStr)
+		claims, err := d.JWT.Validate(strings.TrimPrefix(authHeader, "Bearer "))
 		if err != nil {
 			c.Error(errs.Unauthorized("AUTH_TOKEN_INVALID", "Invalid token").WithCause(err))
 			c.Abort()
 			return
 		}
 
-		role := domain.Role(claims.Role)
+		kind := auth.Kind(claims.Kind)
+		if kind == "" {
+			kind = auth.KindClient
+		}
 
-		if role != domain.RoleAdmin {
-			u, lookupErr := users.FindByID(claims.UserID)
+		switch kind {
+		case auth.KindAdmin:
+			a, lookupErr := d.Admins.FindByID(claims.UserID)
+			if lookupErr != nil {
+				c.Error(errs.Internal("AUTH_ADMIN_LOOKUP_FAILED", lookupErr))
+				c.Abort()
+				return
+			}
+			if a == nil {
+				c.Error(errs.Unauthorized("AUTH_ADMIN_GONE", "admin no longer exists"))
+				c.Abort()
+				return
+			}
+		default:
+			u, lookupErr := d.Users.FindByID(claims.UserID)
 			if lookupErr != nil {
 				c.Error(errs.Internal("AUTH_USER_LOOKUP_FAILED", lookupErr))
 				c.Abort()
@@ -49,7 +67,8 @@ func AuthMiddleware(jwt *auth.JWTService, users *repository.UserRepository) gin.
 		auth.SetUser(c, auth.UserContext{
 			ID:   claims.UserID,
 			Name: claims.Name,
-			Role: role,
+			Role: domain.Role(claims.Role),
+			Kind: kind,
 		})
 		c.Next()
 	}

@@ -39,7 +39,8 @@ type App struct {
 	UserRepo *repository.UserRepository
 	QC       quickcommerce.Client
 
-	AuthService *service.AuthService
+	AdminAuth *service.AdminAuthService
+	AuthDeps  *middleware.AuthDeps
 }
 
 func New(cfg *config.Config) (*App, error) {
@@ -62,26 +63,26 @@ func New(cfg *config.Config) (*App, error) {
 		Record:  qcRecorder(db),
 	})
 
-	authService := service.NewAuthService(
-		userRepo,
-		repository.NewRefreshTokenRepository(db),
-		repository.NewPasswordResetRepository(db),
+	adminRepo := repository.NewAdminRepository(db)
+	adminAuth := service.NewAdminAuthService(
+		adminRepo,
+		repository.NewAdminRefreshTokenRepository(db),
+		repository.NewAdminPasswordResetRepository(db),
 		jwt,
 		"",
 	)
+	authDeps := &middleware.AuthDeps{JWT: jwt, Users: userRepo, Admins: adminRepo}
 
-	// Reference data (cities, platforms, categories, subcategories, brands) is not
-	// seeded on boot -- run `api -seed` deliberately. The old demo seeder that
-	// invented a fake catalog here is gone.
 	config.SeedAdmin(db, cfg.Seed, cfg.Env)
 
 	a := &App{
-		Cfg:         cfg,
-		DB:          db,
-		JWTService:  jwt,
-		UserRepo:    userRepo,
-		QC:          qc,
-		AuthService: authService,
+		Cfg:        cfg,
+		DB:         db,
+		JWTService: jwt,
+		UserRepo:   userRepo,
+		QC:         qc,
+		AdminAuth:  adminAuth,
+		AuthDeps:   authDeps,
 	}
 	a.Router = a.buildRouter()
 	a.initializeFirebase()
@@ -130,10 +131,11 @@ func (a *App) buildRouter() *gin.Engine {
 		c.JSON(405, dto.Response{Status: "failed", Code: "METHOD_NOT_ALLOWED", Message: "Method not allowed"})
 	})
 
-	v1.RegisterAuthRoutes(r, a.AuthService, a.JWTService, a.UserRepo)
-	v1.RegisterUserRoutes(r, a.JWTService, a.UserRepo)
+	v1.RegisterAuthRoutes(r, v1.AuthDeps{Admin: a.AdminAuth, Auth: a.AuthDeps})
+	v1.RegisterUserRoutes(r, a.AuthDeps, a.UserRepo)
 	v1.RegisterDashboardRoutes(r, v1.DashboardDeps{
 		JWT:            a.JWTService,
+		Auth:           a.AuthDeps,
 		Users:          a.UserRepo,
 		Analytics:      repository.NewAnalyticsRepository(a.DB),
 		Products:       repository.NewProductRepository(a.DB),
@@ -145,6 +147,7 @@ func (a *App) buildRouter() *gin.Engine {
 	})
 	v1.RegisterInventoryManagementRoutes(r, v1.InventoryDeps{
 		JWT:           a.JWTService,
+		Auth:          a.AuthDeps,
 		Users:         a.UserRepo,
 		Products:      repository.NewProductRepository(a.DB),
 		Variants:      repository.NewProductVariantRepository(a.DB),
@@ -155,6 +158,7 @@ func (a *App) buildRouter() *gin.Engine {
 
 	v1.RegisterPlatformRoutes(r, v1.PlatformDeps{
 		JWT:       a.JWTService,
+		Auth:      a.AuthDeps,
 		Users:     a.UserRepo,
 		Platforms: repository.NewPlatformRepository(a.DB),
 	})
@@ -162,6 +166,7 @@ func (a *App) buildRouter() *gin.Engine {
 	pricingService := service.NewPricingService(a.DB)
 	v1.RegisterLinkingRoutes(r, v1.LinkingDeps{
 		JWT:            a.JWTService,
+		Auth:           a.AuthDeps,
 		Users:          a.UserRepo,
 		Platforms:      repository.NewPlatformRepository(a.DB),
 		Links:          repository.NewProductPlatformLinkRepository(a.DB),
@@ -172,31 +177,36 @@ func (a *App) buildRouter() *gin.Engine {
 
 	v1.RegisterCategoryRoutes(r, v1.CategoryDeps{
 		JWT:        a.JWTService,
+		Auth:       a.AuthDeps,
 		Users:      a.UserRepo,
 		Categories: repository.NewCategoryRepository(a.DB),
 	})
 	v1.RegisterSubcategoryRoutes(r, v1.SubcategoryDeps{
 		JWT:           a.JWTService,
+		Auth:          a.AuthDeps,
 		Users:         a.UserRepo,
 		Subcategories: repository.NewSubcategoryRepository(a.DB),
 		Categories:    repository.NewCategoryRepository(a.DB),
 	})
 	v1.RegisterBrandsRoutes(r, v1.BrandDeps{
 		JWT:    a.JWTService,
+		Auth:   a.AuthDeps,
 		Users:  a.UserRepo,
 		Brands: repository.NewBrandRepository(a.DB),
 	})
 	v1.RegisterBannerRoutes(r, v1.BannerDeps{
 		JWT:     a.JWTService,
+		Auth:    a.AuthDeps,
 		Users:   a.UserRepo,
 		Banners: repository.NewBannerRepository(a.DB),
 	})
 	v1.RegisterCityRoutes(r, v1.CityDeps{
 		JWT:    a.JWTService,
+		Auth:   a.AuthDeps,
 		Users:  a.UserRepo,
 		Cities: repository.NewCityRepository(a.DB),
 	})
-	v1.RegisterPresignedURLRoutes(r, a.JWTService, a.UserRepo)
+	v1.RegisterPresignedURLRoutes(r, a.AuthDeps)
 	// Mobile-contract stub routes. cart/wishlist/product-detail were dropped in
 	// the master merge — consumer.go implements those for real on the same paths.
 	v1.RegisterAddressRoutes(r)
@@ -204,9 +214,10 @@ func (a *App) buildRouter() *gin.Engine {
 	v1.RegisterSettingsRoutes(r)
 
 	v1.RegisterConsumerRoutes(r, v1.ConsumerDeps{
-		JWT:     a.JWTService,
-		Users:   a.UserRepo,
-		Cities:  repository.NewCityRepository(a.DB),
+		JWT:       a.JWTService,
+		Auth:      a.AuthDeps,
+		Users:     a.UserRepo,
+		Cities:    repository.NewCityRepository(a.DB),
 		Catalog:   service.NewCatalogService(a.DB),
 		Cart:      service.NewCartService(a.DB),
 		Loc:       service.NewLocationResolver(a.DB),
@@ -215,6 +226,7 @@ func (a *App) buildRouter() *gin.Engine {
 
 	v1.RegisterProfileRoutes(r, v1.ProfileDeps{
 		JWT:     a.JWTService,
+		Auth:    a.AuthDeps,
 		Users:   a.UserRepo,
 		Profile: service.NewProfileService(a.DB),
 	})

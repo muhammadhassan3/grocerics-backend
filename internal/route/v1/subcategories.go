@@ -17,6 +17,7 @@ import (
 
 type SubcategoryDeps struct {
 	JWT           *auth.JWTService
+	Auth          *middleware.AuthDeps
 	Users         *repository.UserRepository
 	Subcategories *repository.SubcategoryRepository
 	Categories    *repository.CategoryRepository
@@ -26,12 +27,12 @@ type SubcategoryDeps struct {
 // with the GET /v1/categories/:category_id wildcard.
 func RegisterSubcategoryRoutes(r *gin.Engine, d SubcategoryDeps) {
 	group := r.Group("/v1")
-	group.Use(middleware.AuthMiddleware(d.JWT, d.Users))
+	group.Use(middleware.AuthMiddleware(d.Auth))
 	group.GET("/subcategories", listSubcategories(d))
 	group.GET("/subcategories/:subcategory_id", getSubcategoryByID(d))
 
 	admin := group.Group("")
-	admin.Use(middleware.RequireRole(domain.RoleAdmin))
+	admin.Use(middleware.AdminOnly())
 	admin.POST("/subcategories", createSubcategory(d))
 	admin.PATCH("/subcategories", updateSubcategory(d))
 	admin.PATCH("/subcategories/reorder", reorderSubcategories(d))

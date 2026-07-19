@@ -17,18 +17,19 @@ import (
 
 type CategoryDeps struct {
 	JWT        *auth.JWTService
+	Auth       *middleware.AuthDeps
 	Users      *repository.UserRepository
 	Categories *repository.CategoryRepository
 }
 
 func RegisterCategoryRoutes(r *gin.Engine, d CategoryDeps) {
 	group := r.Group("/v1")
-	group.Use(middleware.AuthMiddleware(d.JWT, d.Users))
+	group.Use(middleware.AuthMiddleware(d.Auth))
 	group.GET("/categories", listCategories(d))
 	group.GET("/categories/:id", getCategoryByID(d))
 
 	admin := group.Group("")
-	admin.Use(middleware.RequireRole(domain.RoleAdmin))
+	admin.Use(middleware.AdminOnly())
 	admin.POST("/categories", createCategory(d))
 	admin.PATCH("/categories", updateCategory(d))
 	admin.PATCH("/categories/reorder", reorderCategories(d))

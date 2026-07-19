@@ -3,16 +3,15 @@ package v1
 import (
 	"net/http"
 
-	"grocerics-backend/internal/auth"
 	"grocerics-backend/internal/middleware"
-	"grocerics-backend/internal/repository"
 
 	"github.com/gin-gonic/gin"
 )
 
-func RegisterPresignedURLRoutes(r *gin.Engine, jwt *auth.JWTService, users *repository.UserRepository) {
+// Presigned upload URLs are an admin-only tool (catalog image upload).
+func RegisterPresignedURLRoutes(r *gin.Engine, authDeps *middleware.AuthDeps) {
 	group := r.Group("/v1/presigned-url")
-	group.Use(middleware.AuthMiddleware(jwt, users))
+	group.Use(middleware.AuthMiddleware(authDeps), middleware.AdminOnly())
 	group.POST("", getPresignedURL)
 }
 

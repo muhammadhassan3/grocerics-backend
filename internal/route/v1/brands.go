@@ -17,18 +17,19 @@ import (
 
 type BrandDeps struct {
 	JWT    *auth.JWTService
+	Auth   *middleware.AuthDeps
 	Users  *repository.UserRepository
 	Brands *repository.BrandRepository
 }
 
 func RegisterBrandsRoutes(r *gin.Engine, d BrandDeps) {
 	group := r.Group("/v1")
-	group.Use(middleware.AuthMiddleware(d.JWT, d.Users))
+	group.Use(middleware.AuthMiddleware(d.Auth))
 	group.GET("/brands", listBrands(d))
 	group.GET("/brands/:brand_id", getBrandByID(d))
 
 	admin := group.Group("")
-	admin.Use(middleware.RequireRole(domain.RoleAdmin))
+	admin.Use(middleware.AdminOnly())
 	admin.POST("/brands", createBrand(d))
 	admin.PATCH("/brands", updateBrand(d))
 	admin.PATCH("/brands/reorder", reorderBrands(d))
@@ -135,8 +136,8 @@ func getBrandByID(d BrandDeps) gin.HandlerFunc {
 }
 
 type CreateBrandRequest struct {
-	BrandName    string `json:"brand_name" binding:"required"`
-	ImageURL     string `json:"image_url" binding:"required"`
+	BrandName  string `json:"brand_name" binding:"required"`
+	ImageURL   string `json:"image_url" binding:"required"`
 	Status     string `json:"status" binding:"required,oneof=active disabled"`
 	IsTopBrand bool   `json:"is_top_brand"`
 }
@@ -161,7 +162,7 @@ func createBrand(d BrandDeps) gin.HandlerFunc {
 		created, err := d.Brands.Create(&domain.Brand{
 			Name:       req.BrandName,
 			Slug:       util.PtrIfSet(slug),
-			ImageURL:     util.PtrIfSet(req.ImageURL),
+			ImageURL:   util.PtrIfSet(req.ImageURL),
 			Status:     domain.Status(req.Status),
 			IsTopBrand: req.IsTopBrand,
 		})
@@ -174,9 +175,9 @@ func createBrand(d BrandDeps) gin.HandlerFunc {
 }
 
 type UpdateBrandRequest struct {
-	BrandID      string `json:"brand_id" binding:"required"`
-	BrandName    string `json:"brand_name"`
-	ImageURL     string `json:"image_url"`
+	BrandID    string `json:"brand_id" binding:"required"`
+	BrandName  string `json:"brand_name"`
+	ImageURL   string `json:"image_url"`
 	Status     string `json:"status" binding:"omitempty,oneof=active disabled"`
 	IsTopBrand *bool  `json:"is_top_brand"`
 }

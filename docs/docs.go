@@ -24,26 +24,17 @@ const docTemplate = `{
                         "BearerAuth": []
                     }
                 ],
-                "description": "Delete the authenticated user's account. This action is irreversible.",
-                "consumes": [
-                    "application/json"
-                ],
+                "description": "Delete the authenticated client's account. STUB — deletion not yet wired.",
                 "produces": [
                     "application/json"
                 ],
                 "tags": [
                     "Auth"
                 ],
-                "summary": "Delete User",
+                "summary": "Delete account (client)",
                 "responses": {
                     "200": {
-                        "description": "User deleted",
-                        "schema": {
-                            "$ref": "#/definitions/dto.Response"
-                        }
-                    },
-                    "401": {
-                        "description": "Unauthorized",
+                        "description": "OK",
                         "schema": {
                             "$ref": "#/definitions/dto.Response"
                         }
@@ -53,7 +44,7 @@ const docTemplate = `{
         },
         "/auth/forgot-password": {
             "post": {
-                "description": "Issue a single-use password-reset token. Always returns 200 to avoid email enumeration.",
+                "description": "Issue a single-use reset token. Always 200, to avoid email enumeration.",
                 "consumes": [
                     "application/json"
                 ],
@@ -63,7 +54,7 @@ const docTemplate = `{
                 "tags": [
                     "Auth"
                 ],
-                "summary": "Forgot Password",
+                "summary": "Admin forgot password",
                 "parameters": [
                     {
                         "description": "Forgot password request payload",
@@ -77,13 +68,7 @@ const docTemplate = `{
                 ],
                 "responses": {
                     "200": {
-                        "description": "If the email exists, a reset link has been sent",
-                        "schema": {
-                            "$ref": "#/definitions/dto.Response"
-                        }
-                    },
-                    "400": {
-                        "description": "Bad request",
+                        "description": "OK",
                         "schema": {
                             "$ref": "#/definitions/dto.Response"
                         }
@@ -93,7 +78,7 @@ const docTemplate = `{
         },
         "/auth/login": {
             "post": {
-                "description": "User login",
+                "description": "Web-UI login with email + password. Clients use the phone/OTP routes.",
                 "consumes": [
                     "application/json"
                 ],
@@ -103,7 +88,7 @@ const docTemplate = `{
                 "tags": [
                     "Auth"
                 ],
-                "summary": "Login",
+                "summary": "Admin login",
                 "parameters": [
                     {
                         "description": "Login request payload",
@@ -117,7 +102,7 @@ const docTemplate = `{
                 ],
                 "responses": {
                     "200": {
-                        "description": "Successful login",
+                        "description": "OK",
                         "schema": {
                             "allOf": [
                                 {
@@ -132,12 +117,6 @@ const docTemplate = `{
                                     }
                                 }
                             ]
-                        }
-                    },
-                    "400": {
-                        "description": "Bad request",
-                        "schema": {
-                            "$ref": "#/definitions/dto.Response"
                         }
                     },
                     "401": {
@@ -156,7 +135,6 @@ const docTemplate = `{
                         "BearerAuth": []
                     }
                 ],
-                "description": "Revoke the presented refresh token. Single-device.",
                 "consumes": [
                     "application/json"
                 ],
@@ -166,7 +144,7 @@ const docTemplate = `{
                 "tags": [
                     "Auth"
                 ],
-                "summary": "Logout",
+                "summary": "Admin logout",
                 "parameters": [
                     {
                         "description": "Logout request payload",
@@ -180,19 +158,7 @@ const docTemplate = `{
                 ],
                 "responses": {
                     "200": {
-                        "description": "Logged out",
-                        "schema": {
-                            "$ref": "#/definitions/dto.Response"
-                        }
-                    },
-                    "400": {
-                        "description": "Bad request",
-                        "schema": {
-                            "$ref": "#/definitions/dto.Response"
-                        }
-                    },
-                    "401": {
-                        "description": "Unauthorized",
+                        "description": "OK",
                         "schema": {
                             "$ref": "#/definitions/dto.Response"
                         }
@@ -202,7 +168,7 @@ const docTemplate = `{
         },
         "/auth/mobile-register": {
             "post": {
-                "description": "User registration via mobile phone number (OTP-based)",
+                "description": "Register a client by phone (sends OTP). STUB.",
                 "consumes": [
                     "application/json"
                 ],
@@ -212,7 +178,7 @@ const docTemplate = `{
                 "tags": [
                     "Auth"
                 ],
-                "summary": "Mobile Register",
+                "summary": "Mobile register (client)",
                 "parameters": [
                     {
                         "description": "Mobile register request payload",
@@ -226,13 +192,7 @@ const docTemplate = `{
                 ],
                 "responses": {
                     "200": {
-                        "description": "OTP code sent",
-                        "schema": {
-                            "$ref": "#/definitions/dto.Response"
-                        }
-                    },
-                    "400": {
-                        "description": "Bad request",
+                        "description": "OK",
                         "schema": {
                             "$ref": "#/definitions/dto.Response"
                         }
@@ -242,7 +202,7 @@ const docTemplate = `{
         },
         "/auth/phone-login": {
             "post": {
-                "description": "User login via phone number (OTP-based)",
+                "description": "Send an OTP to the phone. STUB — OTP delivery not yet implemented.",
                 "consumes": [
                     "application/json"
                 ],
@@ -252,7 +212,7 @@ const docTemplate = `{
                 "tags": [
                     "Auth"
                 ],
-                "summary": "Phone Login",
+                "summary": "Phone login (client)",
                 "parameters": [
                     {
                         "description": "Mobile login request payload",
@@ -266,13 +226,7 @@ const docTemplate = `{
                 ],
                 "responses": {
                     "200": {
-                        "description": "OTP code sent",
-                        "schema": {
-                            "$ref": "#/definitions/dto.Response"
-                        }
-                    },
-                    "400": {
-                        "description": "Bad request",
+                        "description": "OK",
                         "schema": {
                             "$ref": "#/definitions/dto.Response"
                         }
@@ -282,7 +236,6 @@ const docTemplate = `{
         },
         "/auth/refresh": {
             "post": {
-                "description": "Refresh access token using refresh token",
                 "consumes": [
                     "application/json"
                 ],
@@ -292,7 +245,7 @@ const docTemplate = `{
                 "tags": [
                     "Auth"
                 ],
-                "summary": "Refresh Token",
+                "summary": "Refresh admin token",
                 "parameters": [
                     {
                         "description": "Refresh token request payload",
@@ -306,7 +259,7 @@ const docTemplate = `{
                 ],
                 "responses": {
                     "200": {
-                        "description": "Successful token refresh",
+                        "description": "OK",
                         "schema": {
                             "allOf": [
                                 {
@@ -323,12 +276,6 @@ const docTemplate = `{
                             ]
                         }
                     },
-                    "400": {
-                        "description": "Bad request",
-                        "schema": {
-                            "$ref": "#/definitions/dto.Response"
-                        }
-                    },
                     "401": {
                         "description": "Unauthorized",
                         "schema": {
@@ -338,61 +285,8 @@ const docTemplate = `{
                 }
             }
         },
-        "/auth/register": {
-            "post": {
-                "description": "User registration",
-                "consumes": [
-                    "application/json"
-                ],
-                "produces": [
-                    "application/json"
-                ],
-                "tags": [
-                    "Auth"
-                ],
-                "summary": "Register",
-                "parameters": [
-                    {
-                        "description": "Register request payload",
-                        "name": "registerRequest",
-                        "in": "body",
-                        "required": true,
-                        "schema": {
-                            "$ref": "#/definitions/v1.RegisterRequest"
-                        }
-                    }
-                ],
-                "responses": {
-                    "201": {
-                        "description": "Successful registration",
-                        "schema": {
-                            "allOf": [
-                                {
-                                    "$ref": "#/definitions/dto.Response"
-                                },
-                                {
-                                    "type": "object",
-                                    "properties": {
-                                        "data": {
-                                            "$ref": "#/definitions/dto.UserDTO"
-                                        }
-                                    }
-                                }
-                            ]
-                        }
-                    },
-                    "400": {
-                        "description": "Bad request",
-                        "schema": {
-                            "$ref": "#/definitions/dto.Response"
-                        }
-                    }
-                }
-            }
-        },
         "/auth/reset-password": {
             "post": {
-                "description": "Consume a reset token and set a new password.",
                 "consumes": [
                     "application/json"
                 ],
@@ -402,7 +296,7 @@ const docTemplate = `{
                 "tags": [
                     "Auth"
                 ],
-                "summary": "Reset Password",
+                "summary": "Admin reset password",
                 "parameters": [
                     {
                         "description": "Reset password request payload",
@@ -416,13 +310,7 @@ const docTemplate = `{
                 ],
                 "responses": {
                     "200": {
-                        "description": "Password reset",
-                        "schema": {
-                            "$ref": "#/definitions/dto.Response"
-                        }
-                    },
-                    "400": {
-                        "description": "Bad request",
+                        "description": "OK",
                         "schema": {
                             "$ref": "#/definitions/dto.Response"
                         }
@@ -438,7 +326,7 @@ const docTemplate = `{
         },
         "/auth/verify-phone-otp": {
             "post": {
-                "description": "Verify the OTP code sent to the user's phone number",
+                "description": "Verify the OTP and issue client tokens. STUB.",
                 "consumes": [
                     "application/json"
                 ],
@@ -448,7 +336,7 @@ const docTemplate = `{
                 "tags": [
                     "Auth"
                 ],
-                "summary": "Verify Phone OTP",
+                "summary": "Verify phone OTP (client)",
                 "parameters": [
                     {
                         "description": "Verify phone OTP request payload",
@@ -462,7 +350,7 @@ const docTemplate = `{
                 ],
                 "responses": {
                     "200": {
-                        "description": "OTP verified successfully",
+                        "description": "OK",
                         "schema": {
                             "allOf": [
                                 {
@@ -477,18 +365,6 @@ const docTemplate = `{
                                     }
                                 }
                             ]
-                        }
-                    },
-                    "400": {
-                        "description": "Bad request",
-                        "schema": {
-                            "$ref": "#/definitions/dto.Response"
-                        }
-                    },
-                    "401": {
-                        "description": "Unauthorized",
-                        "schema": {
-                            "$ref": "#/definitions/dto.Response"
                         }
                     }
                 }
@@ -5583,14 +5459,14 @@ const docTemplate = `{
                         "BearerAuth": []
                     }
                 ],
-                "description": "Paginated list of users. Admins see every tenant (optionally filter via ?company_id or ?unassigned=true). Non-admins are auto-scoped to their own company.",
+                "description": "Paginated list of mobile clients (name, phone, status).",
                 "produces": [
                     "application/json"
                 ],
                 "tags": [
                     "Users"
                 ],
-                "summary": "List Users",
+                "summary": "List clients",
                 "parameters": [
                     {
                         "type": "integer",
@@ -5606,7 +5482,7 @@ const docTemplate = `{
                     },
                     {
                         "type": "string",
-                        "description": "sort column: created_at | name | email | role (default created_at)",
+                        "description": "sort column: created_at | name (default created_at)",
                         "name": "sort",
                         "in": "query"
                     },
@@ -5624,7 +5500,7 @@ const docTemplate = `{
                     },
                     {
                         "type": "string",
-                        "description": "search by name or email (max 128 chars)",
+                        "description": "search by name or phone (max 128 chars)",
                         "name": "search",
                         "in": "query"
                     }
@@ -5653,25 +5529,13 @@ const docTemplate = `{
                         "schema": {
                             "$ref": "#/definitions/dto.Response"
                         }
-                    },
-                    "401": {
-                        "description": "Unauthorized",
-                        "schema": {
-                            "$ref": "#/definitions/dto.Response"
-                        }
-                    },
-                    "403": {
-                        "description": "Forbidden",
-                        "schema": {
-                            "$ref": "#/definitions/dto.Response"
-                        }
                     }
                 }
             }
         },
         "/v1/users/ban": {
             "post": {
-                "description": "Bans a user by their unique identifier. This action is irreversible and will prevent the user from accessing the system. Sets status to \"banned\".",
+                "description": "Sets the client's status to \"banned\". Irreversible.",
                 "consumes": [
                     "application/json"
                 ],
@@ -5681,7 +5545,7 @@ const docTemplate = `{
                 "tags": [
                     "Users"
                 ],
-                "summary": "Ban User",
+                "summary": "Ban a client",
                 "parameters": [
                     {
                         "description": "Ban User Request",
@@ -5696,24 +5560,6 @@ const docTemplate = `{
                 "responses": {
                     "200": {
                         "description": "User banned successfully",
-                        "schema": {
-                            "$ref": "#/definitions/dto.Response"
-                        }
-                    },
-                    "400": {
-                        "description": "Bad request",
-                        "schema": {
-                            "$ref": "#/definitions/dto.Response"
-                        }
-                    },
-                    "401": {
-                        "description": "Unauthorized",
-                        "schema": {
-                            "$ref": "#/definitions/dto.Response"
-                        }
-                    },
-                    "403": {
-                        "description": "Forbidden",
                         "schema": {
                             "$ref": "#/definitions/dto.Response"
                         }
@@ -7514,61 +7360,6 @@ const docTemplate = `{
                 }
             }
         },
-        "dto.UserDTO": {
-            "description": "Data Transfer Object for a User entity.",
-            "type": "object",
-            "properties": {
-                "account_status": {
-                    "description": "Account-level status, distinct from the user's active/disabled status",
-                    "type": "string",
-                    "enum": [
-                        "active",
-                        "suspended"
-                    ]
-                },
-                "created_at": {
-                    "description": "Creation timestamp, RFC3339",
-                    "type": "string"
-                },
-                "email": {
-                    "description": "Email address of the user",
-                    "type": "string"
-                },
-                "id": {
-                    "description": "Unique identifier for the user",
-                    "type": "string"
-                },
-                "last_active_at": {
-                    "description": "Timestamp of the user's last activity, RFC3339",
-                    "type": "string"
-                },
-                "location": {
-                    "description": "Free-text location of the user",
-                    "type": "string"
-                },
-                "name": {
-                    "description": "Name of the user",
-                    "type": "string"
-                },
-                "role": {
-                    "description": "Role of the user",
-                    "type": "string",
-                    "enum": [
-                        "admin",
-                        "client_manager",
-                        "client"
-                    ]
-                },
-                "status": {
-                    "description": "Status of the user",
-                    "type": "string",
-                    "enum": [
-                        "active",
-                        "disabled"
-                    ]
-                }
-            }
-        },
         "dto.UserData": {
             "description": "User data associated with the authenticated user.",
             "type": "object",
@@ -7592,45 +7383,25 @@ const docTemplate = `{
                     "description": "Creation timestamp, RFC3339",
                     "type": "string"
                 },
-                "email": {
-                    "description": "Email address of the user",
+                "phone": {
+                    "description": "Phone number (login identity)",
                     "type": "string"
-                },
-                "last_active_at": {
-                    "description": "Timestamp of the user's last activity, RFC3339",
-                    "type": "string"
-                },
-                "location": {
-                    "description": "Free-text location of the user",
-                    "type": "string"
-                },
-                "profile_picture_url": {
-                    "description": "URL of the user's profile picture",
-                    "type": "string"
-                },
-                "role": {
-                    "description": "Role of the user",
-                    "type": "string",
-                    "enum": [
-                        "admin",
-                        "client_manager",
-                        "client"
-                    ]
                 },
                 "status": {
-                    "description": "Status of the user",
+                    "description": "Status of the client",
                     "type": "string",
                     "enum": [
                         "active",
-                        "suspended"
+                        "disabled",
+                        "banned"
                     ]
                 },
                 "user_id": {
-                    "description": "Unique identifier for the user",
+                    "description": "Unique identifier for the client",
                     "type": "string"
                 },
                 "user_name": {
-                    "description": "Name of the user",
+                    "description": "Name of the client",
                     "type": "string"
                 }
             }
@@ -8366,25 +8137,6 @@ const docTemplate = `{
             ],
             "properties": {
                 "refresh_token": {
-                    "type": "string"
-                }
-            }
-        },
-        "v1.RegisterRequest": {
-            "type": "object",
-            "required": [
-                "email",
-                "name",
-                "password"
-            ],
-            "properties": {
-                "email": {
-                    "type": "string"
-                },
-                "name": {
-                    "type": "string"
-                },
-                "password": {
                     "type": "string"
                 }
             }

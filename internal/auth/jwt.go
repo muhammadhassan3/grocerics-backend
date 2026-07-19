@@ -8,10 +8,18 @@ import (
 	"github.com/google/uuid"
 )
 
+type Kind string
+
+const (
+	KindAdmin  Kind = "admin"
+	KindClient Kind = "client"
+)
+
 type Claims struct {
 	Name   string
 	UserID string
 	Role   string
+	Kind   string
 	jwt.RegisteredClaims
 }
 
@@ -23,11 +31,12 @@ func NewJWTService(secret string) *JWTService {
 	return &JWTService{secret: []byte(secret)}
 }
 
-func (s *JWTService) Generate(name, userID, role string, ttl time.Duration) string {
+func (s *JWTService) Generate(name, userID, role string, kind Kind, ttl time.Duration) string {
 	claims := Claims{
 		Name:   name,
 		UserID: userID,
 		Role:   role,
+		Kind:   string(kind),
 		RegisteredClaims: jwt.RegisteredClaims{
 			ID:        uuid.NewString(),
 			IssuedAt:  jwt.NewNumericDate(time.Now()),
