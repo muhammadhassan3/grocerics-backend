@@ -17,6 +17,7 @@ import (
 // ConsumerDeps bundles what the consumer read/write endpoints need.
 type ConsumerDeps struct {
 	JWT       *auth.JWTService
+	Auth      *middleware.AuthDeps
 	Users     *repository.UserRepository
 	Cities    *repository.CityRepository
 	Catalog   *service.CatalogService
@@ -29,7 +30,8 @@ type ConsumerDeps struct {
 // authed; every price read is served from stored data (no live API calls).
 func RegisterConsumerRoutes(r *gin.Engine, d ConsumerDeps) {
 	g := r.Group("/v1")
-	g.Use(middleware.AuthMiddleware(d.JWT, d.Users))
+	g.Use(middleware.AuthMiddleware(d.Auth))
+	g.Use(middleware.ClientOnly())
 	g.Use(middleware.ActivityTracker(d.Analytics))
 
 	g.GET("/cities", listCities(d))

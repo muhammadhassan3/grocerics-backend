@@ -43,22 +43,14 @@ type UserDTO struct {
 // @Property created_at: Creation timestamp, RFC3339
 // @Description Per-row shape returned by GET /v1/users.
 type UserListItemDTO struct {
-	// Unique identifier for the user
+	// Unique identifier for the client
 	ID string `json:"user_id"`
-	// Name of the user
+	// Name of the client
 	Name string `json:"user_name"`
-	// Email address of the user
-	Email string `json:"email"`
-	// URL of the user's profile picture
-	ProfilePictureURL string `json:"profile_picture_url"`
-	// Free-text location of the user
-	Location string `json:"location"`
-	// Timestamp of the user's last activity, RFC3339
-	LastActiveAt string `json:"last_active_at"`
-	// Role of the user
-	Role string `json:"role" enums:"admin,client_manager,client"`
-	// Status of the user
-	Status string `json:"status" enums:"active,suspended"`
+	// Phone number (login identity)
+	Phone string `json:"phone"`
+	// Status of the client
+	Status string `json:"status" enums:"active,disabled,banned"`
 	// Creation timestamp, RFC3339
 	CreatedAt string `json:"created_at"`
 }

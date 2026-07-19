@@ -2,35 +2,41 @@ package v1
 
 import (
 	"grocerics-backend/internal/auth"
-	"grocerics-backend/internal/domain"
 	"grocerics-backend/internal/dto"
 	"grocerics-backend/internal/errs"
 	"grocerics-backend/internal/middleware"
-	"grocerics-backend/internal/repository"
 	"grocerics-backend/internal/service"
 	"grocerics-backend/internal/util"
 
 	"github.com/gin-gonic/gin"
 )
 
-// All error reporting goes through c.Error(err); the
-// ErrorHandler middleware does the JSON shaping.
-func RegisterAuthRoutes(r *gin.Engine, svc *service.AuthService, jwt *auth.JWTService, user *repository.UserRepository) {
+type AuthDeps struct {
+	Admin *service.AdminAuthService
+	Auth  *middleware.AuthDeps
+}
+
+func RegisterAuthRoutes(r *gin.Engine, d AuthDeps) {
 	g := r.Group("/auth")
-	g.POST("/login", login(svc))
-	g.POST("/register", register(svc))
-	g.POST("/refresh", refresh(svc))
-	g.POST("/forgot-password", forgotPassword(svc))
-	g.POST("/reset-password", resetPassword(svc))
 
-	g.POST("/phone-login", phoneLogin(svc))
-	g.POST("/verify-phone-otp", verifyPhoneOTP(svc))
-	g.POST("/mobile-register", mobileRegister(svc))
-	g.DELETE("/delete", middleware.AuthMiddleware(jwt, user), DeleteUser(svc))
+	// --- admin (web UI) ---
+	g.POST("/login", adminLogin(d.Admin))
+	g.POST("/refresh", adminRefresh(d.Admin))
+	g.POST("/forgot-password", adminForgotPassword(d.Admin))
+	g.POST("/reset-password", adminResetPassword(d.Admin))
 
-	authGroup := r.Group("/auth")
-	authGroup.Use(middleware.AuthMiddleware(jwt, user))
-	authGroup.POST("/logout", logout(svc))
+	admin := r.Group("/auth")
+	admin.Use(middleware.AuthMiddleware(d.Auth), middleware.AdminOnly())
+	admin.POST("/logout", adminLogout(d.Admin))
+
+	// --- client (mobile, OTP) ---
+	g.POST("/phone-login", phoneLogin())
+	g.POST("/verify-phone-otp", verifyPhoneOTP())
+	g.POST("/mobile-register", mobileRegister())
+
+	client := r.Group("/auth")
+	client.Use(middleware.AuthMiddleware(d.Auth), middleware.ClientOnly())
+	client.DELETE("/delete", deleteAccount())
 }
 
 type LoginRequest struct {
@@ -38,172 +44,28 @@ type LoginRequest struct {
 	Password string `json:"password" binding:"required"`
 }
 
-// @Summary Login
-// @Description User login
+// @Summary Admin login
+// @Description Web-UI login with email + password. Clients use the phone/OTP routes.
 // @Tags Auth
 // @Accept json
 // @Produce json
 // @Param loginRequest body LoginRequest true "Login request payload"
-// @Success 200 {object} dto.Response{data=dto.TokenResponse}  "Successful login"
-// @Failure 400 {object} dto.Response "Bad request"
-// @Failure 401 {object} dto.Response "Unauthorized"
+// @Success 200 {object} dto.Response{data=dto.TokenResponse}
+// @Failure 401 {object} dto.Response
 // @Router /auth/login [post]
-func login(svc *service.AuthService) gin.HandlerFunc {
+func adminLogin(svc *service.AdminAuthService) gin.HandlerFunc {
 	return func(c *gin.Context) {
 		var req LoginRequest
 		if err := c.ShouldBindJSON(&req); err != nil {
 			c.Error(errs.BadRequest("VALIDATION", util.ParseValidationError(err).Error()))
 			return
 		}
-
-		tokenResponse, err := svc.Login(req.Email, req.Password)
+		res, err := svc.Login(req.Email, req.Password)
 		if err != nil {
 			c.Error(err)
 			return
 		}
-
-		c.JSON(200, dto.Response{
-			Message: "Login successful",
-			Status:  "success",
-			Data:    tokenResponse,
-		})
-	}
-}
-
-// @Summary Phone Login
-// @Description User login via phone number (OTP-based)
-// @Tags Auth
-// @Accept json
-// @Produce json
-// @Param mobileLoginRequest body dto.MobileLoginRequest true "Mobile login request payload"
-// @Success 200 {object} dto.Response "OTP code sent"
-// @Failure 400 {object} dto.Response "Bad request"
-// @Router /auth/phone-login [post]
-func phoneLogin(svc *service.AuthService) gin.HandlerFunc {
-	return func(c *gin.Context) {
-		var req dto.MobileLoginRequest
-		if err := c.ShouldBindJSON(&req); err != nil {
-			c.Error(errs.BadRequest("VALIDATION", util.ParseValidationError(err).Error()))
-			return
-		}
-
-		c.JSON(200, dto.Response{
-			Data:    nil,
-			Message: "OTP code sent",
-			Status:  "success",
-		})
-	}
-}
-
-type VerifyPhoneOTPRequest struct {
-	PhoneNumber string `json:"phone_number" binding:"required"`
-	OTPCode     string `json:"otp_code" binding:"required"`
-}
-
-// @Summary Verify Phone OTP
-// @Description Verify the OTP code sent to the user's phone number
-// @Tags Auth
-// @Accept json
-// @Produce json
-// @Param verifyPhoneOTPRequest body VerifyPhoneOTPRequest true "Verify phone OTP request payload"
-// @Success 200 {object} dto.Response{data=dto.TokenResponse} "OTP verified successfully"
-// @Failure 400 {object} dto.Response "Bad request"
-// @Failure 401 {object} dto.Response "Unauthorized"
-// @Router /auth/verify-phone-otp [post]
-func verifyPhoneOTP(svc *service.AuthService) gin.HandlerFunc {
-	return func(c *gin.Context) {
-		var req VerifyPhoneOTPRequest
-		if err := c.ShouldBindJSON(&req); err != nil {
-			c.Error(errs.BadRequest("VALIDATION", util.ParseValidationError(err).Error()))
-			return
-		}
-
-		c.JSON(200, dto.Response{
-			Data:    dto.TokenResponse{},
-			Message: "OTP verified successfully",
-			Status:  "success",
-		})
-	}
-}
-
-type MobileRegisterRequest struct {
-	PhoneNumber string `json:"phone_number" binding:"required"`
-}
-
-// @Summary Mobile Register
-// @Description User registration via mobile phone number (OTP-based)
-// @Tags Auth
-// @Accept json
-// @Produce json
-// @Param mobileRegisterRequest body MobileRegisterRequest true "Mobile register request payload"
-// @Success 200 {object} dto.Response "OTP code sent"
-// @Failure 400 {object} dto.Response "Bad request"
-// @Router /auth/mobile-register [post]
-func mobileRegister(svc *service.AuthService) gin.HandlerFunc {
-	return func(c *gin.Context) {
-		var req MobileRegisterRequest
-		if err := c.ShouldBindJSON(&req); err != nil {
-			c.Error(errs.BadRequest("VALIDATION", util.ParseValidationError(err).Error()))
-			return
-		}
-
-		c.JSON(200, dto.Response{
-			Data:    nil,
-			Message: "OTP code sent",
-			Status:  "success",
-		})
-	}
-}
-
-// RegisterRequest is the public registration payload. Role is intentionally
-// NOT a field — public registration always creates a `client` user.
-// Provisioning of `client_manager` / `admin` goes through an authed admin
-// endpoint (not yet built).
-type RegisterRequest struct {
-	Name     string `json:"name" binding:"required"`
-	Email    string `json:"email" binding:"required,email"`
-	Password string `json:"password" binding:"required"`
-}
-
-// @Summary Register
-// @Description User registration
-// @Tags Auth
-// @Accept json
-// @Produce json
-// @Param registerRequest body RegisterRequest true "Register request payload"
-// @Success 201 {object} dto.Response{data=dto.UserDTO} "Successful registration"
-// @Failure 400 {object} dto.Response "Bad request"
-// @Router /auth/register [post]
-func register(svc *service.AuthService) gin.HandlerFunc {
-	return func(c *gin.Context) {
-		var req RegisterRequest
-		if err := c.ShouldBindJSON(&req); err != nil {
-			c.Error(errs.BadRequest("VALIDATION", util.ParseValidationError(err).Error()))
-			return
-		}
-
-		// Public registration always creates a `client`. Role is not taken
-		// from input — that closes the C1 (admin-self-register) and C2
-		// (duplicate-JSON-key role escalation) findings from the audit.
-		user, err := svc.CreateUser(req.Name, req.Email, req.Password, string(domain.RoleUser))
-		if err != nil {
-			c.Error(err)
-			return
-		}
-
-		userDto := dto.UserDTO{
-			ID:     user.ID,
-			Name:   user.Name,
-			Email:  user.Email,
-			Role:   string(user.Role),
-			Status: string(user.Status),
-		}
-
-		c.JSON(201, dto.Response{
-			Message: "Registration successful",
-			Status:  "success",
-			Data:    userDto,
-		})
+		c.JSON(200, dto.Response{Status: "success", Message: "Login successful", Data: res})
 	}
 }
 
@@ -211,35 +73,27 @@ type RefreshTokenRequest struct {
 	RefreshToken string `json:"refresh_token" binding:"required"`
 }
 
-// @Summary Refresh Token
-// @Description Refresh access token using refresh token
+// @Summary Refresh admin token
 // @Tags Auth
 // @Accept json
 // @Produce json
 // @Param refreshTokenRequest body RefreshTokenRequest true "Refresh token request payload"
-// @Success 200 {object} dto.Response{data=dto.TokenResponse} "Successful token refresh"
-// @Failure 400 {object} dto.Response "Bad request"
-// @Failure 401 {object} dto.Response "Unauthorized"
+// @Success 200 {object} dto.Response{data=dto.TokenResponse}
+// @Failure 401 {object} dto.Response
 // @Router /auth/refresh [post]
-func refresh(svc *service.AuthService) gin.HandlerFunc {
+func adminRefresh(svc *service.AdminAuthService) gin.HandlerFunc {
 	return func(c *gin.Context) {
 		var req RefreshTokenRequest
 		if err := c.ShouldBindJSON(&req); err != nil {
 			c.Error(errs.BadRequest("VALIDATION", util.ParseValidationError(err).Error()))
 			return
 		}
-
-		tokenResponse, err := svc.RefreshToken(req.RefreshToken)
+		res, err := svc.RefreshToken(req.RefreshToken)
 		if err != nil {
 			c.Error(err)
 			return
 		}
-
-		c.JSON(200, dto.Response{
-			Message: "Token refreshed successfully",
-			Status:  "success",
-			Data:    tokenResponse,
-		})
+		c.JSON(200, dto.Response{Status: "success", Message: "Token refreshed", Data: res})
 	}
 }
 
@@ -247,37 +101,26 @@ type LogoutRequest struct {
 	RefreshToken string `json:"refresh_token" binding:"required"`
 }
 
-// @Summary Logout
-// @Description Revoke the presented refresh token. Single-device.
+// @Summary Admin logout
 // @Tags Auth
 // @Accept json
 // @Produce json
 // @Security BearerAuth
 // @Param logoutRequest body LogoutRequest true "Logout request payload"
-// @Success 200 {object} dto.Response "Logged out"
-// @Failure 400 {object} dto.Response "Bad request"
-// @Failure 401 {object} dto.Response "Unauthorized"
+// @Success 200 {object} dto.Response
 // @Router /auth/logout [post]
-func logout(svc *service.AuthService) gin.HandlerFunc {
+func adminLogout(svc *service.AdminAuthService) gin.HandlerFunc {
 	return func(c *gin.Context) {
 		var req LogoutRequest
 		if err := c.ShouldBindJSON(&req); err != nil {
 			c.Error(errs.BadRequest("VALIDATION", util.ParseValidationError(err).Error()))
 			return
 		}
-		user, exists := auth.UserFrom(c)
-		if !exists {
-			c.Error(errs.Unauthorized("USER_CONTEXT_MISSING", "user context missing"))
-			return
-		}
-		if err := svc.Logout(req.RefreshToken, user.ID); err != nil {
+		if err := svc.Logout(req.RefreshToken, auth.MustUser(c).ID); err != nil {
 			c.Error(err)
 			return
 		}
-		c.JSON(200, dto.Response{
-			Status:  "success",
-			Message: "logged out",
-		})
+		c.JSON(200, dto.Response{Status: "success", Message: "logged out"})
 	}
 }
 
@@ -285,16 +128,15 @@ type ForgotPasswordRequest struct {
 	Email string `json:"email" binding:"required,email,max=255"`
 }
 
-// @Summary Forgot Password
-// @Description Issue a single-use password-reset token. Always returns 200 to avoid email enumeration.
+// @Summary Admin forgot password
+// @Description Issue a single-use reset token. Always 200, to avoid email enumeration.
 // @Tags Auth
 // @Accept json
 // @Produce json
 // @Param forgotPasswordRequest body ForgotPasswordRequest true "Forgot password request payload"
-// @Success 200 {object} dto.Response "If the email exists, a reset link has been sent"
-// @Failure 400 {object} dto.Response "Bad request"
+// @Success 200 {object} dto.Response
 // @Router /auth/forgot-password [post]
-func forgotPassword(svc *service.AuthService) gin.HandlerFunc {
+func adminForgotPassword(svc *service.AdminAuthService) gin.HandlerFunc {
 	return func(c *gin.Context) {
 		var req ForgotPasswordRequest
 		if err := c.ShouldBindJSON(&req); err != nil {
@@ -305,10 +147,7 @@ func forgotPassword(svc *service.AuthService) gin.HandlerFunc {
 			c.Error(err)
 			return
 		}
-		c.JSON(200, dto.Response{
-			Status:  "success",
-			Message: "if the email exists, a reset link has been sent",
-		})
+		c.JSON(200, dto.Response{Status: "success", Message: "if the email exists, a reset link has been sent"})
 	}
 }
 
@@ -317,17 +156,15 @@ type ResetPasswordRequest struct {
 	NewPassword string `json:"new_password" binding:"required,min=6,max=72"`
 }
 
-// @Summary Reset Password
-// @Description Consume a reset token and set a new password.
+// @Summary Admin reset password
 // @Tags Auth
 // @Accept json
 // @Produce json
 // @Param resetPasswordRequest body ResetPasswordRequest true "Reset password request payload"
-// @Success 200 {object} dto.Response "Password reset"
-// @Failure 400 {object} dto.Response "Bad request"
-// @Failure 401 {object} dto.Response "Unauthorized"
+// @Success 200 {object} dto.Response
+// @Failure 401 {object} dto.Response
 // @Router /auth/reset-password [post]
-func resetPassword(svc *service.AuthService) gin.HandlerFunc {
+func adminResetPassword(svc *service.AdminAuthService) gin.HandlerFunc {
 	return func(c *gin.Context) {
 		var req ResetPasswordRequest
 		if err := c.ShouldBindJSON(&req); err != nil {
@@ -338,36 +175,86 @@ func resetPassword(svc *service.AuthService) gin.HandlerFunc {
 			c.Error(err)
 			return
 		}
-		c.JSON(200, dto.Response{
-			Status:  "success",
-			Message: "password reset",
-		})
+		c.JSON(200, dto.Response{Status: "success", Message: "password reset"})
 	}
 }
 
-// @Summary Delete User
-// @Description Delete the authenticated user's account. This action is irreversible.
+// @Summary Phone login (client)
+// @Description Send an OTP to the phone. STUB — OTP delivery not yet implemented.
 // @Tags Auth
 // @Accept json
 // @Produce json
-// @Security BearerAuth
-// @Success 200 {object} dto.Response "User deleted"
-// @Failure 401 {object} dto.Response "Unauthorized"
-// @Router /auth/delete [delete]
-func DeleteUser(svc *service.AuthService) gin.HandlerFunc {
+// @Param mobileLoginRequest body dto.MobileLoginRequest true "Mobile login request payload"
+// @Success 200 {object} dto.Response
+// @Router /auth/phone-login [post]
+func phoneLogin() gin.HandlerFunc {
 	return func(c *gin.Context) {
-		_, exists := auth.UserFrom(c)
-		if !exists {
-			c.Error(errs.Unauthorized("USER_CONTEXT_MISSING", "user context missing"))
+		var req dto.MobileLoginRequest
+		if err := c.ShouldBindJSON(&req); err != nil {
+			c.Error(errs.BadRequest("VALIDATION", util.ParseValidationError(err).Error()))
 			return
 		}
-		// if err := svc.DeleteUser(user.ID); err != nil {
-		// 	c.Error(err)
-		// 	return
-		// }
-		c.JSON(200, dto.Response{
-			Status:  "success",
-			Message: "user deleted",
-		})
+		c.JSON(200, dto.Response{Status: "success", Message: "OTP code sent"})
+	}
+}
+
+type VerifyPhoneOTPRequest struct {
+	PhoneNumber string `json:"phone_number" binding:"required"`
+	OTPCode     string `json:"otp_code" binding:"required"`
+}
+
+// @Summary Verify phone OTP (client)
+// @Description Verify the OTP and issue client tokens. STUB.
+// @Tags Auth
+// @Accept json
+// @Produce json
+// @Param verifyPhoneOTPRequest body VerifyPhoneOTPRequest true "Verify phone OTP request payload"
+// @Success 200 {object} dto.Response{data=dto.TokenResponse}
+// @Router /auth/verify-phone-otp [post]
+func verifyPhoneOTP() gin.HandlerFunc {
+	return func(c *gin.Context) {
+		var req VerifyPhoneOTPRequest
+		if err := c.ShouldBindJSON(&req); err != nil {
+			c.Error(errs.BadRequest("VALIDATION", util.ParseValidationError(err).Error()))
+			return
+		}
+		c.JSON(200, dto.Response{Status: "success", Message: "OTP verified successfully", Data: dto.TokenResponse{}})
+	}
+}
+
+type MobileRegisterRequest struct {
+	PhoneNumber string `json:"phone_number" binding:"required"`
+}
+
+// @Summary Mobile register (client)
+// @Description Register a client by phone (sends OTP). STUB.
+// @Tags Auth
+// @Accept json
+// @Produce json
+// @Param mobileRegisterRequest body MobileRegisterRequest true "Mobile register request payload"
+// @Success 200 {object} dto.Response
+// @Router /auth/mobile-register [post]
+func mobileRegister() gin.HandlerFunc {
+	return func(c *gin.Context) {
+		var req MobileRegisterRequest
+		if err := c.ShouldBindJSON(&req); err != nil {
+			c.Error(errs.BadRequest("VALIDATION", util.ParseValidationError(err).Error()))
+			return
+		}
+		c.JSON(200, dto.Response{Status: "success", Message: "OTP code sent"})
+	}
+}
+
+// @Summary Delete account (client)
+// @Description Delete the authenticated client's account. STUB — deletion not yet wired.
+// @Tags Auth
+// @Produce json
+// @Security BearerAuth
+// @Success 200 {object} dto.Response
+// @Router /auth/delete [delete]
+func deleteAccount() gin.HandlerFunc {
+	return func(c *gin.Context) {
+		_ = auth.MustUser(c)
+		c.JSON(200, dto.Response{Status: "success", Message: "user deleted"})
 	}
 }

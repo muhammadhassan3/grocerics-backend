@@ -28,12 +28,12 @@ type Subcategory struct {
 
 type Brand struct {
 	BaseModel
-	Name       string  `gorm:"not null" json:"name"`
-	Slug       *string `json:"slug,omitempty"`
-	ImageURL   *string `json:"image_url,omitempty"`
-	IsTopBrand   bool   `gorm:"not null;default:false" json:"is_top_brand"`
-	Status       Status `gorm:"type:varchar;not null;default:'active'" json:"status"`
-	DisplayOrder int    `gorm:"not null;default:0" json:"display_order"`
+	Name         string  `gorm:"not null" json:"name"`
+	Slug         *string `json:"slug,omitempty"`
+	ImageURL     *string `json:"image_url,omitempty"`
+	IsTopBrand   bool    `gorm:"not null;default:false" json:"is_top_brand"`
+	Status       Status  `gorm:"type:varchar;not null;default:'active'" json:"status"`
+	DisplayOrder int     `gorm:"not null;default:0" json:"display_order"`
 	Timestamps
 	SoftDelete
 }

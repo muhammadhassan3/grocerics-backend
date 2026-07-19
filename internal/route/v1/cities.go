@@ -15,6 +15,7 @@ import (
 
 type CityDeps struct {
 	JWT    *auth.JWTService
+	Auth   *middleware.AuthDeps
 	Users  *repository.UserRepository
 	Cities *repository.CityRepository
 }
@@ -34,10 +35,10 @@ func toCityDTO(c domain.City) dto.CityItem {
 
 func RegisterCityRoutes(r *gin.Engine, d CityDeps) {
 	group := r.Group("/v1")
-	group.Use(middleware.AuthMiddleware(d.JWT, d.Users))
+	group.Use(middleware.AuthMiddleware(d.Auth))
 
 	admin := group.Group("")
-	admin.Use(middleware.RequireRole(domain.RoleAdmin))
+	admin.Use(middleware.AdminOnly())
 	admin.GET("/cities/all", listCitiesAdmin(d))
 	admin.GET("/cities/:id", getCityByID(d))
 	admin.POST("/cities", createCity(d))

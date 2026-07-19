@@ -15,6 +15,7 @@ import (
 
 type LinkingDeps struct {
 	JWT            *auth.JWTService
+	Auth           *middleware.AuthDeps
 	Users          *repository.UserRepository
 	Platforms      *repository.PlatformRepository
 	Links          *repository.ProductPlatformLinkRepository
@@ -25,8 +26,8 @@ type LinkingDeps struct {
 
 func RegisterLinkingRoutes(r *gin.Engine, d LinkingDeps) {
 	group := r.Group("/v1")
-	group.Use(middleware.AuthMiddleware(d.JWT, d.Users))
-	group.Use(middleware.RequireRole(domain.RoleAdmin))
+	group.Use(middleware.AuthMiddleware(d.Auth))
+	group.Use(middleware.AdminOnly())
 
 	group.GET("/platforms", listPlatforms(d))
 	group.GET("/credits", qcCredits(d))

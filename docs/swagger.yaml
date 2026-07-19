@@ -1130,48 +1130,6 @@ definitions:
         description: Lowest price for the product across tracked delivery platforms
         type: number
     type: object
-  dto.UserDTO:
-    description: Data Transfer Object for a User entity.
-    properties:
-      account_status:
-        description: Account-level status, distinct from the user's active/disabled
-          status
-        enum:
-        - active
-        - suspended
-        type: string
-      created_at:
-        description: Creation timestamp, RFC3339
-        type: string
-      email:
-        description: Email address of the user
-        type: string
-      id:
-        description: Unique identifier for the user
-        type: string
-      last_active_at:
-        description: Timestamp of the user's last activity, RFC3339
-        type: string
-      location:
-        description: Free-text location of the user
-        type: string
-      name:
-        description: Name of the user
-        type: string
-      role:
-        description: Role of the user
-        enum:
-        - admin
-        - client_manager
-        - client
-        type: string
-      status:
-        description: Status of the user
-        enum:
-        - active
-        - disabled
-        type: string
-    type: object
   dto.UserData:
     description: User data associated with the authenticated user.
     properties:
@@ -1188,36 +1146,21 @@ definitions:
       created_at:
         description: Creation timestamp, RFC3339
         type: string
-      email:
-        description: Email address of the user
-        type: string
-      last_active_at:
-        description: Timestamp of the user's last activity, RFC3339
-        type: string
-      location:
-        description: Free-text location of the user
-        type: string
-      profile_picture_url:
-        description: URL of the user's profile picture
-        type: string
-      role:
-        description: Role of the user
-        enum:
-        - admin
-        - client_manager
-        - client
+      phone:
+        description: Phone number (login identity)
         type: string
       status:
-        description: Status of the user
+        description: Status of the client
         enum:
         - active
-        - suspended
+        - disabled
+        - banned
         type: string
       user_id:
-        description: Unique identifier for the user
+        description: Unique identifier for the client
         type: string
       user_name:
-        description: Name of the user
+        description: Name of the client
         type: string
     type: object
   dto.UserListResponseDTO:
@@ -1709,19 +1652,6 @@ definitions:
     required:
     - refresh_token
     type: object
-  v1.RegisterRequest:
-    properties:
-      email:
-        type: string
-      name:
-        type: string
-      password:
-        type: string
-    required:
-    - email
-    - name
-    - password
-    type: object
   v1.ReorderRequest:
     properties:
       ids:
@@ -2003,31 +1933,25 @@ info:
 paths:
   /auth/delete:
     delete:
-      consumes:
-      - application/json
-      description: Delete the authenticated user's account. This action is irreversible.
+      description: Delete the authenticated client's account. STUB — deletion not
+        yet wired.
       produces:
       - application/json
       responses:
         "200":
-          description: User deleted
-          schema:
-            $ref: '#/definitions/dto.Response'
-        "401":
-          description: Unauthorized
+          description: OK
           schema:
             $ref: '#/definitions/dto.Response'
       security:
       - BearerAuth: []
-      summary: Delete User
+      summary: Delete account (client)
       tags:
       - Auth
   /auth/forgot-password:
     post:
       consumes:
       - application/json
-      description: Issue a single-use password-reset token. Always returns 200 to
-        avoid email enumeration.
+      description: Issue a single-use reset token. Always 200, to avoid email enumeration.
       parameters:
       - description: Forgot password request payload
         in: body
@@ -2039,21 +1963,17 @@ paths:
       - application/json
       responses:
         "200":
-          description: If the email exists, a reset link has been sent
+          description: OK
           schema:
             $ref: '#/definitions/dto.Response'
-        "400":
-          description: Bad request
-          schema:
-            $ref: '#/definitions/dto.Response'
-      summary: Forgot Password
+      summary: Admin forgot password
       tags:
       - Auth
   /auth/login:
     post:
       consumes:
       - application/json
-      description: User login
+      description: Web-UI login with email + password. Clients use the phone/OTP routes.
       parameters:
       - description: Login request payload
         in: body
@@ -2065,7 +1985,7 @@ paths:
       - application/json
       responses:
         "200":
-          description: Successful login
+          description: OK
           schema:
             allOf:
             - $ref: '#/definitions/dto.Response'
@@ -2073,22 +1993,17 @@ paths:
                 data:
                   $ref: '#/definitions/dto.TokenResponse'
               type: object
-        "400":
-          description: Bad request
-          schema:
-            $ref: '#/definitions/dto.Response'
         "401":
           description: Unauthorized
           schema:
             $ref: '#/definitions/dto.Response'
-      summary: Login
+      summary: Admin login
       tags:
       - Auth
   /auth/logout:
     post:
       consumes:
       - application/json
-      description: Revoke the presented refresh token. Single-device.
       parameters:
       - description: Logout request payload
         in: body
@@ -2100,27 +2015,19 @@ paths:
       - application/json
       responses:
         "200":
-          description: Logged out
-          schema:
-            $ref: '#/definitions/dto.Response'
-        "400":
-          description: Bad request
-          schema:
-            $ref: '#/definitions/dto.Response'
-        "401":
-          description: Unauthorized
+          description: OK
           schema:
             $ref: '#/definitions/dto.Response'
       security:
       - BearerAuth: []
-      summary: Logout
+      summary: Admin logout
       tags:
       - Auth
   /auth/mobile-register:
     post:
       consumes:
       - application/json
-      description: User registration via mobile phone number (OTP-based)
+      description: Register a client by phone (sends OTP). STUB.
       parameters:
       - description: Mobile register request payload
         in: body
@@ -2132,21 +2039,17 @@ paths:
       - application/json
       responses:
         "200":
-          description: OTP code sent
+          description: OK
           schema:
             $ref: '#/definitions/dto.Response'
-        "400":
-          description: Bad request
-          schema:
-            $ref: '#/definitions/dto.Response'
-      summary: Mobile Register
+      summary: Mobile register (client)
       tags:
       - Auth
   /auth/phone-login:
     post:
       consumes:
       - application/json
-      description: User login via phone number (OTP-based)
+      description: Send an OTP to the phone. STUB — OTP delivery not yet implemented.
       parameters:
       - description: Mobile login request payload
         in: body
@@ -2158,21 +2061,16 @@ paths:
       - application/json
       responses:
         "200":
-          description: OTP code sent
+          description: OK
           schema:
             $ref: '#/definitions/dto.Response'
-        "400":
-          description: Bad request
-          schema:
-            $ref: '#/definitions/dto.Response'
-      summary: Phone Login
+      summary: Phone login (client)
       tags:
       - Auth
   /auth/refresh:
     post:
       consumes:
       - application/json
-      description: Refresh access token using refresh token
       parameters:
       - description: Refresh token request payload
         in: body
@@ -2184,7 +2082,7 @@ paths:
       - application/json
       responses:
         "200":
-          description: Successful token refresh
+          description: OK
           schema:
             allOf:
             - $ref: '#/definitions/dto.Response'
@@ -2192,53 +2090,17 @@ paths:
                 data:
                   $ref: '#/definitions/dto.TokenResponse'
               type: object
-        "400":
-          description: Bad request
-          schema:
-            $ref: '#/definitions/dto.Response'
         "401":
           description: Unauthorized
           schema:
             $ref: '#/definitions/dto.Response'
-      summary: Refresh Token
-      tags:
-      - Auth
-  /auth/register:
-    post:
-      consumes:
-      - application/json
-      description: User registration
-      parameters:
-      - description: Register request payload
-        in: body
-        name: registerRequest
-        required: true
-        schema:
-          $ref: '#/definitions/v1.RegisterRequest'
-      produces:
-      - application/json
-      responses:
-        "201":
-          description: Successful registration
-          schema:
-            allOf:
-            - $ref: '#/definitions/dto.Response'
-            - properties:
-                data:
-                  $ref: '#/definitions/dto.UserDTO'
-              type: object
-        "400":
-          description: Bad request
-          schema:
-            $ref: '#/definitions/dto.Response'
-      summary: Register
+      summary: Refresh admin token
       tags:
       - Auth
   /auth/reset-password:
     post:
       consumes:
       - application/json
-      description: Consume a reset token and set a new password.
       parameters:
       - description: Reset password request payload
         in: body
@@ -2250,25 +2112,21 @@ paths:
       - application/json
       responses:
         "200":
-          description: Password reset
-          schema:
-            $ref: '#/definitions/dto.Response'
-        "400":
-          description: Bad request
+          description: OK
           schema:
             $ref: '#/definitions/dto.Response'
         "401":
           description: Unauthorized
           schema:
             $ref: '#/definitions/dto.Response'
-      summary: Reset Password
+      summary: Admin reset password
       tags:
       - Auth
   /auth/verify-phone-otp:
     post:
       consumes:
       - application/json
-      description: Verify the OTP code sent to the user's phone number
+      description: Verify the OTP and issue client tokens. STUB.
       parameters:
       - description: Verify phone OTP request payload
         in: body
@@ -2280,7 +2138,7 @@ paths:
       - application/json
       responses:
         "200":
-          description: OTP verified successfully
+          description: OK
           schema:
             allOf:
             - $ref: '#/definitions/dto.Response'
@@ -2288,15 +2146,7 @@ paths:
                 data:
                   $ref: '#/definitions/dto.TokenResponse'
               type: object
-        "400":
-          description: Bad request
-          schema:
-            $ref: '#/definitions/dto.Response'
-        "401":
-          description: Unauthorized
-          schema:
-            $ref: '#/definitions/dto.Response'
-      summary: Verify Phone OTP
+      summary: Verify phone OTP (client)
       tags:
       - Auth
   /v1/address:
@@ -5169,9 +5019,7 @@ paths:
       - top-deals
   /v1/users:
     get:
-      description: Paginated list of users. Admins see every tenant (optionally filter
-        via ?company_id or ?unassigned=true). Non-admins are auto-scoped to their
-        own company.
+      description: Paginated list of mobile clients (name, phone, status).
       parameters:
       - description: page number (default 1)
         in: query
@@ -5181,7 +5029,7 @@ paths:
         in: query
         name: page_size
         type: integer
-      - description: 'sort column: created_at | name | email | role (default created_at)'
+      - description: 'sort column: created_at | name (default created_at)'
         in: query
         name: sort
         type: string
@@ -5193,7 +5041,7 @@ paths:
         in: query
         name: status
         type: string
-      - description: search by name or email (max 128 chars)
+      - description: search by name or phone (max 128 chars)
         in: query
         name: search
         type: string
@@ -5213,25 +5061,16 @@ paths:
           description: Bad request
           schema:
             $ref: '#/definitions/dto.Response'
-        "401":
-          description: Unauthorized
-          schema:
-            $ref: '#/definitions/dto.Response'
-        "403":
-          description: Forbidden
-          schema:
-            $ref: '#/definitions/dto.Response'
       security:
       - BearerAuth: []
-      summary: List Users
+      summary: List clients
       tags:
       - Users
   /v1/users/ban:
     post:
       consumes:
       - application/json
-      description: Bans a user by their unique identifier. This action is irreversible
-        and will prevent the user from accessing the system. Sets status to "banned".
+      description: Sets the client's status to "banned". Irreversible.
       parameters:
       - description: Ban User Request
         in: body
@@ -5246,23 +5085,11 @@ paths:
           description: User banned successfully
           schema:
             $ref: '#/definitions/dto.Response'
-        "400":
-          description: Bad request
-          schema:
-            $ref: '#/definitions/dto.Response'
-        "401":
-          description: Unauthorized
-          schema:
-            $ref: '#/definitions/dto.Response'
-        "403":
-          description: Forbidden
-          schema:
-            $ref: '#/definitions/dto.Response'
         "404":
           description: User not found
           schema:
             $ref: '#/definitions/dto.Response'
-      summary: Ban User
+      summary: Ban a client
       tags:
       - Users
   /v1/wishlist:

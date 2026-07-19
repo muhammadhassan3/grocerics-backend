@@ -17,18 +17,19 @@ import (
 
 type BannerDeps struct {
 	JWT     *auth.JWTService
+	Auth    *middleware.AuthDeps
 	Users   *repository.UserRepository
 	Banners *repository.BannerRepository
 }
 
 func RegisterBannerRoutes(r *gin.Engine, d BannerDeps) {
 	group := r.Group("/v1")
-	group.Use(middleware.AuthMiddleware(d.JWT, d.Users))
+	group.Use(middleware.AuthMiddleware(d.Auth))
 	group.GET("/banners", listBanners(d))
 	group.GET("/banners/:banner_id", getBannerByID(d))
 
 	admin := group.Group("")
-	admin.Use(middleware.RequireRole(domain.RoleAdmin))
+	admin.Use(middleware.AdminOnly())
 	admin.POST("/banners", createBanner(d))
 	admin.PATCH("/banners", updateBanner(d))
 	admin.DELETE("/banners", deleteBanner(d))

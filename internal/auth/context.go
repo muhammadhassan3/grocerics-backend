@@ -12,6 +12,7 @@ type UserContext struct {
 	ID        string
 	Name      string
 	Role      domain.Role
+	Kind      Kind
 	CompanyID *string
 }
 

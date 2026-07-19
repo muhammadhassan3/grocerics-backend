@@ -13,6 +13,7 @@ import (
 
 type DashboardDeps struct {
 	JWT            *auth.JWTService
+	Auth           *middleware.AuthDeps
 	Users          *repository.UserRepository
 	Analytics      *repository.AnalyticsRepository
 	Products       *repository.ProductRepository
@@ -25,8 +26,8 @@ type DashboardDeps struct {
 
 func RegisterDashboardRoutes(r *gin.Engine, d DashboardDeps) {
 	group := r.Group("/v1")
-	group.Use(middleware.AuthMiddleware(d.JWT, d.Users))
-	group.Use(middleware.RequireRole(domain.RoleAdmin))
+	group.Use(middleware.AuthMiddleware(d.Auth))
+	group.Use(middleware.AdminOnly())
 	group.GET("/dashboard", getDashboard(d))
 	group.GET("/dashboard/stats", getDashboardStats(d))
 	group.GET("/dashboard/live-price-comparison", getLivePriceComparison(d))

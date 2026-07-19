@@ -25,3 +25,5 @@ vendor/
 
 #Service Account
 grocerics-firebase-adminsdk.json
+# Design specs / brainstorm docs (kept local, not in repo)
+docs/superpowers/

@@ -14,13 +14,15 @@ import (
 
 type ProfileDeps struct {
 	JWT     *auth.JWTService
+	Auth    *middleware.AuthDeps
 	Users   *repository.UserRepository
 	Profile *service.ProfileService
 }
 
 func RegisterProfileRoutes(r *gin.Engine, d ProfileDeps) {
 	g := r.Group("/v1/me")
-	g.Use(middleware.AuthMiddleware(d.JWT, d.Users))
+	g.Use(middleware.AuthMiddleware(d.Auth))
+	g.Use(middleware.ClientOnly())
 
 	g.GET("", getMe(d))
 	g.PATCH("", updateMe(d))

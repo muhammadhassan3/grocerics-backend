@@ -37,10 +37,7 @@ func (s *ProfileService) GetMe(userID string) (*dto.MeDTO, error) {
 	if u == nil {
 		return nil, errs.NotFound("USER_NOT_FOUND", "user not found")
 	}
-	me := &dto.MeDTO{ID: u.ID, Name: u.Name, Email: u.Email}
-	if u.Phone != nil {
-		me.Phone = *u.Phone
-	}
+	me := &dto.MeDTO{ID: u.ID, Name: u.Name, Phone: u.Phone}
 	if u.CurrentCityID != nil {
 		me.CurrentCityID = *u.CurrentCityID
 		if c, _ := s.city.FindByID(*u.CurrentCityID); c != nil {

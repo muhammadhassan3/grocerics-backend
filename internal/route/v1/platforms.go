@@ -17,16 +17,17 @@ import (
 
 type PlatformDeps struct {
 	JWT       *auth.JWTService
+	Auth      *middleware.AuthDeps
 	Users     *repository.UserRepository
 	Platforms *repository.PlatformRepository
 }
 
 func RegisterPlatformRoutes(r *gin.Engine, d PlatformDeps) {
 	group := r.Group("/v1")
-	group.Use(middleware.AuthMiddleware(d.JWT, d.Users))
+	group.Use(middleware.AuthMiddleware(d.Auth))
 
 	admin := group.Group("")
-	admin.Use(middleware.RequireRole(domain.RoleAdmin))
+	admin.Use(middleware.AdminOnly())
 	admin.GET("/platforms/all", listPlatformsAdmin(d))
 	admin.GET("/platforms/:platform_id", getPlatformByID(d))
 	admin.POST("/platforms", createPlatform(d))

@@ -5,7 +5,6 @@ import (
 	"strings"
 	"time"
 
-	"grocerics-backend/internal/auth"
 	"grocerics-backend/internal/domain"
 	"grocerics-backend/internal/dto"
 	"grocerics-backend/internal/errs"
@@ -15,43 +14,37 @@ import (
 	"grocerics-backend/internal/util"
 
 	"github.com/gin-gonic/gin"
-	"github.com/google/uuid"
 )
 
 var (
-	userSortable     = []string{"created_at", "name", "email", "role"}
+	userSortable     = []string{"created_at", "name"}
 	userSortFallback = query.Sort{Column: "created_at", Direction: "desc"}
 )
 
-func RegisterUserRoutes(r *gin.Engine, jwt *auth.JWTService, users *repository.UserRepository) {
+func RegisterUserRoutes(r *gin.Engine, authDeps *middleware.AuthDeps, users *repository.UserRepository) {
 	g := r.Group("/v1/users")
-	g.Use(middleware.AuthMiddleware(jwt, users))
+	g.Use(middleware.AuthMiddleware(authDeps), middleware.AdminOnly())
 	g.GET("", listUsers(users))
-	adminGroup := g.Group("")
-	adminGroup.Use(middleware.RequireRole(domain.RoleAdmin))
-	adminGroup.POST("/ban", BanUser(users))
+	g.POST("/ban", BanUser(users))
 }
 
-// @Summary List Users
-// @Description Paginated list of users. Admins see every tenant (optionally filter via ?company_id or ?unassigned=true). Non-admins are auto-scoped to their own company.
+// @Summary List clients
+// @Description Paginated list of mobile clients (name, phone, status).
 // @Tags Users
 // @Produce json
 // @Security BearerAuth
 // @Param page query int false "page number (default 1)"
 // @Param page_size query int false "page size, max 100 (default 20)"
-// @Param sort query string false "sort column: created_at | name | email | role (default created_at)"
+// @Param sort query string false "sort column: created_at | name (default created_at)"
 // @Param order query string false "asc | desc (default desc)"
 // @Param status query string false "filter by status: active | disabled | banned"
-// @Param search query string false "search by name or email (max 128 chars)"
+// @Param search query string false "search by name or phone (max 128 chars)"
 // @Success 200 {object} dto.Response{data=dto.UserListResponseDTO} "Users list"
 // @Failure 400 {object} dto.Response "Bad request"
-// @Failure 401 {object} dto.Response "Unauthorized"
-// @Failure 403 {object} dto.Response "Forbidden"
 // @Router /v1/users [get]
 func listUsers(repo *repository.UserRepository) gin.HandlerFunc {
 	return func(c *gin.Context) {
-		scope := auth.MustScope(c)
-		filters, err := parseUserFilters(c, scope)
+		filters, err := parseUserFilters(c)
 		if err != nil {
 			c.Error(err)
 			return
@@ -59,12 +52,11 @@ func listUsers(repo *repository.UserRepository) gin.HandlerFunc {
 		page := query.PageFromContext(c)
 		sort := query.SortFromContext(c, userSortable, userSortFallback)
 
-		items, total, err := repo.List(scope, filters, page, sort)
+		items, total, err := repo.List(filters, page, sort)
 		if err != nil {
 			c.Error(err)
 			return
 		}
-
 		c.JSON(200, dto.Response{
 			Status: "success",
 			Data: dto.UserListResponseDTO{
@@ -79,16 +71,13 @@ type BanUserRequest struct {
 	UserID string `json:"user_id" binding:"required,uuid"`
 }
 
-// @Summary Ban User
-// @Description Bans a user by their unique identifier. This action is irreversible and will prevent the user from accessing the system. Sets status to "banned".
+// @Summary Ban a client
+// @Description Sets the client's status to "banned". Irreversible.
 // @Tags Users
 // @Accept json
 // @Produce json
 // @Param BanUserRequest body BanUserRequest true "Ban User Request"
 // @Success 200 {object} dto.Response "User banned successfully"
-// @Failure 400 {object} dto.Response "Bad request"
-// @Failure 401 {object} dto.Response "Unauthorized"
-// @Failure 403 {object} dto.Response "Forbidden"
 // @Failure 404 {object} dto.Response "User not found"
 // @Router /v1/users/ban [post]
 func BanUser(repo *repository.UserRepository) gin.HandlerFunc {
@@ -111,28 +100,9 @@ func BanUser(repo *repository.UserRepository) gin.HandlerFunc {
 	}
 }
 
-func parseUserFilters(c *gin.Context, scope auth.Scope) (repository.UserFilters, error) {
+func parseUserFilters(c *gin.Context) (repository.UserFilters, error) {
 	q, _ := url.ParseQuery(c.Request.URL.RawQuery)
 	var f repository.UserFilters
-
-	if v := q.Get("company_id"); v != "" {
-		if _, err := uuid.Parse(v); err != nil {
-			return f, errs.BadRequest("VALIDATION", "company_id is not a valid UUID")
-		}
-		if scope.Role != domain.RoleAdmin {
-			if scope.CompanyID == nil || *scope.CompanyID != v {
-				return f, errs.Forbidden("FORBIDDEN", "cannot filter to another company")
-			}
-		}
-		f.CompanyID = &v
-	}
-	if v := q.Get("role"); v != "" {
-		role := domain.Role(v)
-		if !role.IsValid() {
-			return f, errs.BadRequest("VALIDATION", "invalid role")
-		}
-		f.Role = &role
-	}
 	if v := q.Get("status"); v != "" {
 		st := domain.UserStatus(v)
 		if !st.IsValid() {
@@ -146,12 +116,6 @@ func parseUserFilters(c *gin.Context, scope auth.Scope) (repository.UserFilters,
 		}
 		f.Search = v
 	}
-	if v := q.Get("unassigned"); v == "true" || v == "1" {
-		if scope.Role != domain.RoleAdmin {
-			return f, errs.Forbidden("FORBIDDEN", "only admins can list unassigned users")
-		}
-		f.Unassigned = true
-	}
 	return f, nil
 }
 
@@ -161,8 +125,7 @@ func usersToDTO(us []domain.User) []dto.UserListItemDTO {
 		out = append(out, dto.UserListItemDTO{
 			ID:        u.ID,
 			Name:      u.Name,
-			Email:     u.Email,
-			Role:      string(u.Role),
+			Phone:     u.Phone,
 			Status:    string(u.Status),
 			CreatedAt: u.CreatedAt.UTC().Format(time.RFC3339),
 		})

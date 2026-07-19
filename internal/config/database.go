@@ -40,18 +40,15 @@ func SeedAdmin(db *gorm.DB, seed SeedConfig, env string) {
 		return
 	}
 
-	var existing domain.User
+	var existing domain.Admin
 	if err := db.Where("email = ? AND deleted_at IS NULL", seed.AdminEmail).First(&existing).Error; err == nil {
 		return // already present
 	}
 
-	password := auth.HashPassword(seed.AdminPassword)
-
-	admin := domain.User{
+	admin := domain.Admin{
 		Name:         "Admin",
 		Email:        seed.AdminEmail,
-		PasswordHash: password,
-		Role:         domain.RoleAdmin,
+		PasswordHash: auth.HashPassword(seed.AdminPassword),
 		Status:       domain.UserStatusActive,
 	}
 	if err := db.Create(&admin).Error; err != nil {
