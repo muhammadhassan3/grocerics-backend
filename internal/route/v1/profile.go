@@ -26,6 +26,7 @@ func RegisterProfileRoutes(r *gin.Engine, d ProfileDeps) {
 
 	g.GET("", getMe(d))
 	g.PATCH("", updateMe(d))
+	g.POST("/onboarding", onboard(d))
 
 	g.GET("/addresses", listAddresses(d))
 	g.POST("/addresses", createAddress(d))
@@ -85,6 +86,37 @@ func updateMe(d ProfileDeps) gin.HandlerFunc {
 	}
 }
 
+type onboardingRequest struct {
+	Name    string         `json:"name" binding:"required"`
+	Address addressRequest `json:"address" binding:"required"`
+}
+
+// @Summary Complete onboarding (name + first address)
+// @Description First-time setup for a client: sets the name, saves the default delivery address, and pins the current city — all in one transaction. City is derived from the device-geocoded `address.city` and must be one we serve (else 400). Location is required; the user never picks a city.
+// @Tags profile
+// @Accept json
+// @Produce json
+// @Security BearerAuth
+// @Param request body onboardingRequest true "name + address"
+// @Success 200 {object} dto.Response{data=dto.OnboardingResponse}
+// @Failure 400 {object} dto.Response
+// @Router /v1/me/onboarding [post]
+func onboard(d ProfileDeps) gin.HandlerFunc {
+	return func(c *gin.Context) {
+		var req onboardingRequest
+		if err := c.ShouldBindJSON(&req); err != nil {
+			c.Error(errs.BadRequest("VALIDATION", util.ParseValidationError(err).Error()))
+			return
+		}
+		res, err := d.Profile.Onboard(auth.MustUser(c).ID, req.Name, req.Address.toInput())
+		if err != nil {
+			c.Error(err)
+			return
+		}
+		ok(c, res)
+	}
+}
+
 // @Summary List my delivery addresses
 // @Tags profile
 // @Produce json
@@ -107,6 +139,7 @@ type addressRequest struct {
 	Line1     string   `json:"line1" binding:"required"`
 	Line2     *string  `json:"line2"`
 	Pincode   string   `json:"pincode" binding:"required"`
+	City      string   `json:"city"` // device-geocoded city; resolved to an enabled city server-side
 	Lat       *float64 `json:"lat"`
 	Lng       *float64 `json:"lng"`
 	IsDefault bool     `json:"is_default"`
@@ -115,7 +148,7 @@ type addressRequest struct {
 func (r addressRequest) toInput() service.AddressInput {
 	return service.AddressInput{
 		Label: r.Label, Line1: r.Line1, Line2: r.Line2,
-		Pincode: r.Pincode, Lat: r.Lat, Lng: r.Lng, IsDefault: r.IsDefault,
+		Pincode: r.Pincode, City: r.City, Lat: r.Lat, Lng: r.Lng, IsDefault: r.IsDefault,
 	}
 }
 

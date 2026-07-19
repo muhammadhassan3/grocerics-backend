@@ -9,6 +9,11 @@ type MeDTO struct {
 	CurrentCityName string `json:"current_city_name,omitempty"`
 }
 
+type OnboardingResponse struct {
+	User    MeDTO      `json:"user"`
+	Address AddressDTO `json:"address"`
+}
+
 type AddressDTO struct {
 	ID          string   `json:"id"`
 	Label       string   `json:"label,omitempty"`

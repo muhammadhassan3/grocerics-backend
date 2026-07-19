@@ -13,13 +13,3 @@ type City struct {
 	SoftDelete
 }
 
-type Pincode struct {
-	BaseModel
-	Pincode     string   `gorm:"not null" json:"pincode"`
-	CityID      string   `gorm:"type:uuid;not null" json:"city_id"`
-	Lat         *float64 `json:"lat,omitempty"`
-	Lng         *float64 `json:"lng,omitempty"`
-	Serviceable bool     `gorm:"not null" json:"serviceable"`
-	Timestamps
-	SoftDelete
-}

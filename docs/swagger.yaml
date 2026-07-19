@@ -603,6 +603,13 @@ definitions:
       promotions:
         type: boolean
     type: object
+  dto.OnboardingResponse:
+    properties:
+      address:
+        $ref: '#/definitions/dto.AddressDTO'
+      user:
+        $ref: '#/definitions/dto.MeDTO'
+    type: object
   dto.PlatformBreakdownDTO:
     properties:
       available_item_ids:
@@ -1935,6 +1942,9 @@ definitions:
     type: object
   v1.addressRequest:
     properties:
+      city:
+        description: device-geocoded city; resolved to an enabled city server-side
+        type: string
       is_default:
         type: boolean
       label:
@@ -1968,6 +1978,16 @@ definitions:
         type: string
     required:
     - token
+    type: object
+  v1.onboardingRequest:
+    properties:
+      address:
+        $ref: '#/definitions/v1.addressRequest'
+      name:
+        type: string
+    required:
+    - address
+    - name
     type: object
   v1.quantityRequest:
     properties:
@@ -4417,6 +4437,42 @@ paths:
       security:
       - BearerAuth: []
       summary: Update my notification preferences
+      tags:
+      - profile
+  /v1/me/onboarding:
+    post:
+      consumes:
+      - application/json
+      description: 'First-time setup for a client: sets the name, saves the default
+        delivery address, and pins the current city — all in one transaction. City
+        is derived from the device-geocoded `address.city` and must be one we serve
+        (else 400). Location is required; the user never picks a city.'
+      parameters:
+      - description: name + address
+        in: body
+        name: request
+        required: true
+        schema:
+          $ref: '#/definitions/v1.onboardingRequest'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            allOf:
+            - $ref: '#/definitions/dto.Response'
+            - properties:
+                data:
+                  $ref: '#/definitions/dto.OnboardingResponse'
+              type: object
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/dto.Response'
+      security:
+      - BearerAuth: []
+      summary: Complete onboarding (name + first address)
       tags:
       - profile
   /v1/platforms:

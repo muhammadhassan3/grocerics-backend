@@ -1,6 +1,8 @@
 package service
 
 import (
+	"strings"
+
 	"grocerics-backend/internal/domain"
 	"grocerics-backend/internal/dto"
 	"grocerics-backend/internal/errs"
@@ -10,9 +12,9 @@ import (
 )
 
 type ProfileService struct {
+	db      *gorm.DB
 	user    *repository.UserRepository
 	address *repository.AddressRepository
-	pincode *repository.PincodeRepository
 	city    *repository.CityRepository
 	notif   *repository.NotificationPreferenceRepository
 	fcm     *repository.FcmTokenRepository
@@ -20,9 +22,9 @@ type ProfileService struct {
 
 func NewProfileService(db *gorm.DB) *ProfileService {
 	return &ProfileService{
+		db:      db,
 		user:    repository.NewUserRepository(db),
 		address: repository.NewAddressRepository(db),
-		pincode: repository.NewPincodeRepository(db),
 		city:    repository.NewCityRepository(db),
 		notif:   repository.NewNotificationPreferenceRepository(db),
 		fcm:     repository.NewFcmTokenRepository(db),
@@ -61,6 +63,7 @@ type AddressInput struct {
 	Line1     string
 	Line2     *string
 	Pincode   string
+	City      string // device-geocoded city; resolved to an enabled city
 	Lat       *float64
 	Lng       *float64
 	IsDefault bool
@@ -79,7 +82,10 @@ func (s *ProfileService) ListAddresses(userID string) ([]dto.AddressDTO, error) 
 }
 
 func (s *ProfileService) CreateAddress(userID string, in AddressInput) (*dto.AddressDTO, error) {
-	cityID := s.resolveCity(in.Pincode)
+	cityID, err := s.matchEnabledCity(in.City)
+	if err != nil {
+		return nil, err
+	}
 	a := &domain.UserAddress{
 		UserID: userID, Label: in.Label, Line1: in.Line1, Line2: in.Line2,
 		Pincode: in.Pincode, CityID: cityID, Lat: in.Lat, Lng: in.Lng, IsDefault: in.IsDefault,
@@ -93,7 +99,7 @@ func (s *ProfileService) CreateAddress(userID string, in AddressInput) (*dto.Add
 	if err != nil {
 		return nil, err
 	}
-	if in.IsDefault {
+	if in.IsDefault && cityID != nil {
 		if err := s.user.SetCurrentCity(userID, cityID); err != nil {
 			return nil, err
 		}
@@ -115,11 +121,13 @@ func (s *ProfileService) UpdateAddress(userID, addressID string, in AddressInput
 	a.Line2 = in.Line2
 	a.Lat = in.Lat
 	a.Lng = in.Lng
+	a.Pincode = in.Pincode
 	a.IsDefault = in.IsDefault
-	if in.Pincode != "" && in.Pincode != a.Pincode {
-		a.Pincode = in.Pincode
-		a.CityID = s.resolveCity(in.Pincode)
+	cityID, err := s.matchEnabledCity(in.City)
+	if err != nil {
+		return nil, err
 	}
+	a.CityID = cityID
 	if in.IsDefault {
 		if err := s.address.UnsetDefaults(userID); err != nil {
 			return nil, err
@@ -129,7 +137,7 @@ func (s *ProfileService) UpdateAddress(userID, addressID string, in AddressInput
 	if err != nil {
 		return nil, err
 	}
-	if in.IsDefault {
+	if in.IsDefault && a.CityID != nil {
 		if err := s.user.SetCurrentCity(userID, a.CityID); err != nil {
 			return nil, err
 		}
@@ -149,13 +157,75 @@ func (s *ProfileService) DeleteAddress(userID, addressID string) error {
 	return s.address.Delete(addressID)
 }
 
-func (s *ProfileService) resolveCity(pincode string) *string {
-	row, err := s.pincode.FindByPincode(pincode)
-	if err != nil || row == nil || !row.Serviceable {
-		return nil
+func (s *ProfileService) matchEnabledCity(city string) (*string, error) {
+	city = strings.TrimSpace(city)
+	if city == "" {
+		return nil, nil
 	}
-	cid := row.CityID
-	return &cid
+	cities, err := s.city.ListEnabled()
+	if err != nil {
+		return nil, err
+	}
+	for _, c := range cities {
+		if strings.EqualFold(c.Name, city) || strings.EqualFold(c.Slug, city) {
+			id := c.ID
+			return &id, nil
+		}
+	}
+	return nil, nil
+}
+
+func (s *ProfileService) Onboard(userID, name string, in AddressInput) (*dto.OnboardingResponse, error) {
+	if strings.TrimSpace(in.City) == "" {
+		return nil, errs.BadRequest("LOCATION_REQUIRED", "enable location to continue")
+	}
+	cityRef, err := s.matchEnabledCity(in.City)
+	if err != nil {
+		return nil, err
+	}
+	if cityRef == nil {
+		return nil, errs.BadRequest("CITY_NOT_SERVICEABLE", "we don't deliver to "+in.City+" yet")
+	}
+	cityID := *cityRef
+	in.IsDefault = true
+
+	var addr *domain.UserAddress
+	err = s.db.Transaction(func(tx *gorm.DB) error {
+		ur := repository.NewUserRepository(tx)
+		ar := repository.NewAddressRepository(tx)
+		u, err := ur.FindByID(userID)
+		if err != nil {
+			return err
+		}
+		if u == nil {
+			return errs.NotFound("USER_NOT_FOUND", "user not found")
+		}
+		u.Name = name
+		if _, err := ur.Update(u); err != nil {
+			return err
+		}
+		if err := ar.UnsetDefaults(userID); err != nil {
+			return err
+		}
+		addr, err = ar.Create(&domain.UserAddress{
+			UserID: userID, Label: in.Label, Line1: in.Line1, Line2: in.Line2,
+			Pincode: in.Pincode, CityID: &cityID, Lat: in.Lat, Lng: in.Lng, IsDefault: true,
+		})
+		if err != nil {
+			return err
+		}
+		return ur.SetCurrentCity(userID, &cityID)
+	})
+	if err != nil {
+		return nil, err
+	}
+
+	me, err := s.GetMe(userID)
+	if err != nil {
+		return nil, err
+	}
+	d := s.toAddressDTO(*addr)
+	return &dto.OnboardingResponse{User: *me, Address: d}, nil
 }
 
 func (s *ProfileService) toAddressDTO(a domain.UserAddress) dto.AddressDTO {

@@ -4254,6 +4254,63 @@ const docTemplate = `{
                 }
             }
         },
+        "/v1/me/onboarding": {
+            "post": {
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
+                "description": "First-time setup for a client: sets the name, saves the default delivery address, and pins the current city — all in one transaction. City is derived from the device-geocoded ` + "`" + `address.city` + "`" + ` and must be one we serve (else 400). Location is required; the user never picks a city.",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "profile"
+                ],
+                "summary": "Complete onboarding (name + first address)",
+                "parameters": [
+                    {
+                        "description": "name + address",
+                        "name": "request",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/v1.onboardingRequest"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "allOf": [
+                                {
+                                    "$ref": "#/definitions/dto.Response"
+                                },
+                                {
+                                    "type": "object",
+                                    "properties": {
+                                        "data": {
+                                            "$ref": "#/definitions/dto.OnboardingResponse"
+                                        }
+                                    }
+                                }
+                            ]
+                        }
+                    },
+                    "400": {
+                        "description": "Bad Request",
+                        "schema": {
+                            "$ref": "#/definitions/dto.Response"
+                        }
+                    }
+                }
+            }
+        },
         "/v1/platforms": {
             "get": {
                 "security": [
@@ -6682,6 +6739,17 @@ const docTemplate = `{
                 }
             }
         },
+        "dto.OnboardingResponse": {
+            "type": "object",
+            "properties": {
+                "address": {
+                    "$ref": "#/definitions/dto.AddressDTO"
+                },
+                "user": {
+                    "$ref": "#/definitions/dto.MeDTO"
+                }
+            }
+        },
         "dto.PlatformBreakdownDTO": {
             "type": "object",
             "properties": {
@@ -8648,6 +8716,10 @@ const docTemplate = `{
                 "pincode"
             ],
             "properties": {
+                "city": {
+                    "description": "device-geocoded city; resolved to an enabled city server-side",
+                    "type": "string"
+                },
                 "is_default": {
                     "type": "boolean"
                 },
@@ -8692,6 +8764,21 @@ const docTemplate = `{
                     "type": "string"
                 },
                 "token": {
+                    "type": "string"
+                }
+            }
+        },
+        "v1.onboardingRequest": {
+            "type": "object",
+            "required": [
+                "address",
+                "name"
+            ],
+            "properties": {
+                "address": {
+                    "$ref": "#/definitions/v1.addressRequest"
+                },
+                "name": {
                     "type": "string"
                 }
             }
