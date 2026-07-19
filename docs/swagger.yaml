@@ -2074,7 +2074,8 @@ paths:
       consumes:
       - application/json
       description: Register a client by phone (sends OTP). MOCK — the code is printed
-        to the server logs. Verify via /auth/verify-phone-otp, which creates the account.
+        to the server logs AND returned as data.otp_code (dev only). Verify via /auth/verify-phone-otp,
+        which creates the account.
       parameters:
       - description: Mobile register request payload
         in: body
@@ -2096,8 +2097,8 @@ paths:
     post:
       consumes:
       - application/json
-      description: Send a login OTP to the phone. MOCK — the code is printed to the
-        server logs, not delivered by SMS.
+      description: Send a login OTP to the phone. MOCK — no SMS; the code is printed
+        to the server logs AND returned as data.otp_code (dev only).
       parameters:
       - description: Mobile login request payload
         in: body

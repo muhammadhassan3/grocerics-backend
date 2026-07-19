@@ -38,16 +38,19 @@ func NewClientAuthService(users *repository.UserRepository, jwt *auth.JWTService
 	return &ClientAuthService{users: users, jwt: jwt, codes: map[string]otpEntry{}}
 }
 
-func (s *ClientAuthService) RequestOTP(phone string) error {
+// RequestOTP generates a code for the phone, logs it (mock delivery), and
+// returns it. TODO(dev-only): the real SMS-backed flow must NOT return the code
+// — strip it from the handler response before production.
+func (s *ClientAuthService) RequestOTP(phone string) (string, error) {
 	code, err := generateOTP()
 	if err != nil {
-		return errs.Internal("OTP_GEN_FAILED", err)
+		return "", errs.Internal("OTP_GEN_FAILED", err)
 	}
 	s.mu.Lock()
 	s.codes[phone] = otpEntry{code: code, expiresAt: time.Now().UTC().Add(otpTTL)}
 	s.mu.Unlock()
 	slog.Info("mock OTP issued", "phone", phone, "otp_code", code, "expires_in", otpTTL.String())
-	return nil
+	return code, nil
 }
 func (s *ClientAuthService) VerifyOTP(phone, code string) (*dto.TokenResponse, error) {
 	s.mu.Lock()

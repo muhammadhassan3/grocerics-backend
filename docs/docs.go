@@ -168,7 +168,7 @@ const docTemplate = `{
         },
         "/auth/mobile-register": {
             "post": {
-                "description": "Register a client by phone (sends OTP). MOCK — the code is printed to the server logs. Verify via /auth/verify-phone-otp, which creates the account.",
+                "description": "Register a client by phone (sends OTP). MOCK — the code is printed to the server logs AND returned as data.otp_code (dev only). Verify via /auth/verify-phone-otp, which creates the account.",
                 "consumes": [
                     "application/json"
                 ],
@@ -202,7 +202,7 @@ const docTemplate = `{
         },
         "/auth/phone-login": {
             "post": {
-                "description": "Send a login OTP to the phone. MOCK — the code is printed to the server logs, not delivered by SMS.",
+                "description": "Send a login OTP to the phone. MOCK — no SMS; the code is printed to the server logs AND returned as data.otp_code (dev only).",
                 "consumes": [
                     "application/json"
                 ],

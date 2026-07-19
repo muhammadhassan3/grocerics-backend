@@ -181,7 +181,7 @@ func adminResetPassword(svc *service.AdminAuthService) gin.HandlerFunc {
 }
 
 // @Summary Phone login (client)
-// @Description Send a login OTP to the phone. MOCK — the code is printed to the server logs, not delivered by SMS.
+// @Description Send a login OTP to the phone. MOCK — no SMS; the code is printed to the server logs AND returned as data.otp_code (dev only).
 // @Tags Auth
 // @Accept json
 // @Produce json
@@ -195,11 +195,13 @@ func phoneLogin(svc *service.ClientAuthService) gin.HandlerFunc {
 			c.Error(errs.BadRequest("VALIDATION", util.ParseValidationError(err).Error()))
 			return
 		}
-		if err := svc.RequestOTP(req.PhoneNumber); err != nil {
+		code, err := svc.RequestOTP(req.PhoneNumber)
+		if err != nil {
 			c.Error(err)
 			return
 		}
-		c.JSON(200, dto.Response{Status: "success", Message: "OTP code sent"})
+		// TODO(dev-only): mock returns the code so the app/testers skip the logs.
+		c.JSON(200, dto.Response{Status: "success", Message: "OTP code sent", Data: gin.H{"otp_code": code}})
 	}
 }
 
@@ -237,7 +239,7 @@ type MobileRegisterRequest struct {
 }
 
 // @Summary Mobile register (client)
-// @Description Register a client by phone (sends OTP). MOCK — the code is printed to the server logs. Verify via /auth/verify-phone-otp, which creates the account.
+// @Description Register a client by phone (sends OTP). MOCK — the code is printed to the server logs AND returned as data.otp_code (dev only). Verify via /auth/verify-phone-otp, which creates the account.
 // @Tags Auth
 // @Accept json
 // @Produce json
@@ -251,11 +253,13 @@ func mobileRegister(svc *service.ClientAuthService) gin.HandlerFunc {
 			c.Error(errs.BadRequest("VALIDATION", util.ParseValidationError(err).Error()))
 			return
 		}
-		if err := svc.RequestOTP(req.PhoneNumber); err != nil {
+		code, err := svc.RequestOTP(req.PhoneNumber)
+		if err != nil {
 			c.Error(err)
 			return
 		}
-		c.JSON(200, dto.Response{Status: "success", Message: "OTP code sent"})
+		// TODO(dev-only): mock returns the code so the app/testers skip the logs.
+		c.JSON(200, dto.Response{Status: "success", Message: "OTP code sent", Data: gin.H{"otp_code": code}})
 	}
 }
 
