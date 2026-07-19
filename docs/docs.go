@@ -7689,6 +7689,9 @@ const docTemplate = `{
                 "deeplink": {
                     "type": "string"
                 },
+                "image_url": {
+                    "type": "string"
+                },
                 "inventory": {
                     "type": "integer"
                 },
@@ -7763,6 +7766,9 @@ const docTemplate = `{
                 "deep_link": {
                     "type": "string"
                 },
+                "image_url": {
+                    "type": "string"
+                },
                 "inventory": {
                     "type": "integer"
                 },
@@ -7817,6 +7823,9 @@ const docTemplate = `{
                     "type": "string"
                 },
                 "deep_link": {
+                    "type": "string"
+                },
+                "image_url": {
                     "type": "string"
                 },
                 "inventory": {

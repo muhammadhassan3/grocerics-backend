@@ -44,6 +44,16 @@ type LinkSeed struct {
 	Available  bool
 	Inventory  *int
 	DeepLink   string
+	ImageURL   string
+}
+
+func firstNonEmpty(ss []string) string {
+	for _, s := range ss {
+		if s != "" {
+			return s
+		}
+	}
+	return ""
 }
 
 type Candidate struct {
@@ -58,6 +68,7 @@ type Candidate struct {
 	Inventory   *int   `json:"inventory,omitempty"`
 	StockLabel  string `json:"stock_label,omitempty"`
 	DeepLink    string `json:"deeplink,omitempty"`
+	ImageURL    string `json:"image_url,omitempty"`
 	IsCombo     bool   `json:"is_combo"`
 	IsMultipack bool   `json:"is_multipack"`
 	OutOfStock  bool   `json:"out_of_stock"`
@@ -90,6 +101,7 @@ func toCandidate(p quickcommerce.Product) Candidate {
 		Inventory:   p.Inventory,
 		StockLabel:  p.StockLabel,
 		DeepLink:    p.DeepLink,
+		ImageURL:    firstNonEmpty(p.Images),
 		IsCombo:     strings.Contains(strings.ToLower(p.Quantity), "combo"),
 		IsMultipack: p.Multipack > 1,
 		OutOfStock:  !p.Available,
@@ -250,11 +262,16 @@ func (s *LinkingService) linkOne(variantID, cityID, qcItemID, deepLink string, p
 		deepLink = itemDeepLink
 	}
 	sku := qcItemID
+	var image string
+	if seed != nil {
+		image = seed.ImageURL
+	}
 	if _, err := s.links.Upsert(&domain.ProductPlatformLink{
 		VariantID:   variantID,
 		PlatformID:  pl.ID,
 		PlatformSKU: &sku,
 		DeepLink:    util.PtrIfSet(deepLink),
+		ImageURL:    util.PtrIfSet(image),
 	}); err != nil {
 		return err
 	}

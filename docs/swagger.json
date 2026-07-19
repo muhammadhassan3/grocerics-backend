@@ -7681,6 +7681,9 @@
                 "deeplink": {
                     "type": "string"
                 },
+                "image_url": {
+                    "type": "string"
+                },
                 "inventory": {
                     "type": "integer"
                 },
@@ -7755,6 +7758,9 @@
                 "deep_link": {
                     "type": "string"
                 },
+                "image_url": {
+                    "type": "string"
+                },
                 "inventory": {
                     "type": "integer"
                 },
@@ -7809,6 +7815,9 @@
                     "type": "string"
                 },
                 "deep_link": {
+                    "type": "string"
+                },
+                "image_url": {
                     "type": "string"
                 },
                 "inventory": {

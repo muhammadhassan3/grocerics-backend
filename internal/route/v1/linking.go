@@ -158,6 +158,7 @@ type ConfirmLinkRequest struct {
 	QCItemID     string `json:"qc_item_id" binding:"required"`
 	CityID       string `json:"city_id" binding:"required"`
 	DeepLink     string `json:"deep_link"`
+	ImageURL     string `json:"image_url"`
 	PricePaise   *int64 `json:"price_paise"`
 	MRPPaise     *int64 `json:"mrp_paise"`
 	Available    *bool  `json:"available"`
@@ -179,6 +180,7 @@ func (r ConfirmLinkRequest) seed() (*service.LinkSeed, error) {
 		Available:  *r.Available,
 		Inventory:  r.Inventory,
 		DeepLink:   r.DeepLink,
+		ImageURL:   r.ImageURL,
 	}
 	if r.MRPPaise != nil {
 		if *r.MRPPaise < 0 {
@@ -194,6 +196,7 @@ type BatchLinkEntry struct {
 	PlatformCode string `json:"platform_code" binding:"required"`
 	QCItemID     string `json:"qc_item_id" binding:"required"`
 	DeepLink     string `json:"deep_link"`
+	ImageURL     string `json:"image_url"`
 	PricePaise   *int64 `json:"price_paise"`
 	MRPPaise     *int64 `json:"mrp_paise"`
 	Available    *bool  `json:"available"`
@@ -227,6 +230,7 @@ func confirmLinksBatch(d LinkingDeps) gin.HandlerFunc {
 			seed, err := ConfirmLinkRequest{
 				PricePaise: l.PricePaise, MRPPaise: l.MRPPaise,
 				Available: l.Available, Inventory: l.Inventory, DeepLink: l.DeepLink,
+				ImageURL: l.ImageURL,
 			}.seed()
 			if err != nil {
 				c.Error(err)

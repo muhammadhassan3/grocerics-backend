@@ -247,13 +247,17 @@ func (s *CatalogService) SearchVariants(term, cityID string, platformCodes []str
 	for _, pr := range prices {
 		priceByVariant[pr.VariantID] = append(priceByVariant[pr.VariantID], pr)
 	}
+	imageByVariant, err := s.link.PrimaryImagesByVariants(variantIDs)
+	if err != nil {
+		return nil, query.Meta{}, err
+	}
 
 	items := make([]dto.VariantSearchItemDTO, 0, len(variants))
 	for _, v := range variants {
 		prod := prodByID[v.ProductID]
 		row := dto.VariantSearchItemDTO{
 			VariantID: v.ID, ProductID: v.ProductID, ProductName: prod.Name,
-			ImageURL: strPtr(prod.ImageURL), PackLabel: packLabel(v),
+			ImageURL: imageByVariant[v.ID], PackLabel: packLabel(v),
 			ReferencePrices: []dto.ReferencePriceDTO{},
 		}
 		if prod.BrandID != nil {
