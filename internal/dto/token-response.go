@@ -6,9 +6,16 @@ package dto
 // @Property role: Role of the user
 // @Description User data associated with the authenticated user.
 type UserData struct {
+	ID       string `json:"id,omitempty"`
+	Phone    string `json:"phone,omitempty"`
 	ImageURL string `json:"image_url"`
 	FullName string `json:"full_name"`
 	Role     string `json:"role"`
+}
+
+type ClientAuthResponse struct {
+	TokenResponse
+	IsNew bool `json:"is_new"`
 }
 
 // @Swagger:model TokenResponse

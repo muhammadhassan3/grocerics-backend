@@ -326,7 +326,7 @@ const docTemplate = `{
         },
         "/auth/verify-phone-otp": {
             "post": {
-                "description": "Verify the OTP and issue client tokens. Creates the client account on first successful login (find-or-create by phone).",
+                "description": "Verify the OTP and issue client tokens. Creates the client account on first successful login (find-or-create by phone). ` + "`" + `data.is_new` + "`" + ` is true when this call created the account, so the app can route first-time users to onboarding.",
                 "consumes": [
                     "application/json"
                 ],
@@ -360,7 +360,7 @@ const docTemplate = `{
                                     "type": "object",
                                     "properties": {
                                         "data": {
-                                            "$ref": "#/definitions/dto.TokenResponse"
+                                            "$ref": "#/definitions/dto.ClientAuthResponse"
                                         }
                                     }
                                 }
@@ -6256,6 +6256,30 @@ const docTemplate = `{
                 }
             }
         },
+        "dto.ClientAuthResponse": {
+            "type": "object",
+            "properties": {
+                "access_token": {
+                    "description": "JWT access token used to authenticate subsequent requests",
+                    "type": "string"
+                },
+                "is_new": {
+                    "type": "boolean"
+                },
+                "refresh_token": {
+                    "description": "Token used to obtain a new access token once the current one expires",
+                    "type": "string"
+                },
+                "user_data": {
+                    "description": "User data associated with the authenticated user",
+                    "allOf": [
+                        {
+                            "$ref": "#/definitions/dto.UserData"
+                        }
+                    ]
+                }
+            }
+        },
         "dto.DailyActiveUsers": {
             "description": "Daily active user counts for the current week, keyed by day.",
             "type": "object",
@@ -7466,7 +7490,13 @@ const docTemplate = `{
                 "full_name": {
                     "type": "string"
                 },
+                "id": {
+                    "type": "string"
+                },
                 "image_url": {
+                    "type": "string"
+                },
+                "phone": {
                     "type": "string"
                 },
                 "role": {

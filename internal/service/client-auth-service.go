@@ -52,7 +52,7 @@ func (s *ClientAuthService) RequestOTP(phone string) (string, error) {
 	slog.Info("mock OTP issued", "phone", phone, "otp_code", code, "expires_in", otpTTL.String())
 	return code, nil
 }
-func (s *ClientAuthService) VerifyOTP(phone, code string) (*dto.TokenResponse, error) {
+func (s *ClientAuthService) VerifyOTP(phone, code string) (*dto.ClientAuthResponse, error) {
 	s.mu.Lock()
 	entry, ok := s.codes[phone]
 	if ok && (entry.expiresAt.Before(time.Now().UTC()) || entry.code != code) {
@@ -70,7 +70,8 @@ func (s *ClientAuthService) VerifyOTP(phone, code string) (*dto.TokenResponse, e
 	if err != nil {
 		return nil, errs.Internal("OTP_USER_LOOKUP_FAILED", err)
 	}
-	if u == nil {
+	isNew := u == nil
+	if isNew {
 		u, err = s.users.Create(&domain.User{Name: phone, Phone: phone, Status: domain.UserStatusActive})
 		if err != nil {
 			return nil, errs.Internal("OTP_USER_CREATE_FAILED", err)
@@ -79,10 +80,13 @@ func (s *ClientAuthService) VerifyOTP(phone, code string) (*dto.TokenResponse, e
 
 	access := s.jwt.Generate(u.Name, u.ID, string(domain.RoleUser), auth.KindClient, clientAccessTTL)
 	refresh := s.jwt.Generate(u.Name, u.ID, string(domain.RoleUser), auth.KindClient, clientRefreshTTL)
-	return &dto.TokenResponse{
-		AccessToken:  access,
-		RefreshToken: refresh,
-		UserData:     dto.UserData{FullName: u.Name, Role: string(domain.RoleUser)},
+	return &dto.ClientAuthResponse{
+		TokenResponse: dto.TokenResponse{
+			AccessToken:  access,
+			RefreshToken: refresh,
+			UserData:     dto.UserData{ID: u.ID, Phone: u.Phone, FullName: u.Name, Role: string(domain.RoleUser)},
+		},
+		IsNew: isNew,
 	}, nil
 }
 

@@ -211,12 +211,12 @@ type VerifyPhoneOTPRequest struct {
 }
 
 // @Summary Verify phone OTP (client)
-// @Description Verify the OTP and issue client tokens. Creates the client account on first successful login (find-or-create by phone).
+// @Description Verify the OTP and issue client tokens. Creates the client account on first successful login (find-or-create by phone). `data.is_new` is true when this call created the account, so the app can route first-time users to onboarding.
 // @Tags Auth
 // @Accept json
 // @Produce json
 // @Param verifyPhoneOTPRequest body VerifyPhoneOTPRequest true "Verify phone OTP request payload"
-// @Success 200 {object} dto.Response{data=dto.TokenResponse}
+// @Success 200 {object} dto.Response{data=dto.ClientAuthResponse}
 // @Router /auth/verify-phone-otp [post]
 func verifyPhoneOTP(svc *service.ClientAuthService) gin.HandlerFunc {
 	return func(c *gin.Context) {

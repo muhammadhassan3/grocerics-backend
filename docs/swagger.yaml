@@ -324,6 +324,22 @@ definitions:
         description: State the city sits in
         type: string
     type: object
+  dto.ClientAuthResponse:
+    properties:
+      access_token:
+        description: JWT access token used to authenticate subsequent requests
+        type: string
+      is_new:
+        type: boolean
+      refresh_token:
+        description: Token used to obtain a new access token once the current one
+          expires
+        type: string
+      user_data:
+        allOf:
+        - $ref: '#/definitions/dto.UserData'
+        description: User data associated with the authenticated user
+    type: object
   dto.DailyActiveUsers:
     description: Daily active user counts for the current week, keyed by day.
     properties:
@@ -1150,7 +1166,11 @@ definitions:
     properties:
       full_name:
         type: string
+      id:
+        type: string
       image_url:
+        type: string
+      phone:
         type: string
       role:
         type: string
@@ -2176,7 +2196,9 @@ paths:
       consumes:
       - application/json
       description: Verify the OTP and issue client tokens. Creates the client account
-        on first successful login (find-or-create by phone).
+        on first successful login (find-or-create by phone). `data.is_new` is true
+        when this call created the account, so the app can route first-time users
+        to onboarding.
       parameters:
       - description: Verify phone OTP request payload
         in: body
@@ -2194,7 +2216,7 @@ paths:
             - $ref: '#/definitions/dto.Response'
             - properties:
                 data:
-                  $ref: '#/definitions/dto.TokenResponse'
+                  $ref: '#/definitions/dto.ClientAuthResponse'
               type: object
       summary: Verify phone OTP (client)
       tags:
