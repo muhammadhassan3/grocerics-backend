@@ -57,6 +57,32 @@ type CityDTO struct {
 	Slug string `json:"slug"`
 }
 
+type VariantSearchItemDTO struct {
+	VariantID          string              `json:"variant_id"`
+	ProductID          string              `json:"product_id"`
+	ProductName        string              `json:"product_name"`
+	BrandName          string              `json:"brand_name,omitempty"`
+	ImageURL           string              `json:"image_url,omitempty"`
+	PackLabel          string              `json:"pack_label"`
+	UnitPrice          string              `json:"unit_price,omitempty"`
+	ReferenceFromPaise *int64              `json:"reference_from_paise"`
+	ReferencePrices    []ReferencePriceDTO `json:"reference_prices"`
+}
+
+type ReferencePriceDTO struct {
+	PlatformCode  string `json:"platform_code"`
+	PlatformName  string `json:"platform_name"`
+	PricePaise    int64  `json:"price_paise"`
+	MRPPaise      int64  `json:"mrp_paise"`
+	Available     bool   `json:"available"`
+	LastUpdatedAt string `json:"last_updated_at,omitempty"`
+}
+
+type VariantSearchListDTO struct {
+	Items []VariantSearchItemDTO `json:"items"`
+	Meta  interface{}            `json:"meta"`
+}
+
 type ProductDetailDTO struct {
 	ProductID   string             `json:"product_id"`
 	Name        string             `json:"name"`

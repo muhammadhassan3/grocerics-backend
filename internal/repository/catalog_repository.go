@@ -130,6 +130,24 @@ func (r *ProductRepository) Search(term string, p query.Page) ([]domain.Product,
 	return paginateProducts(ctx, q, p)
 }
 
+// SearchByNameOrBrand matches active products whose name OR brand name contains
+// the term (case-insensitive, partial). Powers the variant search screen.
+func (r *ProductRepository) SearchByNameOrBrand(term string, p query.Page) ([]domain.Product, int64, error) {
+	ctx := context.Background()
+	like := "%" + term + "%"
+	var brandIDs []string
+	_ = r.db.WithContext(ctx).Model(&domain.Brand{}).
+		Where("name ILIKE ? AND deleted_at IS NULL", like).Pluck("id", &brandIDs)
+
+	q := gorm.G[domain.Product](r.db).Where("status = 'active' AND deleted_at IS NULL")
+	if len(brandIDs) > 0 {
+		q = q.Where("name ILIKE ? OR brand_id IN ?", like, brandIDs)
+	} else {
+		q = q.Where("name ILIKE ?", like)
+	}
+	return paginateProducts(ctx, q, p)
+}
+
 func (r *ProductRepository) ListTop(limit int) ([]domain.Product, error) {
 	ctx := context.Background()
 	items, err := gorm.G[domain.Product](r.db).
@@ -197,6 +215,20 @@ type ProductVariantRepository struct{ db *gorm.DB }
 
 func NewProductVariantRepository(db *gorm.DB) *ProductVariantRepository {
 	return &ProductVariantRepository{db: db}
+}
+
+func (r *ProductVariantRepository) ListByProducts(productIDs []string) ([]domain.ProductVariant, error) {
+	if len(productIDs) == 0 {
+		return nil, nil
+	}
+	ctx := context.Background()
+	items, err := gorm.G[domain.ProductVariant](r.db).
+		Where("product_id IN ? AND deleted_at IS NULL", productIDs).
+		Order("product_id, display_order, volume_value").Find(ctx)
+	if err != nil {
+		return nil, util.ParseDatabaseError(err, "idx_product_variants_")
+	}
+	return items, nil
 }
 
 func (r *ProductVariantRepository) ListByProduct(productID string) ([]domain.ProductVariant, error) {
