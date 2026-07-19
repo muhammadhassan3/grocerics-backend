@@ -922,6 +922,21 @@ definitions:
           column. Whole numbers still serialise as 2, not 2.0.
         type: number
     type: object
+  dto.ReferencePriceDTO:
+    properties:
+      available:
+        type: boolean
+      last_updated_at:
+        type: string
+      mrp_paise:
+        type: integer
+      platform_code:
+        type: string
+      platform_name:
+        type: string
+      price_paise:
+        type: integer
+    type: object
   dto.Response:
     description: Generic response envelope wrapping every API response.
     properties:
@@ -1192,6 +1207,37 @@ definitions:
         type: string
       variant_id:
         type: string
+    type: object
+  dto.VariantSearchItemDTO:
+    properties:
+      brand_name:
+        type: string
+      image_url:
+        type: string
+      pack_label:
+        type: string
+      product_id:
+        type: string
+      product_name:
+        type: string
+      reference_from_paise:
+        type: integer
+      reference_prices:
+        items:
+          $ref: '#/definitions/dto.ReferencePriceDTO'
+        type: array
+      unit_price:
+        type: string
+      variant_id:
+        type: string
+    type: object
+  dto.VariantSearchListDTO:
+    properties:
+      items:
+        items:
+          $ref: '#/definitions/dto.VariantSearchItemDTO'
+        type: array
+      meta: {}
     type: object
   query.Meta:
     properties:
@@ -2027,7 +2073,8 @@ paths:
     post:
       consumes:
       - application/json
-      description: Register a client by phone (sends OTP). STUB.
+      description: Register a client by phone (sends OTP). MOCK — the code is printed
+        to the server logs. Verify via /auth/verify-phone-otp, which creates the account.
       parameters:
       - description: Mobile register request payload
         in: body
@@ -2049,7 +2096,8 @@ paths:
     post:
       consumes:
       - application/json
-      description: Send an OTP to the phone. STUB — OTP delivery not yet implemented.
+      description: Send a login OTP to the phone. MOCK — the code is printed to the
+        server logs, not delivered by SMS.
       parameters:
       - description: Mobile login request payload
         in: body
@@ -2126,7 +2174,8 @@ paths:
     post:
       consumes:
       - application/json
-      description: Verify the OTP and issue client tokens. STUB.
+      description: Verify the OTP and issue client tokens. Creates the client account
+        on first successful login (find-or-create by phone).
       parameters:
       - description: Verify phone OTP request payload
         in: body
@@ -4696,6 +4745,55 @@ paths:
       security:
       - BearerAuth: []
       summary: Search products (curated catalog)
+      tags:
+      - consumer
+  /v1/search/variants:
+    get:
+      description: 'Variant-level search: matches products by name/brand, flattens
+        to one row per variant, attaches stored REFERENCE prices for the user''s city
+        filtered to the selected platforms. Zero QuickCommerce calls. City defaults
+        to the user''s current city; pass ?city_id= to override.'
+      parameters:
+      - description: search term (min 2 chars)
+        in: query
+        name: q
+        required: true
+        type: string
+      - description: comma-separated platform codes; omitted = all enabled
+        in: query
+        name: platforms
+        type: string
+      - description: override city (defaults to the user's current city)
+        in: query
+        name: city_id
+        type: string
+      - description: page number (default 1)
+        in: query
+        name: page
+        type: integer
+      - description: page size, max 100 (default 20)
+        in: query
+        name: page_size
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            allOf:
+            - $ref: '#/definitions/dto.Response'
+            - properties:
+                data:
+                  $ref: '#/definitions/dto.VariantSearchListDTO'
+              type: object
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/dto.Response'
+      security:
+      - BearerAuth: []
+      summary: Variant search (reference prices)
       tags:
       - consumer
   /v1/settings/about-us:

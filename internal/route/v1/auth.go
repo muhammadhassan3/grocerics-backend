@@ -12,8 +12,9 @@ import (
 )
 
 type AuthDeps struct {
-	Admin *service.AdminAuthService
-	Auth  *middleware.AuthDeps
+	Admin  *service.AdminAuthService
+	Client *service.ClientAuthService
+	Auth   *middleware.AuthDeps
 }
 
 func RegisterAuthRoutes(r *gin.Engine, d AuthDeps) {
@@ -30,9 +31,9 @@ func RegisterAuthRoutes(r *gin.Engine, d AuthDeps) {
 	admin.POST("/logout", adminLogout(d.Admin))
 
 	// --- client (mobile, OTP) ---
-	g.POST("/phone-login", phoneLogin())
-	g.POST("/verify-phone-otp", verifyPhoneOTP())
-	g.POST("/mobile-register", mobileRegister())
+	g.POST("/phone-login", phoneLogin(d.Client))
+	g.POST("/verify-phone-otp", verifyPhoneOTP(d.Client))
+	g.POST("/mobile-register", mobileRegister(d.Client))
 
 	client := r.Group("/auth")
 	client.Use(middleware.AuthMiddleware(d.Auth), middleware.ClientOnly())
@@ -180,18 +181,22 @@ func adminResetPassword(svc *service.AdminAuthService) gin.HandlerFunc {
 }
 
 // @Summary Phone login (client)
-// @Description Send an OTP to the phone. STUB — OTP delivery not yet implemented.
+// @Description Send a login OTP to the phone. MOCK — the code is printed to the server logs, not delivered by SMS.
 // @Tags Auth
 // @Accept json
 // @Produce json
 // @Param mobileLoginRequest body dto.MobileLoginRequest true "Mobile login request payload"
 // @Success 200 {object} dto.Response
 // @Router /auth/phone-login [post]
-func phoneLogin() gin.HandlerFunc {
+func phoneLogin(svc *service.ClientAuthService) gin.HandlerFunc {
 	return func(c *gin.Context) {
 		var req dto.MobileLoginRequest
 		if err := c.ShouldBindJSON(&req); err != nil {
 			c.Error(errs.BadRequest("VALIDATION", util.ParseValidationError(err).Error()))
+			return
+		}
+		if err := svc.RequestOTP(req.PhoneNumber); err != nil {
+			c.Error(err)
 			return
 		}
 		c.JSON(200, dto.Response{Status: "success", Message: "OTP code sent"})
@@ -204,21 +209,26 @@ type VerifyPhoneOTPRequest struct {
 }
 
 // @Summary Verify phone OTP (client)
-// @Description Verify the OTP and issue client tokens. STUB.
+// @Description Verify the OTP and issue client tokens. Creates the client account on first successful login (find-or-create by phone).
 // @Tags Auth
 // @Accept json
 // @Produce json
 // @Param verifyPhoneOTPRequest body VerifyPhoneOTPRequest true "Verify phone OTP request payload"
 // @Success 200 {object} dto.Response{data=dto.TokenResponse}
 // @Router /auth/verify-phone-otp [post]
-func verifyPhoneOTP() gin.HandlerFunc {
+func verifyPhoneOTP(svc *service.ClientAuthService) gin.HandlerFunc {
 	return func(c *gin.Context) {
 		var req VerifyPhoneOTPRequest
 		if err := c.ShouldBindJSON(&req); err != nil {
 			c.Error(errs.BadRequest("VALIDATION", util.ParseValidationError(err).Error()))
 			return
 		}
-		c.JSON(200, dto.Response{Status: "success", Message: "OTP verified successfully", Data: dto.TokenResponse{}})
+		res, err := svc.VerifyOTP(req.PhoneNumber, req.OTPCode)
+		if err != nil {
+			c.Error(err)
+			return
+		}
+		c.JSON(200, dto.Response{Status: "success", Message: "OTP verified successfully", Data: res})
 	}
 }
 
@@ -227,18 +237,22 @@ type MobileRegisterRequest struct {
 }
 
 // @Summary Mobile register (client)
-// @Description Register a client by phone (sends OTP). STUB.
+// @Description Register a client by phone (sends OTP). MOCK — the code is printed to the server logs. Verify via /auth/verify-phone-otp, which creates the account.
 // @Tags Auth
 // @Accept json
 // @Produce json
 // @Param mobileRegisterRequest body MobileRegisterRequest true "Mobile register request payload"
 // @Success 200 {object} dto.Response
 // @Router /auth/mobile-register [post]
-func mobileRegister() gin.HandlerFunc {
+func mobileRegister(svc *service.ClientAuthService) gin.HandlerFunc {
 	return func(c *gin.Context) {
 		var req MobileRegisterRequest
 		if err := c.ShouldBindJSON(&req); err != nil {
 			c.Error(errs.BadRequest("VALIDATION", util.ParseValidationError(err).Error()))
+			return
+		}
+		if err := svc.RequestOTP(req.PhoneNumber); err != nil {
+			c.Error(err)
 			return
 		}
 		c.JSON(200, dto.Response{Status: "success", Message: "OTP code sent"})
