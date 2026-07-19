@@ -2,7 +2,6 @@ package v1
 
 import (
 	"grocerics-backend/internal/auth"
-	"grocerics-backend/internal/domain"
 	"grocerics-backend/internal/dto"
 	"grocerics-backend/internal/errs"
 	"grocerics-backend/internal/middleware"
@@ -37,7 +36,6 @@ func RegisterConsumerRoutes(r *gin.Engine, d ConsumerDeps) {
 	g.GET("/cities", listCities(d))
 	g.GET("/home", getHome(d))
 	g.GET("/categories/:id/products", getCategoryProducts(d))
-	g.GET("/search", search(d))
 	g.GET("/search/variants", searchVariants(d))
 	g.GET("/deals", getDeals(d))
 	g.GET("/products/:id", getProduct(d))
@@ -139,47 +137,6 @@ func getCategoryProducts(d ConsumerDeps) gin.HandlerFunc {
 			c.Error(err)
 			return
 		}
-		ok(c, dto.ProductCardListDTO{Items: cards, Meta: meta})
-	}
-}
-
-// @Summary Search products (curated catalog)
-// @Description Full-text search over the Groceric catalog (min 2 chars). Never hits the platform APIs.
-// @Tags consumer
-// @Produce json
-// @Security BearerAuth
-// @Param q query string true "search term (min 2 chars)"
-// @Param page query int false "page number (default 1)"
-// @Param page_size query int false "page size, max 100 (default 20)"
-// @Success 200 {object} dto.Response{data=dto.ProductCardListDTO}
-// @Failure 400 {object} dto.Response
-// @Router /v1/search [get]
-func search(d ConsumerDeps) gin.HandlerFunc {
-	return func(c *gin.Context) {
-		term := c.Query("q")
-		if len([]rune(term)) < 2 {
-			c.Error(errs.BadRequest("VALIDATION", "search query must be at least 2 characters"))
-			return
-		}
-		cityID, _, good := resolveCity(c, d)
-		if !good {
-			return
-		}
-		cards, meta, err := d.Catalog.Search(term, cityID, query.PageFromContext(c))
-		if err != nil {
-			c.Error(err)
-			return
-		}
-		uid := auth.MustUser(c).ID
-		cid := cityID
-		var pid *string
-		if len(cards) > 0 {
-			p := cards[0].ProductID
-			pid = &p
-		}
-		go func() {
-			_ = d.Analytics.LogSearch(&domain.SearchEvent{UserID: &uid, Query: term, ResultProductID: pid, CityID: &cid})
-		}()
 		ok(c, dto.ProductCardListDTO{Items: cards, Meta: meta})
 	}
 }

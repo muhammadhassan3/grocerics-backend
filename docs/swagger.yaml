@@ -4787,45 +4787,6 @@ paths:
       summary: Product detail (PDP)
       tags:
       - consumer
-  /v1/search:
-    get:
-      description: Full-text search over the Groceric catalog (min 2 chars). Never
-        hits the platform APIs.
-      parameters:
-      - description: search term (min 2 chars)
-        in: query
-        name: q
-        required: true
-        type: string
-      - description: page number (default 1)
-        in: query
-        name: page
-        type: integer
-      - description: page size, max 100 (default 20)
-        in: query
-        name: page_size
-        type: integer
-      produces:
-      - application/json
-      responses:
-        "200":
-          description: OK
-          schema:
-            allOf:
-            - $ref: '#/definitions/dto.Response'
-            - properties:
-                data:
-                  $ref: '#/definitions/dto.ProductCardListDTO'
-              type: object
-        "400":
-          description: Bad Request
-          schema:
-            $ref: '#/definitions/dto.Response'
-      security:
-      - BearerAuth: []
-      summary: Search products (curated catalog)
-      tags:
-      - consumer
   /v1/search/variants:
     get:
       description: 'Variant-level search: matches products by name/brand, flattens

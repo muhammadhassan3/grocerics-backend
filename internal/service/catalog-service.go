@@ -195,15 +195,6 @@ func (s *CatalogService) ProductsByCategory(categoryID, cityID string, page quer
 	return cards, query.BuildMeta(total, page), err
 }
 
-func (s *CatalogService) Search(term, cityID string, page query.Page) ([]dto.ProductCardDTO, query.Meta, error) {
-	products, total, err := s.product.Search(term, page)
-	if err != nil {
-		return nil, query.Meta{}, err
-	}
-	cards, err := s.productCards(products, cityID)
-	return cards, query.BuildMeta(total, page), err
-}
-
 func (s *CatalogService) SearchVariants(term, cityID string, platformCodes []string, page query.Page) ([]dto.VariantSearchItemDTO, query.Meta, error) {
 	products, total, err := s.product.SearchByNameOrBrand(term, page)
 	if err != nil {
