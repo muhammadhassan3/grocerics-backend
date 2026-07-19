@@ -41,6 +41,20 @@ func (r *UserRepository) FindByID(id string) (*domain.User, error) {
 	return &data, nil
 }
 
+func (r *UserRepository) FindByPhone(phone string) (*domain.User, error) {
+	ctx := context.Background()
+	data, err := gorm.G[domain.User](r.db).
+		Where("phone = ? AND deleted_at IS NULL", phone).
+		First(ctx)
+	if err != nil {
+		if err == gorm.ErrRecordNotFound {
+			return nil, nil
+		}
+		return nil, util.ParseDatabaseError(err, "idx_users_")
+	}
+	return &data, nil
+}
+
 func (r *UserRepository) Update(user *domain.User) (*domain.User, error) {
 	ctx := context.Background()
 	_, err := gorm.G[domain.User](r.db).

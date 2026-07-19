@@ -39,8 +39,9 @@ type App struct {
 	UserRepo *repository.UserRepository
 	QC       quickcommerce.Client
 
-	AdminAuth *service.AdminAuthService
-	AuthDeps  *middleware.AuthDeps
+	AdminAuth  *service.AdminAuthService
+	ClientAuth *service.ClientAuthService
+	AuthDeps   *middleware.AuthDeps
 }
 
 func New(cfg *config.Config) (*App, error) {
@@ -71,6 +72,7 @@ func New(cfg *config.Config) (*App, error) {
 		jwt,
 		"",
 	)
+	clientAuth := service.NewClientAuthService(userRepo, jwt)
 	authDeps := &middleware.AuthDeps{JWT: jwt, Users: userRepo, Admins: adminRepo}
 
 	config.SeedAdmin(db, cfg.Seed, cfg.Env)
@@ -82,6 +84,7 @@ func New(cfg *config.Config) (*App, error) {
 		UserRepo:   userRepo,
 		QC:         qc,
 		AdminAuth:  adminAuth,
+		ClientAuth: clientAuth,
 		AuthDeps:   authDeps,
 	}
 	a.Router = a.buildRouter()
@@ -131,7 +134,7 @@ func (a *App) buildRouter() *gin.Engine {
 		c.JSON(405, dto.Response{Status: "failed", Code: "METHOD_NOT_ALLOWED", Message: "Method not allowed"})
 	})
 
-	v1.RegisterAuthRoutes(r, v1.AuthDeps{Admin: a.AdminAuth, Auth: a.AuthDeps})
+	v1.RegisterAuthRoutes(r, v1.AuthDeps{Admin: a.AdminAuth, Client: a.ClientAuth, Auth: a.AuthDeps})
 	v1.RegisterUserRoutes(r, a.AuthDeps, a.UserRepo)
 	v1.RegisterDashboardRoutes(r, v1.DashboardDeps{
 		JWT:            a.JWTService,

@@ -168,7 +168,7 @@ const docTemplate = `{
         },
         "/auth/mobile-register": {
             "post": {
-                "description": "Register a client by phone (sends OTP). STUB.",
+                "description": "Register a client by phone (sends OTP). MOCK — the code is printed to the server logs AND returned as data.otp_code (dev only). Verify via /auth/verify-phone-otp, which creates the account.",
                 "consumes": [
                     "application/json"
                 ],
@@ -202,7 +202,7 @@ const docTemplate = `{
         },
         "/auth/phone-login": {
             "post": {
-                "description": "Send an OTP to the phone. STUB — OTP delivery not yet implemented.",
+                "description": "Send a login OTP to the phone. MOCK — no SMS; the code is printed to the server logs AND returned as data.otp_code (dev only).",
                 "consumes": [
                     "application/json"
                 ],
@@ -326,7 +326,7 @@ const docTemplate = `{
         },
         "/auth/verify-phone-otp": {
             "post": {
-                "description": "Verify the OTP and issue client tokens. STUB.",
+                "description": "Verify the OTP and issue client tokens. Creates the client account on first successful login (find-or-create by phone).",
                 "consumes": [
                     "application/json"
                 ],
@@ -4868,6 +4868,82 @@ const docTemplate = `{
                 }
             }
         },
+        "/v1/search/variants": {
+            "get": {
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
+                "description": "Variant-level search: matches products by name/brand, flattens to one row per variant, attaches stored REFERENCE prices for the user's city filtered to the selected platforms. Zero QuickCommerce calls. City defaults to the user's current city; pass ?city_id= to override.",
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "consumer"
+                ],
+                "summary": "Variant search (reference prices)",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "search term (min 2 chars)",
+                        "name": "q",
+                        "in": "query",
+                        "required": true
+                    },
+                    {
+                        "type": "string",
+                        "description": "comma-separated platform codes; omitted = all enabled",
+                        "name": "platforms",
+                        "in": "query"
+                    },
+                    {
+                        "type": "string",
+                        "description": "override city (defaults to the user's current city)",
+                        "name": "city_id",
+                        "in": "query"
+                    },
+                    {
+                        "type": "integer",
+                        "description": "page number (default 1)",
+                        "name": "page",
+                        "in": "query"
+                    },
+                    {
+                        "type": "integer",
+                        "description": "page size, max 100 (default 20)",
+                        "name": "page_size",
+                        "in": "query"
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "allOf": [
+                                {
+                                    "$ref": "#/definitions/dto.Response"
+                                },
+                                {
+                                    "type": "object",
+                                    "properties": {
+                                        "data": {
+                                            "$ref": "#/definitions/dto.VariantSearchListDTO"
+                                        }
+                                    }
+                                }
+                            ]
+                        }
+                    },
+                    "400": {
+                        "description": "Bad Request",
+                        "schema": {
+                            "$ref": "#/definitions/dto.Response"
+                        }
+                    }
+                }
+            }
+        },
         "/v1/settings/about-us": {
             "get": {
                 "security": [
@@ -7062,6 +7138,29 @@ const docTemplate = `{
                 }
             }
         },
+        "dto.ReferencePriceDTO": {
+            "type": "object",
+            "properties": {
+                "available": {
+                    "type": "boolean"
+                },
+                "last_updated_at": {
+                    "type": "string"
+                },
+                "mrp_paise": {
+                    "type": "integer"
+                },
+                "platform_code": {
+                    "type": "string"
+                },
+                "platform_name": {
+                    "type": "string"
+                },
+                "price_paise": {
+                    "type": "integer"
+                }
+            }
+        },
         "dto.Response": {
             "description": "Generic response envelope wrapping every API response.",
             "type": "object",
@@ -7450,6 +7549,53 @@ const docTemplate = `{
                 "variant_id": {
                     "type": "string"
                 }
+            }
+        },
+        "dto.VariantSearchItemDTO": {
+            "type": "object",
+            "properties": {
+                "brand_name": {
+                    "type": "string"
+                },
+                "image_url": {
+                    "type": "string"
+                },
+                "pack_label": {
+                    "type": "string"
+                },
+                "product_id": {
+                    "type": "string"
+                },
+                "product_name": {
+                    "type": "string"
+                },
+                "reference_from_paise": {
+                    "type": "integer"
+                },
+                "reference_prices": {
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/dto.ReferencePriceDTO"
+                    }
+                },
+                "unit_price": {
+                    "type": "string"
+                },
+                "variant_id": {
+                    "type": "string"
+                }
+            }
+        },
+        "dto.VariantSearchListDTO": {
+            "type": "object",
+            "properties": {
+                "items": {
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/dto.VariantSearchItemDTO"
+                    }
+                },
+                "meta": {}
             }
         },
         "query.Meta": {
