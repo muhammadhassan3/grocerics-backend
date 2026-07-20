@@ -138,8 +138,8 @@ type addressRequest struct {
 	Label     *string  `json:"label"`
 	Line1     string   `json:"line1" binding:"required"`
 	Line2     *string  `json:"line2"`
-	Pincode   string   `json:"pincode" binding:"required"`
-	City      string   `json:"city"` // device-geocoded city; resolved to an enabled city server-side
+	Pincode   string   `json:"pincode"` // optional: city drives serviceability; used for delivery ETA when the geocode provides it
+	City      string   `json:"city"`
 	Lat       *float64 `json:"lat"`
 	Lng       *float64 `json:"lng"`
 	IsDefault bool     `json:"is_default"`

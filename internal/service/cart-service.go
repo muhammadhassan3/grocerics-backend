@@ -1,6 +1,9 @@
 package service
 
 import (
+	"strconv"
+	"strings"
+
 	"grocerics-backend/internal/domain"
 	"grocerics-backend/internal/dto"
 	"grocerics-backend/internal/errs"
@@ -8,6 +11,21 @@ import (
 
 	"gorm.io/gorm"
 )
+
+func leadingMinutes(s *string) (int, bool) {
+	if s == nil {
+		return 0, false
+	}
+	fields := strings.Fields(*s)
+	if len(fields) == 0 {
+		return 0, false
+	}
+	n, err := strconv.Atoi(fields[0])
+	if err != nil {
+		return 0, false
+	}
+	return n, true
+}
 
 type CartService struct {
 	cart     *repository.CartRepository
@@ -198,6 +216,8 @@ func (s *CartService) buildResponse(lines []breakdownLine, cityID, pincode strin
 		if m, ok := etaByPlatform[plat.ID]; ok {
 			eta := m
 			b.DeliveryETAMinutes = &eta
+		} else if mins, ok := leadingMinutes(plat.DeliveryETAText); ok {
+			b.DeliveryETAMinutes = &mins
 		}
 		var itemTotal, availTotal int64
 		for _, l := range lines {

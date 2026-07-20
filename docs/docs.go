@@ -8406,12 +8406,10 @@ const docTemplate = `{
         "v1.addressRequest": {
             "type": "object",
             "required": [
-                "line1",
-                "pincode"
+                "line1"
             ],
             "properties": {
                 "city": {
-                    "description": "device-geocoded city; resolved to an enabled city server-side",
                     "type": "string"
                 },
                 "is_default": {
@@ -8433,6 +8431,7 @@ const docTemplate = `{
                     "type": "number"
                 },
                 "pincode": {
+                    "description": "optional: city drives serviceability; used for delivery ETA when the geocode provides it",
                     "type": "string"
                 }
             }
