@@ -162,8 +162,7 @@ func (r *ProductRepository) ListSimilar(categoryID, excludeProductID string, lim
 	return items, nil
 }
 
-// returns the list of active products that have at least one discounted platform, for the TOp DEALS tab
-func (r *ProductRepository) ListDeals(cityID string, limit int) ([]domain.Product, error) {
+func (r *ProductRepository) ListDealVariantIDs(cityID string, limit int) ([]string, error) {
 	ctx := context.Background()
 	var ids []string
 	err := r.db.WithContext(ctx).
@@ -172,21 +171,11 @@ func (r *ProductRepository) ListDeals(cityID string, limit int) ([]domain.Produc
 		Joins("JOIN products p ON p.id = v.product_id").
 		Where("pp.city_id = ? AND pp.available AND pp.mrp_paise IS NOT NULL AND pp.mrp_paise > pp.price_paise", cityID).
 		Where("p.status = 'active' AND p.deleted_at IS NULL AND v.deleted_at IS NULL").
-		Distinct("p.id").Limit(limit).Pluck("p.id", &ids).Error
+		Distinct("v.id").Limit(limit).Pluck("v.id", &ids).Error
 	if err != nil {
-		return nil, util.ParseDatabaseError(err, "idx_products_")
+		return nil, util.ParseDatabaseError(err, "idx_product_variants_")
 	}
-	m, err := r.FindByIDs(ids)
-	if err != nil {
-		return nil, err
-	}
-	out := make([]domain.Product, 0, len(ids))
-	for _, id := range ids {
-		if p, ok := m[id]; ok {
-			out = append(out, p)
-		}
-	}
-	return out, nil
+	return ids, nil
 }
 
 func paginateProducts(ctx context.Context, q gorm.ChainInterface[domain.Product], p query.Page) ([]domain.Product, int64, error) {
@@ -279,6 +268,20 @@ func (r *ProductVariantRepository) FindByIDs(ids []string) (map[string]domain.Pr
 	}
 	for _, v := range items {
 		out[v.ID] = v
+	}
+	return out, nil
+}
+
+func (r *ProductVariantRepository) ListByIDsOrdered(ids []string) ([]domain.ProductVariant, error) {
+	m, err := r.FindByIDs(ids)
+	if err != nil {
+		return nil, err
+	}
+	out := make([]domain.ProductVariant, 0, len(ids))
+	for _, id := range ids {
+		if v, ok := m[id]; ok {
+			out = append(out, v)
+		}
 	}
 	return out, nil
 }

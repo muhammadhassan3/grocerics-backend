@@ -204,44 +204,66 @@ func (s *CatalogService) SearchVariants(term, cityID string, platformCodes []str
 		return []dto.VariantSearchItemDTO{}, query.BuildMeta(0, page), nil
 	}
 
-	plats, err := s.platforms.ListEnabled()
+	productIDs := make([]string, 0, len(products))
+	for _, p := range products {
+		productIDs = append(productIDs, p.ID)
+	}
+	variants, err := s.variant.ListByProducts(productIDs)
 	if err != nil {
 		return nil, query.Meta{}, err
 	}
+	items, err := s.variantCards(variants, cityID, platformCodes)
+	if err != nil {
+		return nil, query.Meta{}, err
+	}
+	return items, query.BuildMeta(total, page), nil
+}
+
+func (s *CatalogService) variantCards(variants []domain.ProductVariant, cityID string, platformCodes []string) ([]dto.VariantSearchItemDTO, error) {
+	items := make([]dto.VariantSearchItemDTO, 0, len(variants))
+	if len(variants) == 0 {
+		return items, nil
+	}
+	plats, err := s.platforms.ListEnabled()
+	if err != nil {
+		return nil, err
+	}
 	platByID := make(map[string]domain.Platform, len(plats))
+	for _, p := range plats {
+		platByID[p.ID] = p
+	}
 	want := make(map[string]bool, len(platformCodes))
 	for _, code := range platformCodes {
 		want[code] = true
 	}
-	for _, p := range plats {
-		platByID[p.ID] = p
-	}
 
-	productIDs := make([]string, 0, len(products))
-	brandIDs := make([]string, 0, len(products))
-	prodByID := make(map[string]domain.Product, len(products))
-	for _, p := range products {
-		productIDs = append(productIDs, p.ID)
-		prodByID[p.ID] = p
+	productIDs := make([]string, 0, len(variants))
+	variantIDs := make([]string, 0, len(variants))
+	seenProduct := make(map[string]bool)
+	for _, v := range variants {
+		variantIDs = append(variantIDs, v.ID)
+		if !seenProduct[v.ProductID] {
+			seenProduct[v.ProductID] = true
+			productIDs = append(productIDs, v.ProductID)
+		}
+	}
+	prods, err := s.product.FindByIDs(productIDs)
+	if err != nil {
+		return nil, err
+	}
+	brandIDs := make([]string, 0, len(prods))
+	for _, p := range prods {
 		if p.BrandID != nil {
 			brandIDs = append(brandIDs, *p.BrandID)
 		}
 	}
 	brands, err := s.brand.FindByIDs(brandIDs)
 	if err != nil {
-		return nil, query.Meta{}, err
-	}
-	variants, err := s.variant.ListByProducts(productIDs)
-	if err != nil {
-		return nil, query.Meta{}, err
-	}
-	variantIDs := make([]string, 0, len(variants))
-	for _, v := range variants {
-		variantIDs = append(variantIDs, v.ID)
+		return nil, err
 	}
 	prices, err := s.price.ListByVariantsCity(variantIDs, cityID)
 	if err != nil {
-		return nil, query.Meta{}, err
+		return nil, err
 	}
 	priceByVariant := make(map[string][]domain.PlatformPrice, len(variantIDs))
 	for _, pr := range prices {
@@ -249,12 +271,11 @@ func (s *CatalogService) SearchVariants(term, cityID string, platformCodes []str
 	}
 	imageByVariant, err := s.link.PrimaryImagesByVariants(variantIDs)
 	if err != nil {
-		return nil, query.Meta{}, err
+		return nil, err
 	}
 
-	items := make([]dto.VariantSearchItemDTO, 0, len(variants))
 	for _, v := range variants {
-		prod := prodByID[v.ProductID]
+		prod := prods[v.ProductID]
 		row := dto.VariantSearchItemDTO{
 			VariantID: v.ID, ProductID: v.ProductID, ProductName: prod.Name,
 			ImageURL: imageByVariant[v.ID], PackLabel: packLabel(v),
@@ -296,15 +317,19 @@ func (s *CatalogService) SearchVariants(term, cityID string, platformCodes []str
 		}
 		items = append(items, row)
 	}
-	return items, query.BuildMeta(total, page), nil
+	return items, nil
 }
 
-func (s *CatalogService) Deals(cityID string) ([]dto.ProductCardDTO, error) {
-	products, err := s.product.ListDeals(cityID, 30)
+func (s *CatalogService) Deals(cityID string, platformCodes []string) ([]dto.VariantSearchItemDTO, error) {
+	ids, err := s.product.ListDealVariantIDs(cityID, 30)
 	if err != nil {
 		return nil, err
 	}
-	return s.productCards(products, cityID)
+	variants, err := s.variant.ListByIDsOrdered(ids)
+	if err != nil {
+		return nil, err
+	}
+	return s.variantCards(variants, cityID, platformCodes)
 }
 
 func (s *CatalogService) productCards(products []domain.Product, cityID string) ([]dto.ProductCardDTO, error) {

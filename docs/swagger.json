@@ -362,111 +362,6 @@
                 }
             }
         },
-        "/v1/address": {
-            "post": {
-                "security": [
-                    {
-                        "BearerAuth": []
-                    }
-                ],
-                "description": "Creates a new address for the authenticated user.",
-                "consumes": [
-                    "application/json"
-                ],
-                "produces": [
-                    "application/json"
-                ],
-                "tags": [
-                    "address"
-                ],
-                "summary": "Create a new address",
-                "parameters": [
-                    {
-                        "description": "Address details",
-                        "name": "address",
-                        "in": "body",
-                        "required": true,
-                        "schema": {
-                            "$ref": "#/definitions/dto.AddAddressRequest"
-                        }
-                    }
-                ],
-                "responses": {
-                    "201": {
-                        "description": "Created",
-                        "schema": {
-                            "allOf": [
-                                {
-                                    "$ref": "#/definitions/dto.Response"
-                                },
-                                {
-                                    "type": "object",
-                                    "properties": {
-                                        "data": {
-                                            "$ref": "#/definitions/dto.AddressResponse"
-                                        }
-                                    }
-                                }
-                            ]
-                        }
-                    },
-                    "400": {
-                        "description": "Bad Request",
-                        "schema": {
-                            "allOf": [
-                                {
-                                    "$ref": "#/definitions/dto.Response"
-                                },
-                                {
-                                    "type": "object",
-                                    "properties": {
-                                        "data": {
-                                            "type": "string"
-                                        }
-                                    }
-                                }
-                            ]
-                        }
-                    },
-                    "401": {
-                        "description": "Unauthorized",
-                        "schema": {
-                            "allOf": [
-                                {
-                                    "$ref": "#/definitions/dto.Response"
-                                },
-                                {
-                                    "type": "object",
-                                    "properties": {
-                                        "data": {
-                                            "type": "string"
-                                        }
-                                    }
-                                }
-                            ]
-                        }
-                    },
-                    "403": {
-                        "description": "Forbidden",
-                        "schema": {
-                            "allOf": [
-                                {
-                                    "$ref": "#/definitions/dto.Response"
-                                },
-                                {
-                                    "type": "object",
-                                    "properties": {
-                                        "data": {
-                                            "type": "string"
-                                        }
-                                    }
-                                }
-                            ]
-                        }
-                    }
-                }
-            }
-        },
         "/v1/banners": {
             "get": {
                 "security": [
@@ -2529,7 +2424,7 @@
                         "BearerAuth": []
                     }
                 ],
-                "description": "Products that have a discounted platform price (mrp \u003e price) in the user's city.",
+                "description": "Variants with a discounted platform price (mrp \u003e price) in the user's city, as variant cards. Optional ?platforms= filters which reference prices are shown.",
                 "produces": [
                     "application/json"
                 ],
@@ -2537,6 +2432,14 @@
                     "consumer"
                 ],
                 "summary": "Top Deals",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "comma-separated platform codes; omitted = all enabled",
+                        "name": "platforms",
+                        "in": "query"
+                    }
+                ],
                 "responses": {
                     "200": {
                         "description": "OK",
@@ -2551,7 +2454,7 @@
                                         "data": {
                                             "type": "array",
                                             "items": {
-                                                "$ref": "#/definitions/dto.ProductCardDTO"
+                                                "$ref": "#/definitions/dto.VariantSearchItemDTO"
                                             }
                                         }
                                     }
@@ -5437,82 +5340,6 @@
                 }
             }
         },
-        "/v1/top-deals": {
-            "get": {
-                "security": [
-                    {
-                        "BearerAuth": []
-                    }
-                ],
-                "description": "Fetches a list of top deals.",
-                "consumes": [
-                    "application/json"
-                ],
-                "produces": [
-                    "application/json"
-                ],
-                "tags": [
-                    "top-deals"
-                ],
-                "summary": "Get top deals",
-                "responses": {
-                    "200": {
-                        "description": "OK",
-                        "schema": {
-                            "allOf": [
-                                {
-                                    "$ref": "#/definitions/dto.Response"
-                                },
-                                {
-                                    "type": "object",
-                                    "properties": {
-                                        "data": {
-                                            "$ref": "#/definitions/dto.TopDealsMobileResponse"
-                                        }
-                                    }
-                                }
-                            ]
-                        }
-                    },
-                    "401": {
-                        "description": "Unauthorized",
-                        "schema": {
-                            "allOf": [
-                                {
-                                    "$ref": "#/definitions/dto.Response"
-                                },
-                                {
-                                    "type": "object",
-                                    "properties": {
-                                        "data": {
-                                            "type": "string"
-                                        }
-                                    }
-                                }
-                            ]
-                        }
-                    },
-                    "403": {
-                        "description": "Forbidden",
-                        "schema": {
-                            "allOf": [
-                                {
-                                    "$ref": "#/definitions/dto.Response"
-                                },
-                                {
-                                    "type": "object",
-                                    "properties": {
-                                        "data": {
-                                            "type": "string"
-                                        }
-                                    }
-                                }
-                            ]
-                        }
-                    }
-                }
-            }
-        },
         "/v1/users": {
             "get": {
                 "security": [
@@ -5780,28 +5607,6 @@
                 }
             }
         },
-        "dto.AddAddressRequest": {
-            "description": "Request payload for adding a new delivery address.",
-            "type": "object",
-            "required": [
-                "address_line_1",
-                "pincode"
-            ],
-            "properties": {
-                "address_line_1": {
-                    "description": "Primary address line, e.g. house/flat number and street",
-                    "type": "string"
-                },
-                "address_line_2": {
-                    "description": "Secondary address line, e.g. landmark or apartment details",
-                    "type": "string"
-                },
-                "pincode": {
-                    "description": "Postal/ZIP code of the address",
-                    "type": "string"
-                }
-            }
-        },
         "dto.AddressDTO": {
             "type": "object",
             "properties": {
@@ -5838,27 +5643,6 @@
                 "serviceable": {
                     "description": "true if the pincode resolved to a serving city",
                     "type": "boolean"
-                }
-            }
-        },
-        "dto.AddressResponse": {
-            "description": "Response payload containing details of a delivery address.",
-            "type": "object",
-            "properties": {
-                "address_id": {
-                    "type": "string"
-                },
-                "address_line_1": {
-                    "type": "string"
-                },
-                "address_line_2": {
-                    "type": "string"
-                },
-                "created_at": {
-                    "type": "string"
-                },
-                "pincode": {
-                    "type": "string"
                 }
             }
         },
@@ -6838,24 +6622,6 @@
                 }
             }
         },
-        "dto.PlatformSearchResult": {
-            "description": "A delivery platform considered when searching or listing products.",
-            "type": "object",
-            "properties": {
-                "platform_id": {
-                    "description": "Unique identifier for the delivery platform",
-                    "type": "string"
-                },
-                "platform_logo": {
-                    "description": "URL of the delivery platform's logo",
-                    "type": "string"
-                },
-                "platform_name": {
-                    "description": "Display name of the delivery platform",
-                    "type": "string"
-                }
-            }
-        },
         "dto.Platforms": {
             "description": "Paginated list of platforms.",
             "type": "object",
@@ -7316,64 +7082,6 @@
                             "$ref": "#/definitions/dto.UserData"
                         }
                     ]
-                }
-            }
-        },
-        "dto.TopDealsMobileItem": {
-            "description": "A single product row within the top deals list.",
-            "type": "object",
-            "properties": {
-                "cart_count": {
-                    "description": "Number of times the product has been added to a cart",
-                    "type": "integer"
-                },
-                "category_name": {
-                    "description": "Name of the category the product belongs to",
-                    "type": "string"
-                },
-                "image_url": {
-                    "description": "URL of the product's display image",
-                    "type": "string"
-                },
-                "item_id": {
-                    "description": "Unique identifier for the product",
-                    "type": "string"
-                },
-                "item_name": {
-                    "description": "Display name of the product",
-                    "type": "string"
-                },
-                "lowest_price": {
-                    "description": "Lowest price for the product across tracked delivery platforms",
-                    "type": "number"
-                }
-            }
-        },
-        "dto.TopDealsMobileResponse": {
-            "description": "Envelope for the mobile app's top deals endpoint.",
-            "type": "object",
-            "properties": {
-                "meta": {
-                    "description": "Pagination metadata",
-                    "allOf": [
-                        {
-                            "$ref": "#/definitions/query.Meta"
-                        }
-                    ]
-                },
-                "platforms": {
-                    "description": "Delivery platforms considered when pricing the deals",
-                    "type": "array",
-                    "items": {
-                        "$ref": "#/definitions/dto.PlatformSearchResult"
-                    }
-                },
-                "results": {
-                    "description": "Page of top deal products",
-                    "type": "array",
-                    "items": {
-                        "$ref": "#/definitions/dto.TopDealsMobileItem"
-                    }
                 }
             }
         },

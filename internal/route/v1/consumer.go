@@ -179,11 +179,12 @@ func searchVariants(d ConsumerDeps) gin.HandlerFunc {
 }
 
 // @Summary Top Deals
-// @Description Products that have a discounted platform price (mrp > price) in the user's city.
+// @Description Variants with a discounted platform price (mrp > price) in the user's city, as variant cards. Optional ?platforms= filters which reference prices are shown.
 // @Tags consumer
 // @Produce json
 // @Security BearerAuth
-// @Success 200 {object} dto.Response{data=[]dto.ProductCardDTO}
+// @Param platforms query string false "comma-separated platform codes; omitted = all enabled"
+// @Success 200 {object} dto.Response{data=[]dto.VariantSearchItemDTO}
 // @Router /v1/deals [get]
 func getDeals(d ConsumerDeps) gin.HandlerFunc {
 	return func(c *gin.Context) {
@@ -191,12 +192,12 @@ func getDeals(d ConsumerDeps) gin.HandlerFunc {
 		if !good {
 			return
 		}
-		cards, err := d.Catalog.Deals(cityID)
+		items, err := d.Catalog.Deals(cityID, util.SplitCSV(c.Query("platforms")))
 		if err != nil {
 			c.Error(err)
 			return
 		}
-		ok(c, cards)
+		ok(c, items)
 	}
 }
 

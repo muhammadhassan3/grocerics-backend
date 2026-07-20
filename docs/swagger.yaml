@@ -4,22 +4,6 @@ definitions:
       content:
         type: string
     type: object
-  dto.AddAddressRequest:
-    description: Request payload for adding a new delivery address.
-    properties:
-      address_line_1:
-        description: Primary address line, e.g. house/flat number and street
-        type: string
-      address_line_2:
-        description: Secondary address line, e.g. landmark or apartment details
-        type: string
-      pincode:
-        description: Postal/ZIP code of the address
-        type: string
-    required:
-    - address_line_1
-    - pincode
-    type: object
   dto.AddressDTO:
     properties:
       city_id:
@@ -45,20 +29,6 @@ definitions:
       serviceable:
         description: true if the pincode resolved to a serving city
         type: boolean
-    type: object
-  dto.AddressResponse:
-    description: Response payload containing details of a delivery address.
-    properties:
-      address_id:
-        type: string
-      address_line_1:
-        type: string
-      address_line_2:
-        type: string
-      created_at:
-        type: string
-      pincode:
-        type: string
     type: object
   dto.BannerCardDTO:
     properties:
@@ -724,19 +694,6 @@ definitions:
           product)
         type: integer
     type: object
-  dto.PlatformSearchResult:
-    description: A delivery platform considered when searching or listing products.
-    properties:
-      platform_id:
-        description: Unique identifier for the delivery platform
-        type: string
-      platform_logo:
-        description: URL of the delivery platform's logo
-        type: string
-      platform_name:
-        description: Display name of the delivery platform
-        type: string
-    type: object
   dto.Platforms:
     description: Paginated list of platforms.
     properties:
@@ -1055,46 +1012,6 @@ definitions:
         allOf:
         - $ref: '#/definitions/dto.UserData'
         description: User data associated with the authenticated user
-    type: object
-  dto.TopDealsMobileItem:
-    description: A single product row within the top deals list.
-    properties:
-      cart_count:
-        description: Number of times the product has been added to a cart
-        type: integer
-      category_name:
-        description: Name of the category the product belongs to
-        type: string
-      image_url:
-        description: URL of the product's display image
-        type: string
-      item_id:
-        description: Unique identifier for the product
-        type: string
-      item_name:
-        description: Display name of the product
-        type: string
-      lowest_price:
-        description: Lowest price for the product across tracked delivery platforms
-        type: number
-    type: object
-  dto.TopDealsMobileResponse:
-    description: Envelope for the mobile app's top deals endpoint.
-    properties:
-      meta:
-        allOf:
-        - $ref: '#/definitions/query.Meta'
-        description: Pagination metadata
-      platforms:
-        description: Delivery platforms considered when pricing the deals
-        items:
-          $ref: '#/definitions/dto.PlatformSearchResult'
-        type: array
-      results:
-        description: Page of top deal products
-        items:
-          $ref: '#/definitions/dto.TopDealsMobileItem'
-        type: array
     type: object
   dto.TopSearchProduct:
     description: Paginated list of top-searched products.
@@ -2249,62 +2166,6 @@ paths:
       summary: Verify phone OTP (client)
       tags:
       - Auth
-  /v1/address:
-    post:
-      consumes:
-      - application/json
-      description: Creates a new address for the authenticated user.
-      parameters:
-      - description: Address details
-        in: body
-        name: address
-        required: true
-        schema:
-          $ref: '#/definitions/dto.AddAddressRequest'
-      produces:
-      - application/json
-      responses:
-        "201":
-          description: Created
-          schema:
-            allOf:
-            - $ref: '#/definitions/dto.Response'
-            - properties:
-                data:
-                  $ref: '#/definitions/dto.AddressResponse'
-              type: object
-        "400":
-          description: Bad Request
-          schema:
-            allOf:
-            - $ref: '#/definitions/dto.Response'
-            - properties:
-                data:
-                  type: string
-              type: object
-        "401":
-          description: Unauthorized
-          schema:
-            allOf:
-            - $ref: '#/definitions/dto.Response'
-            - properties:
-                data:
-                  type: string
-              type: object
-        "403":
-          description: Forbidden
-          schema:
-            allOf:
-            - $ref: '#/definitions/dto.Response'
-            - properties:
-                data:
-                  type: string
-              type: object
-      security:
-      - BearerAuth: []
-      summary: Create a new address
-      tags:
-      - address
   /v1/banners:
     delete:
       consumes:
@@ -3455,8 +3316,14 @@ paths:
       - dashboard
   /v1/deals:
     get:
-      description: Products that have a discounted platform price (mrp > price) in
-        the user's city.
+      description: Variants with a discounted platform price (mrp > price) in the
+        user's city, as variant cards. Optional ?platforms= filters which reference
+        prices are shown.
+      parameters:
+      - description: comma-separated platform codes; omitted = all enabled
+        in: query
+        name: platforms
+        type: string
       produces:
       - application/json
       responses:
@@ -3468,7 +3335,7 @@ paths:
             - properties:
                 data:
                   items:
-                    $ref: '#/definitions/dto.ProductCardDTO'
+                    $ref: '#/definitions/dto.VariantSearchItemDTO'
                   type: array
               type: object
       security:
@@ -5123,46 +4990,6 @@ paths:
       summary: Reorder subcategories
       tags:
       - subcategories
-  /v1/top-deals:
-    get:
-      consumes:
-      - application/json
-      description: Fetches a list of top deals.
-      produces:
-      - application/json
-      responses:
-        "200":
-          description: OK
-          schema:
-            allOf:
-            - $ref: '#/definitions/dto.Response'
-            - properties:
-                data:
-                  $ref: '#/definitions/dto.TopDealsMobileResponse'
-              type: object
-        "401":
-          description: Unauthorized
-          schema:
-            allOf:
-            - $ref: '#/definitions/dto.Response'
-            - properties:
-                data:
-                  type: string
-              type: object
-        "403":
-          description: Forbidden
-          schema:
-            allOf:
-            - $ref: '#/definitions/dto.Response'
-            - properties:
-                data:
-                  type: string
-              type: object
-      security:
-      - BearerAuth: []
-      summary: Get top deals
-      tags:
-      - top-deals
   /v1/users:
     get:
       description: Paginated list of mobile clients (name, phone, status).
