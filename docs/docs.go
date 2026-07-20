@@ -6460,10 +6460,10 @@ const docTemplate = `{
         "dto.NotificationPreferencesDTO": {
             "type": "object",
             "properties": {
-                "order_updates": {
+                "deals": {
                     "type": "boolean"
                 },
-                "price_alerts": {
+                "muted": {
                     "type": "boolean"
                 },
                 "promotions": {

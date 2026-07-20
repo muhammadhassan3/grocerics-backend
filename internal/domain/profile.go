@@ -11,10 +11,10 @@ type FcmToken struct {
 
 type NotificationPreference struct {
 	BaseModel
-	UserID       string `gorm:"type:uuid;not null" json:"user_id"`
-	PriceAlerts  bool   `gorm:"not null" json:"price_alerts"`
-	Promotions   bool   `gorm:"not null" json:"promotions"`
-	OrderUpdates bool   `gorm:"not null" json:"order_updates"`
+	UserID     string `gorm:"type:uuid;not null" json:"user_id"`
+	Muted      bool   `gorm:"not null;default:false" json:"muted"`
+	Promotions bool   `gorm:"not null" json:"promotions"`
+	Deals      bool   `gorm:"not null" json:"deals"`
 	Timestamps
 	SoftDelete
 }

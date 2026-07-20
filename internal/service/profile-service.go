@@ -279,14 +279,14 @@ func (s *ProfileService) GetNotificationPreferences(userID string) (*dto.Notific
 		return nil, err
 	}
 	if p == nil {
-		return &dto.NotificationPreferencesDTO{PriceAlerts: true, Promotions: true, OrderUpdates: true}, nil
+		return &dto.NotificationPreferencesDTO{Muted: false, Promotions: true, Deals: true}, nil
 	}
-	return &dto.NotificationPreferencesDTO{PriceAlerts: p.PriceAlerts, Promotions: p.Promotions, OrderUpdates: p.OrderUpdates}, nil
+	return &dto.NotificationPreferencesDTO{Muted: p.Muted, Promotions: p.Promotions, Deals: p.Deals}, nil
 }
 
 func (s *ProfileService) UpdateNotificationPreferences(userID string, in dto.NotificationPreferencesDTO) (*dto.NotificationPreferencesDTO, error) {
 	_, err := s.notif.Upsert(&domain.NotificationPreference{
-		UserID: userID, PriceAlerts: in.PriceAlerts, Promotions: in.Promotions, OrderUpdates: in.OrderUpdates,
+		UserID: userID, Muted: in.Muted, Promotions: in.Promotions, Deals: in.Deals,
 	})
 	if err != nil {
 		return nil, err

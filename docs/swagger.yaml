@@ -570,9 +570,9 @@ definitions:
     type: object
   dto.NotificationPreferencesDTO:
     properties:
-      order_updates:
+      deals:
         type: boolean
-      price_alerts:
+      muted:
         type: boolean
       promotions:
         type: boolean
