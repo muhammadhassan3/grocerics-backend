@@ -52,7 +52,7 @@ type VariantSearchItemDTO struct {
 	ProductID          string              `json:"product_id"`
 	ProductName        string              `json:"product_name"`
 	BrandName          string              `json:"brand_name,omitempty"`
-	ImageURL           string              `json:"image_url,omitempty"`
+	ImageURL           string              `json:"image_url"`
 	PackLabel          string              `json:"pack_label"`
 	UnitPrice          string              `json:"unit_price,omitempty"`
 	ReferenceFromPaise *int64              `json:"reference_from_paise"`
@@ -86,7 +86,7 @@ type ProductDetailDTO struct {
 
 type VariantDetailDTO struct {
 	VariantID      string                 `json:"variant_id"`
-	ImageURL       string                 `json:"image_url,omitempty"`
+	ImageURL       string                 `json:"image_url"`
 	PackLabel      string                 `json:"pack_label"`           // "500 gm"
 	UnitPrice      string                 `json:"unit_price,omitempty"` // "₹72/100gm"
 	AveragePrice   *MoneyDTO              `json:"average_price,omitempty"`
@@ -103,7 +103,7 @@ type CartLineDTO struct {
 	ItemID       string    `json:"item_id"`
 	VariantID    string    `json:"variant_id"`
 	ProductName  string    `json:"product_name"`
-	ImageURL     string    `json:"image_url,omitempty"`
+	ImageURL     string    `json:"image_url"`
 	PackLabel    string    `json:"pack_label"`
 	Quantity     int       `json:"quantity"`
 	AveragePrice *MoneyDTO `json:"average_price,omitempty"`
