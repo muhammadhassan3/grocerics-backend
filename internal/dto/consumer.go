@@ -103,6 +103,7 @@ type CartLineDTO struct {
 	ItemID       string    `json:"item_id"`
 	VariantID    string    `json:"variant_id"`
 	ProductName  string    `json:"product_name"`
+	ImageURL     string    `json:"image_url,omitempty"`
 	PackLabel    string    `json:"pack_label"`
 	Quantity     int       `json:"quantity"`
 	AveragePrice *MoneyDTO `json:"average_price,omitempty"`

@@ -19,6 +19,7 @@ type CartService struct {
 	platform *repository.PlatformRepository
 	eta      *repository.PlatformDeliveryETARepository
 	wishlist *repository.WishlistRepository
+	link     *repository.ProductPlatformLinkRepository
 }
 
 func NewCartService(db *gorm.DB) *CartService {
@@ -32,6 +33,7 @@ func NewCartService(db *gorm.DB) *CartService {
 		platform: repository.NewPlatformRepository(db),
 		eta:      repository.NewPlatformDeliveryETARepository(db),
 		wishlist: repository.NewWishlistRepository(db),
+		link:     repository.NewProductPlatformLinkRepository(db),
 	}
 }
 
@@ -143,6 +145,10 @@ func (s *CartService) buildResponse(lines []breakdownLine, cityID, pincode strin
 	if err != nil {
 		return nil, err
 	}
+	imageByVariant, err := s.link.PrimaryImagesByVariants(variantIDs)
+	if err != nil {
+		return nil, err
+	}
 	prices, err := s.price.ListByVariantsCity(variantIDs, cityID)
 	if err != nil {
 		return nil, err
@@ -173,7 +179,7 @@ func (s *CartService) buildResponse(lines []breakdownLine, cityID, pincode strin
 
 	for _, l := range lines {
 		v := variants[l.VariantID]
-		line := dto.CartLineDTO{ItemID: l.ID, VariantID: l.VariantID, PackLabel: packLabel(v), Quantity: l.Quantity}
+		line := dto.CartLineDTO{ItemID: l.ID, VariantID: l.VariantID, PackLabel: packLabel(v), Quantity: l.Quantity, ImageURL: imageByVariant[l.VariantID]}
 		if p, ok := products[v.ProductID]; ok {
 			line.ProductName = p.Name
 		}
