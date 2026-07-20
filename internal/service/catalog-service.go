@@ -23,7 +23,6 @@ type CatalogService struct {
 	variant   *repository.ProductVariantRepository
 	image     *repository.ProductImageRepository
 	price     *repository.PlatformPriceRepository
-	summary   *repository.VariantPriceSummaryRepository
 	link      *repository.ProductPlatformLinkRepository
 }
 
@@ -37,7 +36,6 @@ func NewCatalogService(db *gorm.DB) *CatalogService {
 		variant:   repository.NewProductVariantRepository(db),
 		image:     repository.NewProductImageRepository(db),
 		price:     repository.NewPlatformPriceRepository(db),
-		summary:   repository.NewVariantPriceSummaryRepository(db),
 		link:      repository.NewProductPlatformLinkRepository(db),
 	}
 }
@@ -132,11 +130,20 @@ func (s *CatalogService) ProductDetail(productID, cityID string) (*dto.ProductDe
 	if err != nil {
 		return nil, err
 	}
+	variantIDs := make([]string, 0, len(variants))
+	for _, v := range variants {
+		variantIDs = append(variantIDs, v.ID)
+	}
+	imageByVariant, err := s.link.PrimaryImagesByVariants(variantIDs)
+	if err != nil {
+		return nil, err
+	}
 	for _, v := range variants {
 		vd, vErr := s.variantDetail(v, cityID, platMap)
 		if vErr != nil {
 			return nil, vErr
 		}
+		vd.ImageURL = imageByVariant[v.ID]
 		out.Variants = append(out.Variants, vd)
 	}
 

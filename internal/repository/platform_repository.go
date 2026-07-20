@@ -175,7 +175,7 @@ func (r *ProductPlatformLinkRepository) PrimaryImagesByVariants(variantIDs []str
 	err := r.db.WithContext(context.Background()).
 		Raw(`SELECT DISTINCT ON (l.variant_id) l.variant_id, l.image_url
 		     FROM product_platform_links l
-		     JOIN platforms p ON p.id = l.platform_id AND p.deleted_at IS NULL
+		     JOIN platforms p ON p.id = l.platform_id AND p.deleted_at IS NULL AND p.enabled
 		     WHERE l.variant_id IN ? AND l.deleted_at IS NULL
 		       AND l.image_url IS NOT NULL AND l.image_url <> ''
 		     ORDER BY l.variant_id, p.display_order ASC`, variantIDs).

@@ -1,6 +1,5 @@
 package dto
 
-
 // a delivery platform (Home "Top Stores" + filter chips).
 type PlatformDTO struct {
 	Code            string `json:"code"`
@@ -75,11 +74,11 @@ type VariantSearchListDTO struct {
 }
 
 type ProductDetailDTO struct {
-	ProductID   string             `json:"product_id"`
-	Name        string             `json:"name"`
-	Description string             `json:"description,omitempty"`
-	BrandName   string             `json:"brand_name,omitempty"`
-	CategoryID  string             `json:"category_id"`
+	ProductID   string                 `json:"product_id"`
+	Name        string                 `json:"name"`
+	Description string                 `json:"description,omitempty"`
+	BrandName   string                 `json:"brand_name,omitempty"`
+	CategoryID  string                 `json:"category_id"`
 	Images      []string               `json:"images"`
 	Variants    []VariantDetailDTO     `json:"variants"`
 	Similar     []VariantSearchItemDTO `json:"similar"`
@@ -87,6 +86,7 @@ type ProductDetailDTO struct {
 
 type VariantDetailDTO struct {
 	VariantID      string                 `json:"variant_id"`
+	ImageURL       string                 `json:"image_url,omitempty"`
 	PackLabel      string                 `json:"pack_label"`           // "500 gm"
 	UnitPrice      string                 `json:"unit_price,omitempty"` // "₹72/100gm"
 	AveragePrice   *MoneyDTO              `json:"average_price,omitempty"`

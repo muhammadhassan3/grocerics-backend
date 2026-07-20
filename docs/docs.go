@@ -7246,6 +7246,9 @@ const docTemplate = `{
                 "average_price": {
                     "$ref": "#/definitions/dto.MoneyDTO"
                 },
+                "image_url": {
+                    "type": "string"
+                },
                 "pack_label": {
                     "description": "\"500 gm\"",
                     "type": "string"
