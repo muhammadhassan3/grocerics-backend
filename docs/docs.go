@@ -1608,14 +1608,14 @@ const docTemplate = `{
                         "BearerAuth": []
                     }
                 ],
-                "description": "Paginated grid of product cards for a category in the user's city.",
+                "description": "Paginated grid of variant cards for a category in the user's city. Variant-first — one card per pack. Optional ?platforms= filters which reference prices are shown.",
                 "produces": [
                     "application/json"
                 ],
                 "tags": [
                     "consumer"
                 ],
-                "summary": "Products in a category (PLP)",
+                "summary": "Variants in a category (PLP)",
                 "parameters": [
                     {
                         "type": "string",
@@ -1623,6 +1623,12 @@ const docTemplate = `{
                         "name": "id",
                         "in": "path",
                         "required": true
+                    },
+                    {
+                        "type": "string",
+                        "description": "comma-separated platform codes; omitted = all enabled",
+                        "name": "platforms",
+                        "in": "query"
                     },
                     {
                         "type": "integer",
@@ -1649,7 +1655,7 @@ const docTemplate = `{
                                     "type": "object",
                                     "properties": {
                                         "data": {
-                                            "$ref": "#/definitions/dto.ProductCardListDTO"
+                                            "$ref": "#/definitions/dto.VariantSearchListDTO"
                                         }
                                     }
                                 }
@@ -6209,7 +6215,7 @@ const docTemplate = `{
                 "trending_items": {
                     "type": "array",
                     "items": {
-                        "$ref": "#/definitions/dto.ProductCardDTO"
+                        "$ref": "#/definitions/dto.VariantSearchItemDTO"
                     }
                 }
             }
@@ -6673,43 +6679,6 @@ const docTemplate = `{
                 }
             }
         },
-        "dto.ProductCardDTO": {
-            "type": "object",
-            "properties": {
-                "brand_name": {
-                    "type": "string"
-                },
-                "default_variant_id": {
-                    "type": "string"
-                },
-                "image_url": {
-                    "type": "string"
-                },
-                "name": {
-                    "type": "string"
-                },
-                "product_id": {
-                    "type": "string"
-                },
-                "starting_price": {
-                    "$ref": "#/definitions/dto.MoneyDTO"
-                }
-            }
-        },
-        "dto.ProductCardListDTO": {
-            "type": "object",
-            "properties": {
-                "items": {
-                    "type": "array",
-                    "items": {
-                        "$ref": "#/definitions/dto.ProductCardDTO"
-                    }
-                },
-                "meta": {
-                    "$ref": "#/definitions/query.Meta"
-                }
-            }
-        },
         "dto.ProductCategory": {
             "description": "Category a product belongs to.",
             "type": "object",
@@ -6751,7 +6720,7 @@ const docTemplate = `{
                 "similar": {
                     "type": "array",
                     "items": {
-                        "$ref": "#/definitions/dto.ProductCardDTO"
+                        "$ref": "#/definitions/dto.VariantSearchItemDTO"
                     }
                 },
                 "variants": {

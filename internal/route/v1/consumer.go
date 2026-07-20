@@ -115,15 +115,16 @@ func getHome(d ConsumerDeps) gin.HandlerFunc {
 	}
 }
 
-// @Summary Products in a category (PLP)
-// @Description Paginated grid of product cards for a category in the user's city.
+// @Summary Variants in a category (PLP)
+// @Description Paginated grid of variant cards for a category in the user's city. Variant-first — one card per pack. Optional ?platforms= filters which reference prices are shown.
 // @Tags consumer
 // @Produce json
 // @Security BearerAuth
 // @Param id path string true "Category ID"
+// @Param platforms query string false "comma-separated platform codes; omitted = all enabled"
 // @Param page query int false "page number (default 1)"
 // @Param page_size query int false "page size, max 100 (default 20)"
-// @Success 200 {object} dto.Response{data=dto.ProductCardListDTO}
+// @Success 200 {object} dto.Response{data=dto.VariantSearchListDTO}
 // @Failure 401 {object} dto.Response
 // @Router /v1/categories/{id}/products [get]
 func getCategoryProducts(d ConsumerDeps) gin.HandlerFunc {
@@ -132,12 +133,12 @@ func getCategoryProducts(d ConsumerDeps) gin.HandlerFunc {
 		if !good {
 			return
 		}
-		cards, meta, err := d.Catalog.ProductsByCategory(c.Param("id"), cityID, query.PageFromContext(c))
+		items, meta, err := d.Catalog.ProductsByCategory(c.Param("id"), cityID, util.SplitCSV(c.Query("platforms")), query.PageFromContext(c))
 		if err != nil {
 			c.Error(err)
 			return
 		}
-		ok(c, dto.ProductCardListDTO{Items: cards, Meta: meta})
+		ok(c, dto.VariantSearchListDTO{Items: items, Meta: meta})
 	}
 }
 

@@ -407,7 +407,7 @@ definitions:
         type: array
       trending_items:
         items:
-          $ref: '#/definitions/dto.ProductCardDTO'
+          $ref: '#/definitions/dto.VariantSearchItemDTO'
         type: array
     type: object
   dto.InventoryManagements:
@@ -723,30 +723,6 @@ definitions:
         description: Public URL of the uploaded file
         type: string
     type: object
-  dto.ProductCardDTO:
-    properties:
-      brand_name:
-        type: string
-      default_variant_id:
-        type: string
-      image_url:
-        type: string
-      name:
-        type: string
-      product_id:
-        type: string
-      starting_price:
-        $ref: '#/definitions/dto.MoneyDTO'
-    type: object
-  dto.ProductCardListDTO:
-    properties:
-      items:
-        items:
-          $ref: '#/definitions/dto.ProductCardDTO'
-        type: array
-      meta:
-        $ref: '#/definitions/query.Meta'
-    type: object
   dto.ProductCategory:
     description: Category a product belongs to.
     properties:
@@ -775,7 +751,7 @@ definitions:
         type: string
       similar:
         items:
-          $ref: '#/definitions/dto.ProductCardDTO'
+          $ref: '#/definitions/dto.VariantSearchItemDTO'
         type: array
       variants:
         items:
@@ -2825,12 +2801,18 @@ paths:
       - categories
   /v1/categories/{id}/products:
     get:
-      description: Paginated grid of product cards for a category in the user's city.
+      description: Paginated grid of variant cards for a category in the user's city.
+        Variant-first — one card per pack. Optional ?platforms= filters which reference
+        prices are shown.
       parameters:
       - description: Category ID
         in: path
         name: id
         required: true
+        type: string
+      - description: comma-separated platform codes; omitted = all enabled
+        in: query
+        name: platforms
         type: string
       - description: page number (default 1)
         in: query
@@ -2850,7 +2832,7 @@ paths:
             - $ref: '#/definitions/dto.Response'
             - properties:
                 data:
-                  $ref: '#/definitions/dto.ProductCardListDTO'
+                  $ref: '#/definitions/dto.VariantSearchListDTO'
               type: object
         "401":
           description: Unauthorized
@@ -2858,7 +2840,7 @@ paths:
             $ref: '#/definitions/dto.Response'
       security:
       - BearerAuth: []
-      summary: Products in a category (PLP)
+      summary: Variants in a category (PLP)
       tags:
       - consumer
   /v1/categories/reorder:

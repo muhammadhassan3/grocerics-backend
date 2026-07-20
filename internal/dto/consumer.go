@@ -1,14 +1,5 @@
 package dto
 
-// grid card used by Home rails, PLP, Search and Top Deals.
-type ProductCardDTO struct {
-	ProductID        string    `json:"product_id"`
-	DefaultVariantID string    `json:"default_variant_id,omitempty"`
-	Name             string    `json:"name"`
-	BrandName        string    `json:"brand_name,omitempty"`
-	ImageURL         string    `json:"image_url,omitempty"`
-	StartingPrice    *MoneyDTO `json:"starting_price,omitempty"`
-}
 
 // a delivery platform (Home "Top Stores" + filter chips).
 type PlatformDTO struct {
@@ -31,10 +22,10 @@ type PlatformPriceChipDTO struct {
 }
 
 type HomeResponse struct {
-	Banners       []BannerCardDTO   `json:"banners"`
-	TopStores     []PlatformDTO     `json:"top_stores"`
-	Categories    []CategoryCardDTO `json:"categories"`
-	TrendingItems []ProductCardDTO  `json:"trending_items"`
+	Banners       []BannerCardDTO        `json:"banners"`
+	TopStores     []PlatformDTO          `json:"top_stores"`
+	Categories    []CategoryCardDTO      `json:"categories"`
+	TrendingItems []VariantSearchItemDTO `json:"trending_items"`
 }
 
 type BannerCardDTO struct {
@@ -89,9 +80,9 @@ type ProductDetailDTO struct {
 	Description string             `json:"description,omitempty"`
 	BrandName   string             `json:"brand_name,omitempty"`
 	CategoryID  string             `json:"category_id"`
-	Images      []string           `json:"images"`
-	Variants    []VariantDetailDTO `json:"variants"`
-	Similar     []ProductCardDTO   `json:"similar"`
+	Images      []string               `json:"images"`
+	Variants    []VariantDetailDTO     `json:"variants"`
+	Similar     []VariantSearchItemDTO `json:"similar"`
 }
 
 type VariantDetailDTO struct {

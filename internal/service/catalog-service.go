@@ -59,7 +59,11 @@ func (s *CatalogService) Home(cityID string) (*dto.HomeResponse, error) {
 	if err != nil {
 		return nil, err
 	}
-	cards, err := s.productCards(top, cityID)
+	topVariants, err := s.defaultVariantsFor(top)
+	if err != nil {
+		return nil, err
+	}
+	cards, err := s.variantCards(topVariants, cityID, nil)
 	if err != nil {
 		return nil, err
 	}
@@ -140,8 +144,30 @@ func (s *CatalogService) ProductDetail(productID, cityID string) (*dto.ProductDe
 	if err != nil {
 		return nil, err
 	}
-	if out.Similar, err = s.productCards(similar, cityID); err != nil {
+	similarVariants, err := s.defaultVariantsFor(similar)
+	if err != nil {
 		return nil, err
+	}
+	if out.Similar, err = s.variantCards(similarVariants, cityID, nil); err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
+func (s *CatalogService) defaultVariantsFor(products []domain.Product) ([]domain.ProductVariant, error) {
+	ids := make([]string, 0, len(products))
+	for _, p := range products {
+		ids = append(ids, p.ID)
+	}
+	defaults, err := s.variant.DefaultsForProducts(ids)
+	if err != nil {
+		return nil, err
+	}
+	out := make([]domain.ProductVariant, 0, len(products))
+	for _, p := range products {
+		if v, ok := defaults[p.ID]; ok {
+			out = append(out, v)
+		}
 	}
 	return out, nil
 }
@@ -186,13 +212,21 @@ func (s *CatalogService) variantDetail(v domain.ProductVariant, cityID string, p
 	return vd, nil
 }
 
-func (s *CatalogService) ProductsByCategory(categoryID, cityID string, page query.Page) ([]dto.ProductCardDTO, query.Meta, error) {
+func (s *CatalogService) ProductsByCategory(categoryID, cityID string, platformCodes []string, page query.Page) ([]dto.VariantSearchItemDTO, query.Meta, error) {
 	products, total, err := s.product.ListByCategory(categoryID, page)
 	if err != nil {
 		return nil, query.Meta{}, err
 	}
-	cards, err := s.productCards(products, cityID)
-	return cards, query.BuildMeta(total, page), err
+	productIDs := make([]string, 0, len(products))
+	for _, p := range products {
+		productIDs = append(productIDs, p.ID)
+	}
+	variants, err := s.variant.ListByProducts(productIDs)
+	if err != nil {
+		return nil, query.Meta{}, err
+	}
+	items, err := s.variantCards(variants, cityID, platformCodes)
+	return items, query.BuildMeta(total, page), err
 }
 
 func (s *CatalogService) SearchVariants(term, cityID string, platformCodes []string, page query.Page) ([]dto.VariantSearchItemDTO, query.Meta, error) {
@@ -330,54 +364,6 @@ func (s *CatalogService) Deals(cityID string, platformCodes []string) ([]dto.Var
 		return nil, err
 	}
 	return s.variantCards(variants, cityID, platformCodes)
-}
-
-func (s *CatalogService) productCards(products []domain.Product, cityID string) ([]dto.ProductCardDTO, error) {
-	if len(products) == 0 {
-		return []dto.ProductCardDTO{}, nil
-	}
-	productIDs := make([]string, 0, len(products))
-	brandIDs := make([]string, 0, len(products))
-	for _, p := range products {
-		productIDs = append(productIDs, p.ID)
-		if p.BrandID != nil {
-			brandIDs = append(brandIDs, *p.BrandID)
-		}
-	}
-	brands, err := s.brand.FindByIDs(brandIDs)
-	if err != nil {
-		return nil, err
-	}
-	defaults, err := s.variant.DefaultsForProducts(productIDs)
-	if err != nil {
-		return nil, err
-	}
-	variantIDs := make([]string, 0, len(defaults))
-	for _, v := range defaults {
-		variantIDs = append(variantIDs, v.ID)
-	}
-	summaries, err := s.summary.GetMany(variantIDs, cityID)
-	if err != nil {
-		return nil, err
-	}
-
-	cards := make([]dto.ProductCardDTO, 0, len(products))
-	for _, p := range products {
-		card := dto.ProductCardDTO{ProductID: p.ID, Name: p.Name, ImageURL: strPtr(p.ImageURL)}
-		if p.BrandID != nil {
-			if b, ok := brands[*p.BrandID]; ok {
-				card.BrandName = b.Name
-			}
-		}
-		if dv, ok := defaults[p.ID]; ok {
-			card.DefaultVariantID = dv.ID
-			if sum, ok := summaries[dv.ID]; ok && sum.MinPricePaise != nil {
-				card.StartingPrice = dto.MoneyPtr(sum.MinPricePaise)
-			}
-		}
-		cards = append(cards, card)
-	}
-	return cards, nil
 }
 
 func (s *CatalogService) platformMap() (map[string]domain.Platform, error) {
