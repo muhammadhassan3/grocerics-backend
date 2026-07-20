@@ -234,6 +234,58 @@ const docTemplate = `{
                 }
             }
         },
+        "/auth/phone-refresh": {
+            "post": {
+                "description": "Exchange a valid client refresh_token (from verify-phone-otp) for a fresh access + refresh pair. Stateless; rejects admin tokens. Use this instead of /auth/refresh, which is admin-only.",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Auth"
+                ],
+                "summary": "Refresh client token",
+                "parameters": [
+                    {
+                        "description": "Client refresh token payload",
+                        "name": "phoneRefreshRequest",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/v1.PhoneRefreshRequest"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "allOf": [
+                                {
+                                    "$ref": "#/definitions/dto.Response"
+                                },
+                                {
+                                    "type": "object",
+                                    "properties": {
+                                        "data": {
+                                            "$ref": "#/definitions/dto.ClientAuthResponse"
+                                        }
+                                    }
+                                }
+                            ]
+                        }
+                    },
+                    "401": {
+                        "description": "Unauthorized",
+                        "schema": {
+                            "$ref": "#/definitions/dto.Response"
+                        }
+                    }
+                }
+            }
+        },
         "/auth/refresh": {
             "post": {
                 "consumes": [
@@ -7942,6 +7994,17 @@ const docTemplate = `{
             ],
             "properties": {
                 "phone_number": {
+                    "type": "string"
+                }
+            }
+        },
+        "v1.PhoneRefreshRequest": {
+            "type": "object",
+            "required": [
+                "refresh_token"
+            ],
+            "properties": {
+                "refresh_token": {
                     "type": "string"
                 }
             }

@@ -1584,6 +1584,13 @@ definitions:
     required:
     - phone_number
     type: object
+  v1.PhoneRefreshRequest:
+    properties:
+      refresh_token:
+        type: string
+    required:
+    - refresh_token
+    type: object
   v1.PlatformOption:
     properties:
       code:
@@ -2059,6 +2066,39 @@ paths:
           schema:
             $ref: '#/definitions/dto.Response'
       summary: Phone login (client)
+      tags:
+      - Auth
+  /auth/phone-refresh:
+    post:
+      consumes:
+      - application/json
+      description: Exchange a valid client refresh_token (from verify-phone-otp) for
+        a fresh access + refresh pair. Stateless; rejects admin tokens. Use this instead
+        of /auth/refresh, which is admin-only.
+      parameters:
+      - description: Client refresh token payload
+        in: body
+        name: phoneRefreshRequest
+        required: true
+        schema:
+          $ref: '#/definitions/v1.PhoneRefreshRequest'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            allOf:
+            - $ref: '#/definitions/dto.Response'
+            - properties:
+                data:
+                  $ref: '#/definitions/dto.ClientAuthResponse'
+              type: object
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/dto.Response'
+      summary: Refresh client token
       tags:
       - Auth
   /auth/refresh:

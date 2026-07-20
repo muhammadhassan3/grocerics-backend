@@ -33,6 +33,7 @@ func RegisterAuthRoutes(r *gin.Engine, d AuthDeps) {
 	// --- client (mobile, OTP) ---
 	g.POST("/phone-login", phoneLogin(d.Client))
 	g.POST("/verify-phone-otp", verifyPhoneOTP(d.Client))
+	g.POST("/phone-refresh", phoneRefresh(d.Client))
 	g.POST("/mobile-register", mobileRegister(d.Client))
 
 	client := r.Group("/auth")
@@ -231,6 +232,35 @@ func verifyPhoneOTP(svc *service.ClientAuthService) gin.HandlerFunc {
 			return
 		}
 		c.JSON(200, dto.Response{Status: "success", Message: "OTP verified successfully", Data: res})
+	}
+}
+
+type PhoneRefreshRequest struct {
+	RefreshToken string `json:"refresh_token" binding:"required"`
+}
+
+// @Summary Refresh client token
+// @Description Exchange a valid client refresh_token (from verify-phone-otp) for a fresh access + refresh pair. Stateless; rejects admin tokens. Use this instead of /auth/refresh, which is admin-only.
+// @Tags Auth
+// @Accept json
+// @Produce json
+// @Param phoneRefreshRequest body PhoneRefreshRequest true "Client refresh token payload"
+// @Success 200 {object} dto.Response{data=dto.ClientAuthResponse}
+// @Failure 401 {object} dto.Response
+// @Router /auth/phone-refresh [post]
+func phoneRefresh(svc *service.ClientAuthService) gin.HandlerFunc {
+	return func(c *gin.Context) {
+		var req PhoneRefreshRequest
+		if err := c.ShouldBindJSON(&req); err != nil {
+			c.Error(errs.BadRequest("VALIDATION", util.ParseValidationError(err).Error()))
+			return
+		}
+		res, err := svc.RefreshToken(req.RefreshToken)
+		if err != nil {
+			c.Error(err)
+			return
+		}
+		c.JSON(200, dto.Response{Status: "success", Message: "token refreshed", Data: res})
 	}
 }
 
