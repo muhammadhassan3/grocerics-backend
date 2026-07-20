@@ -6578,6 +6578,9 @@ const docTemplate = `{
                 "name": {
                     "type": "string"
                 },
+                "onboarded": {
+                    "type": "boolean"
+                },
                 "phone": {
                     "type": "string"
                 }

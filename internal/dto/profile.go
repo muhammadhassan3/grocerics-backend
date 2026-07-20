@@ -7,6 +7,7 @@ type MeDTO struct {
 	Phone           string `json:"phone,omitempty"`
 	CurrentCityID   string `json:"current_city_id,omitempty"`
 	CurrentCityName string `json:"current_city_name,omitempty"`
+	Onboarded       bool   `json:"onboarded"`
 }
 
 type OnboardingResponse struct {
