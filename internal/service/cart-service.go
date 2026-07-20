@@ -217,7 +217,10 @@ func (s *CartService) buildResponse(lines []breakdownLine, cityID, pincode strin
 		b.ItemTotal = dto.Money(itemTotal)
 		b.AvailableTotal = dto.Money(availTotal)
 		resp.Platforms = append(resp.Platforms, b)
-		if availTotal > 0 && (cheapestTotal < 0 || availTotal < cheapestTotal) {
+		// is_cheapest only among platforms carrying the WHOLE basket (no
+		// unavailable/missing lines). If none do, nobody is flagged.
+		fullCoverage := len(b.UnavailableItemIDs) == 0 && len(b.AvailableItemIDs) > 0
+		if fullCoverage && (cheapestTotal < 0 || availTotal < cheapestTotal) {
 			cheapestTotal = availTotal
 			cheapestIdx = len(resp.Platforms) - 1
 		}
