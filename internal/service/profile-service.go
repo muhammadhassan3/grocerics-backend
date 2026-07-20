@@ -157,19 +157,46 @@ func (s *ProfileService) DeleteAddress(userID, addressID string) error {
 	return s.address.Delete(addressID)
 }
 
+// cityAliases maps common reverse-geocoder names to our enabled-city names —
+// device geocoders return "Bengaluru"/"New Delhi"/"Bombay" where our rows say
+// "Bangalore"/"Delhi"/"Mumbai".
+// ponytail: stopgap name-matching. Real fix is a geospatial radius match on the
+// lat/lng onboarding already sends (city coords are seeded) — swap when revisited.
+var cityAliases = map[string]string{
+	"bengaluru": "bangalore",
+	"new delhi": "delhi",
+	"delhi ncr": "delhi",
+	"bombay":    "mumbai",
+	"amdavad":   "ahmedabad",
+}
+
+func normalizeCity(s string) string {
+	s = strings.Join(strings.Fields(strings.ToLower(s)), " ")
+	if a, ok := cityAliases[s]; ok {
+		return a
+	}
+	return s
+}
+
 func (s *ProfileService) matchEnabledCity(city string) (*string, error) {
-	city = strings.TrimSpace(city)
-	if city == "" {
+	norm := normalizeCity(city)
+	if norm == "" {
 		return nil, nil
+	}
+	cands := []string{norm}
+	for _, w := range strings.Fields(norm) {
+		cands = append(cands, normalizeCity(w))
 	}
 	cities, err := s.city.ListEnabled()
 	if err != nil {
 		return nil, err
 	}
 	for _, c := range cities {
-		if strings.EqualFold(c.Name, city) || strings.EqualFold(c.Slug, city) {
-			id := c.ID
-			return &id, nil
+		for _, w := range cands {
+			if strings.EqualFold(c.Name, w) || strings.EqualFold(c.Slug, w) {
+				id := c.ID
+				return &id, nil
+			}
 		}
 	}
 	return nil, nil
