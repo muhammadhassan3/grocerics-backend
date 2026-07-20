@@ -1068,11 +1068,11 @@ definitions:
   dto.UserData:
     description: User data associated with the authenticated user.
     properties:
-      full_name:
-        type: string
       id:
         type: string
       image_url:
+        type: string
+      name:
         type: string
       phone:
         type: string

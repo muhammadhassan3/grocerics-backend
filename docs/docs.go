@@ -7174,13 +7174,13 @@ const docTemplate = `{
             "description": "User data associated with the authenticated user.",
             "type": "object",
             "properties": {
-                "full_name": {
-                    "type": "string"
-                },
                 "id": {
                     "type": "string"
                 },
                 "image_url": {
+                    "type": "string"
+                },
+                "name": {
                     "type": "string"
                 },
                 "phone": {

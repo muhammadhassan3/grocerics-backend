@@ -84,7 +84,7 @@ func (s *ClientAuthService) VerifyOTP(phone, code string) (*dto.ClientAuthRespon
 		TokenResponse: dto.TokenResponse{
 			AccessToken:  access,
 			RefreshToken: refresh,
-			UserData:     dto.UserData{ID: u.ID, Phone: u.Phone, FullName: u.Name, Role: string(domain.RoleUser)},
+			UserData:     dto.UserData{ID: u.ID, Phone: u.Phone, Name: u.Name, Role: string(domain.RoleUser)},
 		},
 		IsNew: isNew,
 	}, nil
