@@ -29,6 +29,21 @@ func (r *CategoryRepository) ListVisible(topOnly bool) ([]domain.Category, error
 	return items, nil
 }
 
+func (r *CategoryRepository) ListVisibleWithProducts(topOnly bool) ([]domain.Category, error) {
+	ctx := context.Background()
+	q := gorm.G[domain.Category](r.db).
+		Where("status = 'active' AND deleted_at IS NULL").
+		Where("EXISTS (SELECT 1 FROM products p WHERE p.category_id = categories.id AND p.status = 'active' AND p.deleted_at IS NULL)")
+	if topOnly {
+		q = q.Where("is_top_category")
+	}
+	items, err := q.Order("display_order, name").Find(ctx)
+	if err != nil {
+		return nil, util.ParseDatabaseError(err, "idx_categories_")
+	}
+	return items, nil
+}
+
 func (r *CategoryRepository) FindByID(id string) (*domain.Category, error) {
 	ctx := context.Background()
 	data, err := gorm.G[domain.Category](r.db).Where("id = ? AND deleted_at IS NULL", id).First(ctx)

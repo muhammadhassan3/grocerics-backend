@@ -49,7 +49,7 @@ func (s *CatalogService) Home(cityID string) (*dto.HomeResponse, error) {
 	if err != nil {
 		return nil, err
 	}
-	cats, err := s.category.ListVisible(true)
+	cats, err := s.category.ListVisibleWithProducts(true)
 	if err != nil {
 		return nil, err
 	}
