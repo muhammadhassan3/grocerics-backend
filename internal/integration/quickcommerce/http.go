@@ -255,18 +255,24 @@ func (c *httpClient) GroupETA(ctx context.Context, loc Location, platforms []str
 func (c *httpClient) Credits(ctx context.Context) (*Credits, error) {
 	var raw struct {
 		CreditsRemaining int `json:"credits_remaining"`
+		TotalUsed        int `json:"credits_used"`
 		Summary          struct {
 			TotalAvailable int `json:"total_available"`
+			TotalUsed      int `json:"total_used"`
 		} `json:"summary"`
 	}
 	if err := c.doGet(ctx, "/credits", nil, &raw); err != nil {
 		return nil, err
 	}
 	rem := raw.CreditsRemaining
+	used := raw.TotalUsed
+	if used == 0 {
+		used = raw.Summary.TotalUsed
+	}
 	if rem == 0 {
 		rem = raw.Summary.TotalAvailable
 	}
-	return &Credits{Remaining: rem}, nil
+	return &Credits{Remaining: rem, Used: used}, nil
 }
 
 func (c *httpClient) ListPlatforms(ctx context.Context) ([]string, error) {
