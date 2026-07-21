@@ -2,13 +2,20 @@ package dto
 
 // @Swagger:model UserData
 // @Property image_url: URL of the user's profile image
-// @Property full_name: Full name of the user
+// @Property name: Name of the user (same field as GET/PATCH /v1/me)
 // @Property role: Role of the user
 // @Description User data associated with the authenticated user.
 type UserData struct {
+	ID       string `json:"id,omitempty"`
+	Phone    string `json:"phone,omitempty"`
 	ImageURL string `json:"image_url"`
-	FullName string `json:"full_name"`
+	Name     string `json:"name"`
 	Role     string `json:"role"`
+}
+
+type ClientAuthResponse struct {
+	TokenResponse
+	IsNew bool `json:"is_new"`
 }
 
 // @Swagger:model TokenResponse

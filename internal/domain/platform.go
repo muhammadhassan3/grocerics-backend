@@ -23,6 +23,7 @@ type ProductPlatformLink struct {
 	PlatformSKU *string `json:"platform_sku,omitempty"`
 	ProductURL  *string `json:"product_url,omitempty"`
 	DeepLink    *string `json:"deep_link,omitempty"`
+	ImageURL    *string `json:"image_url,omitempty"`
 	Timestamps
 	SoftDelete
 }

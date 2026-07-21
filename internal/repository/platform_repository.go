@@ -154,10 +154,39 @@ func (r *ProductPlatformLinkRepository) Upsert(l *domain.ProductPlatformLink) (*
 	existing.PlatformSKU = l.PlatformSKU
 	existing.ProductURL = l.ProductURL
 	existing.DeepLink = l.DeepLink
+	if l.ImageURL != nil { // keep the last known image if this link carries none
+		existing.ImageURL = l.ImageURL
+	}
 	if _, err := gorm.G[domain.ProductPlatformLink](r.db).Where("id = ?", existing.ID).Updates(ctx, *existing); err != nil {
 		return nil, util.ParseDatabaseError(err, "idx_product_platform_links_")
 	}
 	return existing, nil
+}
+
+func (r *ProductPlatformLinkRepository) PrimaryImagesByVariants(variantIDs []string) (map[string]string, error) {
+	out := map[string]string{}
+	if len(variantIDs) == 0 {
+		return out, nil
+	}
+	var rows []struct {
+		VariantID string
+		ImageURL  string
+	}
+	err := r.db.WithContext(context.Background()).
+		Raw(`SELECT DISTINCT ON (l.variant_id) l.variant_id, l.image_url
+		     FROM product_platform_links l
+		     JOIN platforms p ON p.id = l.platform_id AND p.deleted_at IS NULL AND p.enabled
+		     WHERE l.variant_id IN ? AND l.deleted_at IS NULL
+		       AND l.image_url IS NOT NULL AND l.image_url <> ''
+		     ORDER BY l.variant_id, p.display_order ASC`, variantIDs).
+		Scan(&rows).Error
+	if err != nil {
+		return nil, util.ParseDatabaseError(err, "idx_product_platform_links_")
+	}
+	for _, row := range rows {
+		out[row.VariantID] = row.ImageURL
+	}
+	return out, nil
 }
 
 func (r *ProductPlatformLinkRepository) ListByVariant(variantID string) ([]domain.ProductPlatformLink, error) {

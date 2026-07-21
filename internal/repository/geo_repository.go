@@ -39,24 +39,6 @@ func (r *CityRepository) FindByID(id string) (*domain.City, error) {
 	return &data, nil
 }
 
-// ---------- pincodes ----------
-
-type PincodeRepository struct{ db *gorm.DB }
-
-func NewPincodeRepository(db *gorm.DB) *PincodeRepository { return &PincodeRepository{db: db} }
-
-func (r *PincodeRepository) FindByPincode(pincode string) (*domain.Pincode, error) {
-	ctx := context.Background()
-	data, err := gorm.G[domain.Pincode](r.db).Where("pincode = ? AND deleted_at IS NULL", pincode).First(ctx)
-	if err != nil {
-		if err == gorm.ErrRecordNotFound {
-			return nil, nil
-		}
-		return nil, util.ParseDatabaseError(err, "idx_pincodes_")
-	}
-	return &data, nil
-}
-
 // ---------- user addresses ----------
 
 type AddressRepository struct{ db *gorm.DB }

@@ -42,9 +42,9 @@ func (r *NotificationPreferenceRepository) Upsert(p *domain.NotificationPreferen
 		}
 		return p, nil
 	}
-	existing.PriceAlerts = p.PriceAlerts
+	existing.Muted = p.Muted
 	existing.Promotions = p.Promotions
-	existing.OrderUpdates = p.OrderUpdates
+	existing.Deals = p.Deals
 	if _, uErr := gorm.G[domain.NotificationPreference](r.db).Where("id = ?", existing.ID).Updates(ctx, *existing); uErr != nil {
 		return nil, util.ParseDatabaseError(uErr, "idx_notification_preferences_")
 	}

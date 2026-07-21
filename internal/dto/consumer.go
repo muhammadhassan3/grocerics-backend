@@ -1,15 +1,5 @@
 package dto
 
-// grid card used by Home rails, PLP, Search and Top Deals.
-type ProductCardDTO struct {
-	ProductID        string    `json:"product_id"`
-	DefaultVariantID string    `json:"default_variant_id,omitempty"`
-	Name             string    `json:"name"`
-	BrandName        string    `json:"brand_name,omitempty"`
-	ImageURL         string    `json:"image_url,omitempty"`
-	StartingPrice    *MoneyDTO `json:"starting_price,omitempty"`
-}
-
 // a delivery platform (Home "Top Stores" + filter chips).
 type PlatformDTO struct {
 	Code            string `json:"code"`
@@ -31,10 +21,10 @@ type PlatformPriceChipDTO struct {
 }
 
 type HomeResponse struct {
-	Banners       []BannerCardDTO   `json:"banners"`
-	TopStores     []PlatformDTO     `json:"top_stores"`
-	Categories    []CategoryCardDTO `json:"categories"`
-	TrendingItems []ProductCardDTO  `json:"trending_items"`
+	Banners       []BannerCardDTO        `json:"banners"`
+	TopStores     []PlatformDTO          `json:"top_stores"`
+	Categories    []CategoryCardDTO      `json:"categories"`
+	TrendingItems []VariantSearchItemDTO `json:"trending_items"`
 }
 
 type BannerCardDTO struct {
@@ -62,7 +52,7 @@ type VariantSearchItemDTO struct {
 	ProductID          string              `json:"product_id"`
 	ProductName        string              `json:"product_name"`
 	BrandName          string              `json:"brand_name,omitempty"`
-	ImageURL           string              `json:"image_url,omitempty"`
+	ImageURL           string              `json:"image_url"`
 	PackLabel          string              `json:"pack_label"`
 	UnitPrice          string              `json:"unit_price,omitempty"`
 	ReferenceFromPaise *int64              `json:"reference_from_paise"`
@@ -84,18 +74,19 @@ type VariantSearchListDTO struct {
 }
 
 type ProductDetailDTO struct {
-	ProductID   string             `json:"product_id"`
-	Name        string             `json:"name"`
-	Description string             `json:"description,omitempty"`
-	BrandName   string             `json:"brand_name,omitempty"`
-	CategoryID  string             `json:"category_id"`
-	Images      []string           `json:"images"`
-	Variants    []VariantDetailDTO `json:"variants"`
-	Similar     []ProductCardDTO   `json:"similar"`
+	ProductID   string                 `json:"product_id"`
+	Name        string                 `json:"name"`
+	Description string                 `json:"description,omitempty"`
+	BrandName   string                 `json:"brand_name,omitempty"`
+	CategoryID  string                 `json:"category_id"`
+	Images      []string               `json:"images"`
+	Variants    []VariantDetailDTO     `json:"variants"`
+	Similar     []VariantSearchItemDTO `json:"similar"`
 }
 
 type VariantDetailDTO struct {
 	VariantID      string                 `json:"variant_id"`
+	ImageURL       string                 `json:"image_url"`
 	PackLabel      string                 `json:"pack_label"`           // "500 gm"
 	UnitPrice      string                 `json:"unit_price,omitempty"` // "₹72/100gm"
 	AveragePrice   *MoneyDTO              `json:"average_price,omitempty"`
@@ -112,6 +103,7 @@ type CartLineDTO struct {
 	ItemID       string    `json:"item_id"`
 	VariantID    string    `json:"variant_id"`
 	ProductName  string    `json:"product_name"`
+	ImageURL     string    `json:"image_url"`
 	PackLabel    string    `json:"pack_label"`
 	Quantity     int       `json:"quantity"`
 	AveragePrice *MoneyDTO `json:"average_price,omitempty"`
