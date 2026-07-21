@@ -224,6 +224,18 @@ func (s *CatalogService) ProductsByCategory(categoryID, cityID string, platformC
 	if err != nil {
 		return nil, query.Meta{}, err
 	}
+	return s.variantCardsForProducts(products, total, cityID, platformCodes, page)
+}
+
+func (s *CatalogService) ProductsBySubcategory(subcategoryID, cityID string, platformCodes []string, page query.Page) ([]dto.VariantSearchItemDTO, query.Meta, error) {
+	products, total, err := s.product.ListBySubcategory(subcategoryID, page)
+	if err != nil {
+		return nil, query.Meta{}, err
+	}
+	return s.variantCardsForProducts(products, total, cityID, platformCodes, page)
+}
+
+func (s *CatalogService) variantCardsForProducts(products []domain.Product, total int64, cityID string, platformCodes []string, page query.Page) ([]dto.VariantSearchItemDTO, query.Meta, error) {
 	productIDs := make([]string, 0, len(products))
 	for _, p := range products {
 		productIDs = append(productIDs, p.ID)

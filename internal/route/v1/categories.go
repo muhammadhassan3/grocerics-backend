@@ -86,11 +86,12 @@ func toCategoryDTO(c domain.Category, subCount int) dto.Category {
 // @Param search query string false "Filter by name"
 // @Success 200 {object} dto.Response{data=dto.Categories}
 // @Security BearerAuth
+// @Param has_products query bool false "if true, only categories with at least one active variant (use for the consumer browse to avoid empty tiles)"
 // @Router /v1/categories [get]
 func listCategories(d CategoryDeps) gin.HandlerFunc {
 	return func(c *gin.Context) {
 		p := query.PageFromContext(c)
-		items, total, err := d.Categories.ListAdmin(p, c.Query("search"))
+		items, total, err := d.Categories.ListAdmin(p, c.Query("search"), c.Query("has_products") == "true")
 		if err != nil {
 			c.Error(err)
 			return

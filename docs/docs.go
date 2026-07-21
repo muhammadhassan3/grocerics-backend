@@ -1299,6 +1299,12 @@ const docTemplate = `{
                         "description": "Filter by name",
                         "name": "search",
                         "in": "query"
+                    },
+                    {
+                        "type": "boolean",
+                        "description": "if true, only categories with at least one active variant (use for the consumer browse to avoid empty tiles)",
+                        "name": "has_products",
+                        "in": "query"
                     }
                 ],
                 "responses": {
@@ -5088,6 +5094,12 @@ const docTemplate = `{
                         "description": "Filter by name",
                         "name": "search",
                         "in": "query"
+                    },
+                    {
+                        "type": "boolean",
+                        "description": "if true, only subcategories with at least one active variant (use for the consumer browse to avoid empty tiles)",
+                        "name": "has_products",
+                        "in": "query"
                     }
                 ],
                 "responses": {
@@ -5401,6 +5413,76 @@ const docTemplate = `{
                                     }
                                 }
                             ]
+                        }
+                    }
+                }
+            }
+        },
+        "/v1/subcategories/{subcategory_id}/products": {
+            "get": {
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
+                "description": "Paginated grid of variant cards for a subcategory in the user's city. Variant-first. Optional ?platforms= filters which reference prices are shown.",
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "consumer"
+                ],
+                "summary": "Variants in a subcategory (PLP)",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "Subcategory ID",
+                        "name": "subcategory_id",
+                        "in": "path",
+                        "required": true
+                    },
+                    {
+                        "type": "string",
+                        "description": "comma-separated platform codes; omitted = all enabled",
+                        "name": "platforms",
+                        "in": "query"
+                    },
+                    {
+                        "type": "integer",
+                        "description": "page number (default 1)",
+                        "name": "page",
+                        "in": "query"
+                    },
+                    {
+                        "type": "integer",
+                        "description": "page size, max 100 (default 20)",
+                        "name": "page_size",
+                        "in": "query"
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "allOf": [
+                                {
+                                    "$ref": "#/definitions/dto.Response"
+                                },
+                                {
+                                    "type": "object",
+                                    "properties": {
+                                        "data": {
+                                            "$ref": "#/definitions/dto.VariantSearchListDTO"
+                                        }
+                                    }
+                                }
+                            ]
+                        }
+                    },
+                    "401": {
+                        "description": "Unauthorized",
+                        "schema": {
+                            "$ref": "#/definitions/dto.Response"
                         }
                     }
                 }

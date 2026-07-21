@@ -97,9 +97,13 @@ func (r *CategoryRepository) Reorder(ids []string) error {
 	return adminReorder[domain.Category](r.db, ids, "idx_categories_")
 }
 
-func (r *CategoryRepository) ListAdmin(p query.Page, search string) ([]domain.Category, int64, error) {
+func (r *CategoryRepository) ListAdmin(p query.Page, search string, hasProducts bool) ([]domain.Category, int64, error) {
 	ctx := context.Background()
 	q := gorm.G[domain.Category](r.db).Where("deleted_at IS NULL")
+	if hasProducts {
+		q = q.Where(`EXISTS (SELECT 1 FROM products p JOIN product_variants v ON v.product_id = p.id
+			WHERE p.category_id = categories.id AND p.status = 'active' AND p.deleted_at IS NULL AND v.deleted_at IS NULL)`)
+	}
 	if search != "" {
 		q = q.Where("name ILIKE ?", "%"+search+"%")
 	}
@@ -166,11 +170,15 @@ func (r *SubcategoryRepository) NamesByIDs(ids []string) (map[string]string, err
 	return out, nil
 }
 
-func (r *SubcategoryRepository) ListAdmin(p query.Page, categoryID, search string) ([]domain.Subcategory, int64, error) {
+func (r *SubcategoryRepository) ListAdmin(p query.Page, categoryID, search string, hasProducts bool) ([]domain.Subcategory, int64, error) {
 	ctx := context.Background()
 	q := gorm.G[domain.Subcategory](r.db).Where("deleted_at IS NULL")
 	if categoryID != "" {
 		q = q.Where("category_id = ?", categoryID)
+	}
+	if hasProducts {
+		q = q.Where(`EXISTS (SELECT 1 FROM products p JOIN product_variants v ON v.product_id = p.id
+			WHERE p.subcategory_id = subcategories.id AND p.status = 'active' AND p.deleted_at IS NULL AND v.deleted_at IS NULL)`)
 	}
 	if search != "" {
 		q = q.Where("name ILIKE ?", "%"+search+"%")

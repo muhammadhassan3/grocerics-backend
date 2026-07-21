@@ -2711,6 +2711,11 @@ paths:
         in: query
         name: search
         type: string
+      - description: if true, only categories with at least one active variant (use
+          for the consumer browse to avoid empty tiles)
+        in: query
+        name: has_products
+        type: boolean
       produces:
       - application/json
       responses:
@@ -4863,6 +4868,11 @@ paths:
         in: query
         name: search
         type: string
+      - description: if true, only subcategories with at least one active variant
+          (use for the consumer browse to avoid empty tiles)
+        in: query
+        name: has_products
+        type: boolean
       produces:
       - application/json
       responses:
@@ -4986,6 +4996,50 @@ paths:
       summary: Get subcategory by ID
       tags:
       - subcategories
+  /v1/subcategories/{subcategory_id}/products:
+    get:
+      description: Paginated grid of variant cards for a subcategory in the user's
+        city. Variant-first. Optional ?platforms= filters which reference prices are
+        shown.
+      parameters:
+      - description: Subcategory ID
+        in: path
+        name: subcategory_id
+        required: true
+        type: string
+      - description: comma-separated platform codes; omitted = all enabled
+        in: query
+        name: platforms
+        type: string
+      - description: page number (default 1)
+        in: query
+        name: page
+        type: integer
+      - description: page size, max 100 (default 20)
+        in: query
+        name: page_size
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            allOf:
+            - $ref: '#/definitions/dto.Response'
+            - properties:
+                data:
+                  $ref: '#/definitions/dto.VariantSearchListDTO'
+              type: object
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/dto.Response'
+      security:
+      - BearerAuth: []
+      summary: Variants in a subcategory (PLP)
+      tags:
+      - consumer
   /v1/subcategories/reorder:
     patch:
       consumes:
