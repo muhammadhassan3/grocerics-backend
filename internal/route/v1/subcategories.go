@@ -94,12 +94,13 @@ func (d SubcategoryDeps) categoryName(categoryID string) string {
 // @Param search query string false "Filter by name"
 // @Success 200 {object} dto.Response{data=dto.SubCategories}
 // @Security BearerAuth
+// @Param has_products query bool false "if true, only subcategories with at least one active variant (use for the consumer browse to avoid empty tiles)"
 // @Router /v1/subcategories [get]
 func listSubcategories(d SubcategoryDeps) gin.HandlerFunc {
 	return func(c *gin.Context) {
 		p := query.PageFromContext(c)
 		categoryID := c.Query("category_id")
-		items, total, err := d.Subcategories.ListAdmin(p, categoryID, c.Query("search"))
+		items, total, err := d.Subcategories.ListAdmin(p, categoryID, c.Query("search"), c.Query("has_products") == "true")
 		if err != nil {
 			c.Error(err)
 			return

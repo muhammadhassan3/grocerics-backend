@@ -29,6 +29,21 @@ func (r *CategoryRepository) ListVisible(topOnly bool) ([]domain.Category, error
 	return items, nil
 }
 
+func (r *CategoryRepository) ListVisibleWithProducts(topOnly bool) ([]domain.Category, error) {
+	ctx := context.Background()
+	q := gorm.G[domain.Category](r.db).
+		Where("status = 'active' AND deleted_at IS NULL").
+		Where("EXISTS (SELECT 1 FROM products p WHERE p.category_id = categories.id AND p.status = 'active' AND p.deleted_at IS NULL)")
+	if topOnly {
+		q = q.Where("is_top_category")
+	}
+	items, err := q.Order("display_order, name").Find(ctx)
+	if err != nil {
+		return nil, util.ParseDatabaseError(err, "idx_categories_")
+	}
+	return items, nil
+}
+
 func (r *CategoryRepository) FindByID(id string) (*domain.Category, error) {
 	ctx := context.Background()
 	data, err := gorm.G[domain.Category](r.db).Where("id = ? AND deleted_at IS NULL", id).First(ctx)
@@ -122,11 +137,9 @@ func (r *ProductRepository) ListByCategory(categoryID string, p query.Page) ([]d
 	return paginateProducts(ctx, q, p)
 }
 
-func (r *ProductRepository) Search(term string, p query.Page) ([]domain.Product, int64, error) {
+func (r *ProductRepository) ListBySubcategory(subcategoryID string, p query.Page) ([]domain.Product, int64, error) {
 	ctx := context.Background()
-	q := gorm.G[domain.Product](r.db).
-		Where("status = 'active' AND deleted_at IS NULL").
-		Where("to_tsvector('simple', name || ' ' || coalesce(description,'')) @@ plainto_tsquery('simple', ?)", term)
+	q := gorm.G[domain.Product](r.db).Where("subcategory_id = ? AND status = 'active' AND deleted_at IS NULL", subcategoryID)
 	return paginateProducts(ctx, q, p)
 }
 
@@ -170,8 +183,7 @@ func (r *ProductRepository) ListSimilar(categoryID, excludeProductID string, lim
 	return items, nil
 }
 
-// returns the list of active products that have at least one discounted platform, for the TOp DEALS tab
-func (r *ProductRepository) ListDeals(cityID string, limit int) ([]domain.Product, error) {
+func (r *ProductRepository) ListDealVariantIDs(cityID string, limit int) ([]string, error) {
 	ctx := context.Background()
 	var ids []string
 	err := r.db.WithContext(ctx).
@@ -180,21 +192,11 @@ func (r *ProductRepository) ListDeals(cityID string, limit int) ([]domain.Produc
 		Joins("JOIN products p ON p.id = v.product_id").
 		Where("pp.city_id = ? AND pp.available AND pp.mrp_paise IS NOT NULL AND pp.mrp_paise > pp.price_paise", cityID).
 		Where("p.status = 'active' AND p.deleted_at IS NULL AND v.deleted_at IS NULL").
-		Distinct("p.id").Limit(limit).Pluck("p.id", &ids).Error
+		Distinct("v.id").Limit(limit).Pluck("v.id", &ids).Error
 	if err != nil {
-		return nil, util.ParseDatabaseError(err, "idx_products_")
+		return nil, util.ParseDatabaseError(err, "idx_product_variants_")
 	}
-	m, err := r.FindByIDs(ids)
-	if err != nil {
-		return nil, err
-	}
-	out := make([]domain.Product, 0, len(ids))
-	for _, id := range ids {
-		if p, ok := m[id]; ok {
-			out = append(out, p)
-		}
-	}
-	return out, nil
+	return ids, nil
 }
 
 func paginateProducts(ctx context.Context, q gorm.ChainInterface[domain.Product], p query.Page) ([]domain.Product, int64, error) {
@@ -287,6 +289,20 @@ func (r *ProductVariantRepository) FindByIDs(ids []string) (map[string]domain.Pr
 	}
 	for _, v := range items {
 		out[v.ID] = v
+	}
+	return out, nil
+}
+
+func (r *ProductVariantRepository) ListByIDsOrdered(ids []string) ([]domain.ProductVariant, error) {
+	m, err := r.FindByIDs(ids)
+	if err != nil {
+		return nil, err
+	}
+	out := make([]domain.ProductVariant, 0, len(ids))
+	for _, id := range ids {
+		if v, ok := m[id]; ok {
+			out = append(out, v)
+		}
 	}
 	return out, nil
 }

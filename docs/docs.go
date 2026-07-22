@@ -234,6 +234,58 @@ const docTemplate = `{
                 }
             }
         },
+        "/auth/phone-refresh": {
+            "post": {
+                "description": "Exchange a valid client refresh_token (from verify-phone-otp) for a fresh access + refresh pair. Stateless; rejects admin tokens. Use this instead of /auth/refresh, which is admin-only.",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Auth"
+                ],
+                "summary": "Refresh client token",
+                "parameters": [
+                    {
+                        "description": "Client refresh token payload",
+                        "name": "phoneRefreshRequest",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/v1.PhoneRefreshRequest"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "allOf": [
+                                {
+                                    "$ref": "#/definitions/dto.Response"
+                                },
+                                {
+                                    "type": "object",
+                                    "properties": {
+                                        "data": {
+                                            "$ref": "#/definitions/dto.ClientAuthResponse"
+                                        }
+                                    }
+                                }
+                            ]
+                        }
+                    },
+                    "401": {
+                        "description": "Unauthorized",
+                        "schema": {
+                            "$ref": "#/definitions/dto.Response"
+                        }
+                    }
+                }
+            }
+        },
         "/auth/refresh": {
             "post": {
                 "consumes": [
@@ -326,7 +378,7 @@ const docTemplate = `{
         },
         "/auth/verify-phone-otp": {
             "post": {
-                "description": "Verify the OTP and issue client tokens. Creates the client account on first successful login (find-or-create by phone).",
+                "description": "Verify the OTP and issue client tokens. Creates the client account on first successful login (find-or-create by phone). ` + "`" + `data.is_new` + "`" + ` is true when this call created the account, so the app can route first-time users to onboarding.",
                 "consumes": [
                     "application/json"
                 ],
@@ -360,112 +412,7 @@ const docTemplate = `{
                                     "type": "object",
                                     "properties": {
                                         "data": {
-                                            "$ref": "#/definitions/dto.TokenResponse"
-                                        }
-                                    }
-                                }
-                            ]
-                        }
-                    }
-                }
-            }
-        },
-        "/v1/address": {
-            "post": {
-                "security": [
-                    {
-                        "BearerAuth": []
-                    }
-                ],
-                "description": "Creates a new address for the authenticated user.",
-                "consumes": [
-                    "application/json"
-                ],
-                "produces": [
-                    "application/json"
-                ],
-                "tags": [
-                    "address"
-                ],
-                "summary": "Create a new address",
-                "parameters": [
-                    {
-                        "description": "Address details",
-                        "name": "address",
-                        "in": "body",
-                        "required": true,
-                        "schema": {
-                            "$ref": "#/definitions/dto.AddAddressRequest"
-                        }
-                    }
-                ],
-                "responses": {
-                    "201": {
-                        "description": "Created",
-                        "schema": {
-                            "allOf": [
-                                {
-                                    "$ref": "#/definitions/dto.Response"
-                                },
-                                {
-                                    "type": "object",
-                                    "properties": {
-                                        "data": {
-                                            "$ref": "#/definitions/dto.AddressResponse"
-                                        }
-                                    }
-                                }
-                            ]
-                        }
-                    },
-                    "400": {
-                        "description": "Bad Request",
-                        "schema": {
-                            "allOf": [
-                                {
-                                    "$ref": "#/definitions/dto.Response"
-                                },
-                                {
-                                    "type": "object",
-                                    "properties": {
-                                        "data": {
-                                            "type": "string"
-                                        }
-                                    }
-                                }
-                            ]
-                        }
-                    },
-                    "401": {
-                        "description": "Unauthorized",
-                        "schema": {
-                            "allOf": [
-                                {
-                                    "$ref": "#/definitions/dto.Response"
-                                },
-                                {
-                                    "type": "object",
-                                    "properties": {
-                                        "data": {
-                                            "type": "string"
-                                        }
-                                    }
-                                }
-                            ]
-                        }
-                    },
-                    "403": {
-                        "description": "Forbidden",
-                        "schema": {
-                            "allOf": [
-                                {
-                                    "$ref": "#/definitions/dto.Response"
-                                },
-                                {
-                                    "type": "object",
-                                    "properties": {
-                                        "data": {
-                                            "type": "string"
+                                            "$ref": "#/definitions/dto.ClientAuthResponse"
                                         }
                                     }
                                 }
@@ -1352,6 +1299,12 @@ const docTemplate = `{
                         "description": "Filter by name",
                         "name": "search",
                         "in": "query"
+                    },
+                    {
+                        "type": "boolean",
+                        "description": "if true, only categories with at least one active variant (use for the consumer browse to avoid empty tiles)",
+                        "name": "has_products",
+                        "in": "query"
                     }
                 ],
                 "responses": {
@@ -1713,14 +1666,14 @@ const docTemplate = `{
                         "BearerAuth": []
                     }
                 ],
-                "description": "Paginated grid of product cards for a category in the user's city.",
+                "description": "Paginated grid of variant cards for a category in the user's city. Variant-first — one card per pack. Optional ?platforms= filters which reference prices are shown.",
                 "produces": [
                     "application/json"
                 ],
                 "tags": [
                     "consumer"
                 ],
-                "summary": "Products in a category (PLP)",
+                "summary": "Variants in a category (PLP)",
                 "parameters": [
                     {
                         "type": "string",
@@ -1728,6 +1681,12 @@ const docTemplate = `{
                         "name": "id",
                         "in": "path",
                         "required": true
+                    },
+                    {
+                        "type": "string",
+                        "description": "comma-separated platform codes; omitted = all enabled",
+                        "name": "platforms",
+                        "in": "query"
                     },
                     {
                         "type": "integer",
@@ -1754,7 +1713,7 @@ const docTemplate = `{
                                     "type": "object",
                                     "properties": {
                                         "data": {
-                                            "$ref": "#/definitions/dto.ProductCardListDTO"
+                                            "$ref": "#/definitions/dto.VariantSearchListDTO"
                                         }
                                     }
                                 }
@@ -2537,7 +2496,7 @@ const docTemplate = `{
                         "BearerAuth": []
                     }
                 ],
-                "description": "Products that have a discounted platform price (mrp \u003e price) in the user's city.",
+                "description": "Variants with a discounted platform price (mrp \u003e price) in the user's city, as variant cards. Optional ?platforms= filters which reference prices are shown.",
                 "produces": [
                     "application/json"
                 ],
@@ -2545,6 +2504,14 @@ const docTemplate = `{
                     "consumer"
                 ],
                 "summary": "Top Deals",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "comma-separated platform codes; omitted = all enabled",
+                        "name": "platforms",
+                        "in": "query"
+                    }
+                ],
                 "responses": {
                     "200": {
                         "description": "OK",
@@ -2559,7 +2526,7 @@ const docTemplate = `{
                                         "data": {
                                             "type": "array",
                                             "items": {
-                                                "$ref": "#/definitions/dto.ProductCardDTO"
+                                                "$ref": "#/definitions/dto.VariantSearchItemDTO"
                                             }
                                         }
                                     }
@@ -4254,6 +4221,63 @@ const docTemplate = `{
                 }
             }
         },
+        "/v1/me/onboarding": {
+            "post": {
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
+                "description": "First-time setup for a client: sets the name, saves the default delivery address, and pins the current city — all in one transaction. City is derived from the device-geocoded ` + "`" + `address.city` + "`" + ` and must be one we serve (else 400). Location is required; the user never picks a city.",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "profile"
+                ],
+                "summary": "Complete onboarding (name + first address)",
+                "parameters": [
+                    {
+                        "description": "name + address",
+                        "name": "request",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/v1.onboardingRequest"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "allOf": [
+                                {
+                                    "$ref": "#/definitions/dto.Response"
+                                },
+                                {
+                                    "type": "object",
+                                    "properties": {
+                                        "data": {
+                                            "$ref": "#/definitions/dto.OnboardingResponse"
+                                        }
+                                    }
+                                }
+                            ]
+                        }
+                    },
+                    "400": {
+                        "description": "Bad Request",
+                        "schema": {
+                            "$ref": "#/definitions/dto.Response"
+                        }
+                    }
+                }
+            }
+        },
         "/v1/platforms": {
             "get": {
                 "security": [
@@ -4804,70 +4828,6 @@ const docTemplate = `{
                 }
             }
         },
-        "/v1/search": {
-            "get": {
-                "security": [
-                    {
-                        "BearerAuth": []
-                    }
-                ],
-                "description": "Full-text search over the Groceric catalog (min 2 chars). Never hits the platform APIs.",
-                "produces": [
-                    "application/json"
-                ],
-                "tags": [
-                    "consumer"
-                ],
-                "summary": "Search products (curated catalog)",
-                "parameters": [
-                    {
-                        "type": "string",
-                        "description": "search term (min 2 chars)",
-                        "name": "q",
-                        "in": "query",
-                        "required": true
-                    },
-                    {
-                        "type": "integer",
-                        "description": "page number (default 1)",
-                        "name": "page",
-                        "in": "query"
-                    },
-                    {
-                        "type": "integer",
-                        "description": "page size, max 100 (default 20)",
-                        "name": "page_size",
-                        "in": "query"
-                    }
-                ],
-                "responses": {
-                    "200": {
-                        "description": "OK",
-                        "schema": {
-                            "allOf": [
-                                {
-                                    "$ref": "#/definitions/dto.Response"
-                                },
-                                {
-                                    "type": "object",
-                                    "properties": {
-                                        "data": {
-                                            "$ref": "#/definitions/dto.ProductCardListDTO"
-                                        }
-                                    }
-                                }
-                            ]
-                        }
-                    },
-                    "400": {
-                        "description": "Bad Request",
-                        "schema": {
-                            "$ref": "#/definitions/dto.Response"
-                        }
-                    }
-                }
-            }
-        },
         "/v1/search/variants": {
             "get": {
                 "security": [
@@ -5133,6 +5093,12 @@ const docTemplate = `{
                         "type": "string",
                         "description": "Filter by name",
                         "name": "search",
+                        "in": "query"
+                    },
+                    {
+                        "type": "boolean",
+                        "description": "if true, only subcategories with at least one active variant (use for the consumer browse to avoid empty tiles)",
+                        "name": "has_products",
                         "in": "query"
                     }
                 ],
@@ -5452,24 +5418,48 @@ const docTemplate = `{
                 }
             }
         },
-        "/v1/top-deals": {
+        "/v1/subcategories/{subcategory_id}/products": {
             "get": {
                 "security": [
                     {
                         "BearerAuth": []
                     }
                 ],
-                "description": "Fetches a list of top deals.",
-                "consumes": [
-                    "application/json"
-                ],
+                "description": "Paginated grid of variant cards for a subcategory in the user's city. Variant-first. Optional ?platforms= filters which reference prices are shown.",
                 "produces": [
                     "application/json"
                 ],
                 "tags": [
-                    "top-deals"
+                    "consumer"
                 ],
-                "summary": "Get top deals",
+                "summary": "Variants in a subcategory (PLP)",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "Subcategory ID",
+                        "name": "subcategory_id",
+                        "in": "path",
+                        "required": true
+                    },
+                    {
+                        "type": "string",
+                        "description": "comma-separated platform codes; omitted = all enabled",
+                        "name": "platforms",
+                        "in": "query"
+                    },
+                    {
+                        "type": "integer",
+                        "description": "page number (default 1)",
+                        "name": "page",
+                        "in": "query"
+                    },
+                    {
+                        "type": "integer",
+                        "description": "page size, max 100 (default 20)",
+                        "name": "page_size",
+                        "in": "query"
+                    }
+                ],
                 "responses": {
                     "200": {
                         "description": "OK",
@@ -5482,7 +5472,7 @@ const docTemplate = `{
                                     "type": "object",
                                     "properties": {
                                         "data": {
-                                            "$ref": "#/definitions/dto.TopDealsMobileResponse"
+                                            "$ref": "#/definitions/dto.VariantSearchListDTO"
                                         }
                                     }
                                 }
@@ -5492,37 +5482,7 @@ const docTemplate = `{
                     "401": {
                         "description": "Unauthorized",
                         "schema": {
-                            "allOf": [
-                                {
-                                    "$ref": "#/definitions/dto.Response"
-                                },
-                                {
-                                    "type": "object",
-                                    "properties": {
-                                        "data": {
-                                            "type": "string"
-                                        }
-                                    }
-                                }
-                            ]
-                        }
-                    },
-                    "403": {
-                        "description": "Forbidden",
-                        "schema": {
-                            "allOf": [
-                                {
-                                    "$ref": "#/definitions/dto.Response"
-                                },
-                                {
-                                    "type": "object",
-                                    "properties": {
-                                        "data": {
-                                            "type": "string"
-                                        }
-                                    }
-                                }
-                            ]
+                            "$ref": "#/definitions/dto.Response"
                         }
                     }
                 }
@@ -5795,28 +5755,6 @@ const docTemplate = `{
                 }
             }
         },
-        "dto.AddAddressRequest": {
-            "description": "Request payload for adding a new delivery address.",
-            "type": "object",
-            "required": [
-                "address_line_1",
-                "pincode"
-            ],
-            "properties": {
-                "address_line_1": {
-                    "description": "Primary address line, e.g. house/flat number and street",
-                    "type": "string"
-                },
-                "address_line_2": {
-                    "description": "Secondary address line, e.g. landmark or apartment details",
-                    "type": "string"
-                },
-                "pincode": {
-                    "description": "Postal/ZIP code of the address",
-                    "type": "string"
-                }
-            }
-        },
         "dto.AddressDTO": {
             "type": "object",
             "properties": {
@@ -5853,27 +5791,6 @@ const docTemplate = `{
                 "serviceable": {
                     "description": "true if the pincode resolved to a serving city",
                     "type": "boolean"
-                }
-            }
-        },
-        "dto.AddressResponse": {
-            "description": "Response payload containing details of a delivery address.",
-            "type": "object",
-            "properties": {
-                "address_id": {
-                    "type": "string"
-                },
-                "address_line_1": {
-                    "type": "string"
-                },
-                "address_line_2": {
-                    "type": "string"
-                },
-                "created_at": {
-                    "type": "string"
-                },
-                "pincode": {
-                    "type": "string"
                 }
             }
         },
@@ -6053,6 +5970,9 @@ const docTemplate = `{
             "properties": {
                 "average_price": {
                     "$ref": "#/definitions/dto.MoneyDTO"
+                },
+                "image_url": {
+                    "type": "string"
                 },
                 "item_id": {
                     "type": "string"
@@ -6256,6 +6176,30 @@ const docTemplate = `{
                 }
             }
         },
+        "dto.ClientAuthResponse": {
+            "type": "object",
+            "properties": {
+                "access_token": {
+                    "description": "JWT access token used to authenticate subsequent requests",
+                    "type": "string"
+                },
+                "is_new": {
+                    "type": "boolean"
+                },
+                "refresh_token": {
+                    "description": "Token used to obtain a new access token once the current one expires",
+                    "type": "string"
+                },
+                "user_data": {
+                    "description": "User data associated with the authenticated user",
+                    "allOf": [
+                        {
+                            "$ref": "#/definitions/dto.UserData"
+                        }
+                    ]
+                }
+            }
+        },
         "dto.DailyActiveUsers": {
             "description": "Daily active user counts for the current week, keyed by day.",
             "type": "object",
@@ -6408,7 +6352,7 @@ const docTemplate = `{
                 "trending_items": {
                     "type": "array",
                     "items": {
-                        "$ref": "#/definitions/dto.ProductCardDTO"
+                        "$ref": "#/definitions/dto.VariantSearchItemDTO"
                     }
                 }
             }
@@ -6561,6 +6505,9 @@ const docTemplate = `{
                 "name": {
                     "type": "string"
                 },
+                "onboarded": {
+                    "type": "boolean"
+                },
                 "phone": {
                     "type": "string"
                 }
@@ -6647,14 +6594,25 @@ const docTemplate = `{
         "dto.NotificationPreferencesDTO": {
             "type": "object",
             "properties": {
-                "order_updates": {
+                "deals": {
                     "type": "boolean"
                 },
-                "price_alerts": {
+                "muted": {
                     "type": "boolean"
                 },
                 "promotions": {
                     "type": "boolean"
+                }
+            }
+        },
+        "dto.OnboardingResponse": {
+            "type": "object",
+            "properties": {
+                "address": {
+                    "$ref": "#/definitions/dto.AddressDTO"
+                },
+                "user": {
+                    "$ref": "#/definitions/dto.MeDTO"
                 }
             }
         },
@@ -6815,24 +6773,6 @@ const docTemplate = `{
                 }
             }
         },
-        "dto.PlatformSearchResult": {
-            "description": "A delivery platform considered when searching or listing products.",
-            "type": "object",
-            "properties": {
-                "platform_id": {
-                    "description": "Unique identifier for the delivery platform",
-                    "type": "string"
-                },
-                "platform_logo": {
-                    "description": "URL of the delivery platform's logo",
-                    "type": "string"
-                },
-                "platform_name": {
-                    "description": "Display name of the delivery platform",
-                    "type": "string"
-                }
-            }
-        },
         "dto.Platforms": {
             "description": "Paginated list of platforms.",
             "type": "object",
@@ -6873,43 +6813,6 @@ const docTemplate = `{
                 "public_url": {
                     "description": "Public URL of the uploaded file",
                     "type": "string"
-                }
-            }
-        },
-        "dto.ProductCardDTO": {
-            "type": "object",
-            "properties": {
-                "brand_name": {
-                    "type": "string"
-                },
-                "default_variant_id": {
-                    "type": "string"
-                },
-                "image_url": {
-                    "type": "string"
-                },
-                "name": {
-                    "type": "string"
-                },
-                "product_id": {
-                    "type": "string"
-                },
-                "starting_price": {
-                    "$ref": "#/definitions/dto.MoneyDTO"
-                }
-            }
-        },
-        "dto.ProductCardListDTO": {
-            "type": "object",
-            "properties": {
-                "items": {
-                    "type": "array",
-                    "items": {
-                        "$ref": "#/definitions/dto.ProductCardDTO"
-                    }
-                },
-                "meta": {
-                    "$ref": "#/definitions/query.Meta"
                 }
             }
         },
@@ -6954,7 +6857,7 @@ const docTemplate = `{
                 "similar": {
                     "type": "array",
                     "items": {
-                        "$ref": "#/definitions/dto.ProductCardDTO"
+                        "$ref": "#/definitions/dto.VariantSearchItemDTO"
                     }
                 },
                 "variants": {
@@ -7296,64 +7199,6 @@ const docTemplate = `{
                 }
             }
         },
-        "dto.TopDealsMobileItem": {
-            "description": "A single product row within the top deals list.",
-            "type": "object",
-            "properties": {
-                "cart_count": {
-                    "description": "Number of times the product has been added to a cart",
-                    "type": "integer"
-                },
-                "category_name": {
-                    "description": "Name of the category the product belongs to",
-                    "type": "string"
-                },
-                "image_url": {
-                    "description": "URL of the product's display image",
-                    "type": "string"
-                },
-                "item_id": {
-                    "description": "Unique identifier for the product",
-                    "type": "string"
-                },
-                "item_name": {
-                    "description": "Display name of the product",
-                    "type": "string"
-                },
-                "lowest_price": {
-                    "description": "Lowest price for the product across tracked delivery platforms",
-                    "type": "number"
-                }
-            }
-        },
-        "dto.TopDealsMobileResponse": {
-            "description": "Envelope for the mobile app's top deals endpoint.",
-            "type": "object",
-            "properties": {
-                "meta": {
-                    "description": "Pagination metadata",
-                    "allOf": [
-                        {
-                            "$ref": "#/definitions/query.Meta"
-                        }
-                    ]
-                },
-                "platforms": {
-                    "description": "Delivery platforms considered when pricing the deals",
-                    "type": "array",
-                    "items": {
-                        "$ref": "#/definitions/dto.PlatformSearchResult"
-                    }
-                },
-                "results": {
-                    "description": "Page of top deal products",
-                    "type": "array",
-                    "items": {
-                        "$ref": "#/definitions/dto.TopDealsMobileItem"
-                    }
-                }
-            }
-        },
         "dto.TopSearchProduct": {
             "description": "Paginated list of top-searched products.",
             "type": "object",
@@ -7463,10 +7308,16 @@ const docTemplate = `{
             "description": "User data associated with the authenticated user.",
             "type": "object",
             "properties": {
-                "full_name": {
+                "id": {
                     "type": "string"
                 },
                 "image_url": {
+                    "type": "string"
+                },
+                "name": {
+                    "type": "string"
+                },
+                "phone": {
                     "type": "string"
                 },
                 "role": {
@@ -7531,6 +7382,9 @@ const docTemplate = `{
             "properties": {
                 "average_price": {
                     "$ref": "#/definitions/dto.MoneyDTO"
+                },
+                "image_url": {
+                    "type": "string"
                 },
                 "pack_label": {
                     "description": "\"500 gm\"",
@@ -7655,6 +7509,9 @@ const docTemplate = `{
                 "deeplink": {
                     "type": "string"
                 },
+                "image_url": {
+                    "type": "string"
+                },
                 "inventory": {
                     "type": "integer"
                 },
@@ -7729,6 +7586,9 @@ const docTemplate = `{
                 "deep_link": {
                     "type": "string"
                 },
+                "image_url": {
+                    "type": "string"
+                },
                 "inventory": {
                     "type": "integer"
                 },
@@ -7783,6 +7643,9 @@ const docTemplate = `{
                     "type": "string"
                 },
                 "deep_link": {
+                    "type": "string"
+                },
+                "image_url": {
                     "type": "string"
                 },
                 "inventory": {
@@ -8220,6 +8083,17 @@ const docTemplate = `{
                 }
             }
         },
+        "v1.PhoneRefreshRequest": {
+            "type": "object",
+            "required": [
+                "refresh_token"
+            ],
+            "properties": {
+                "refresh_token": {
+                    "type": "string"
+                }
+            }
+        },
         "v1.PlatformOption": {
             "type": "object",
             "properties": {
@@ -8617,10 +8491,12 @@ const docTemplate = `{
         "v1.addressRequest": {
             "type": "object",
             "required": [
-                "line1",
-                "pincode"
+                "line1"
             ],
             "properties": {
+                "city": {
+                    "type": "string"
+                },
                 "is_default": {
                     "type": "boolean"
                 },
@@ -8640,6 +8516,7 @@ const docTemplate = `{
                     "type": "number"
                 },
                 "pincode": {
+                    "description": "optional: city drives serviceability; used for delivery ETA when the geocode provides it",
                     "type": "string"
                 }
             }
@@ -8665,6 +8542,21 @@ const docTemplate = `{
                     "type": "string"
                 },
                 "token": {
+                    "type": "string"
+                }
+            }
+        },
+        "v1.onboardingRequest": {
+            "type": "object",
+            "required": [
+                "address",
+                "name"
+            ],
+            "properties": {
+                "address": {
+                    "$ref": "#/definitions/v1.addressRequest"
+                },
+                "name": {
                     "type": "string"
                 }
             }

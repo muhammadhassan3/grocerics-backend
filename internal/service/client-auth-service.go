@@ -52,7 +52,7 @@ func (s *ClientAuthService) RequestOTP(phone string) (string, error) {
 	slog.Info("mock OTP issued", "phone", phone, "otp_code", code, "expires_in", otpTTL.String())
 	return code, nil
 }
-func (s *ClientAuthService) VerifyOTP(phone, code string) (*dto.TokenResponse, error) {
+func (s *ClientAuthService) VerifyOTP(phone, code string) (*dto.ClientAuthResponse, error) {
 	s.mu.Lock()
 	entry, ok := s.codes[phone]
 	if ok && (entry.expiresAt.Before(time.Now().UTC()) || entry.code != code) {
@@ -70,20 +70,46 @@ func (s *ClientAuthService) VerifyOTP(phone, code string) (*dto.TokenResponse, e
 	if err != nil {
 		return nil, errs.Internal("OTP_USER_LOOKUP_FAILED", err)
 	}
-	if u == nil {
+	isNew := u == nil
+	if isNew {
 		u, err = s.users.Create(&domain.User{Name: phone, Phone: phone, Status: domain.UserStatusActive})
 		if err != nil {
 			return nil, errs.Internal("OTP_USER_CREATE_FAILED", err)
 		}
 	}
 
+	return s.issueTokens(u, isNew), nil
+}
+
+func (s *ClientAuthService) RefreshToken(refreshToken string) (*dto.ClientAuthResponse, error) {
+	claims, err := s.jwt.Validate(refreshToken)
+	if err != nil {
+		return nil, errs.Unauthorized("INVALID_REFRESH_TOKEN", "invalid or expired refresh token")
+	}
+	if claims.Kind != string(auth.KindClient) {
+		return nil, errs.Unauthorized("INVALID_REFRESH_TOKEN", "not a client token")
+	}
+	u, err := s.users.FindByID(claims.UserID)
+	if err != nil {
+		return nil, errs.Internal("REFRESH_USER_LOOKUP_FAILED", err)
+	}
+	if u == nil {
+		return nil, errs.Unauthorized("INVALID_REFRESH_TOKEN", "user not found")
+	}
+	return s.issueTokens(u, false), nil
+}
+
+func (s *ClientAuthService) issueTokens(u *domain.User, isNew bool) *dto.ClientAuthResponse {
 	access := s.jwt.Generate(u.Name, u.ID, string(domain.RoleUser), auth.KindClient, clientAccessTTL)
 	refresh := s.jwt.Generate(u.Name, u.ID, string(domain.RoleUser), auth.KindClient, clientRefreshTTL)
-	return &dto.TokenResponse{
-		AccessToken:  access,
-		RefreshToken: refresh,
-		UserData:     dto.UserData{FullName: u.Name, Role: string(domain.RoleUser)},
-	}, nil
+	return &dto.ClientAuthResponse{
+		TokenResponse: dto.TokenResponse{
+			AccessToken:  access,
+			RefreshToken: refresh,
+			UserData:     dto.UserData{ID: u.ID, Phone: u.Phone, Name: u.Name, Role: string(domain.RoleUser)},
+		},
+		IsNew: isNew,
+	}
 }
 
 func generateOTP() (string, error) {

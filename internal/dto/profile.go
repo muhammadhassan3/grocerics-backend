@@ -7,6 +7,12 @@ type MeDTO struct {
 	Phone           string `json:"phone,omitempty"`
 	CurrentCityID   string `json:"current_city_id,omitempty"`
 	CurrentCityName string `json:"current_city_name,omitempty"`
+	Onboarded       bool   `json:"onboarded"`
+}
+
+type OnboardingResponse struct {
+	User    MeDTO      `json:"user"`
+	Address AddressDTO `json:"address"`
 }
 
 type AddressDTO struct {
@@ -23,9 +29,9 @@ type AddressDTO struct {
 	Serviceable bool     `json:"serviceable"` // true if the pincode resolved to a serving city
 }
 
-// TODO: may update later, thisis just based of hte design
+// NotificationPreferencesDTO matches the app's toggles: Mute / Promotions / Deals.
 type NotificationPreferencesDTO struct {
-	PriceAlerts  bool `json:"price_alerts"`
-	Promotions   bool `json:"promotions"`
-	OrderUpdates bool `json:"order_updates"`
+	Muted      bool `json:"muted"`
+	Promotions bool `json:"promotions"`
+	Deals      bool `json:"deals"`
 }

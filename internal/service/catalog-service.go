@@ -23,7 +23,6 @@ type CatalogService struct {
 	variant   *repository.ProductVariantRepository
 	image     *repository.ProductImageRepository
 	price     *repository.PlatformPriceRepository
-	summary   *repository.VariantPriceSummaryRepository
 	link      *repository.ProductPlatformLinkRepository
 }
 
@@ -37,7 +36,6 @@ func NewCatalogService(db *gorm.DB) *CatalogService {
 		variant:   repository.NewProductVariantRepository(db),
 		image:     repository.NewProductImageRepository(db),
 		price:     repository.NewPlatformPriceRepository(db),
-		summary:   repository.NewVariantPriceSummaryRepository(db),
 		link:      repository.NewProductPlatformLinkRepository(db),
 	}
 }
@@ -51,7 +49,7 @@ func (s *CatalogService) Home(cityID string) (*dto.HomeResponse, error) {
 	if err != nil {
 		return nil, err
 	}
-	cats, err := s.category.ListVisible(true)
+	cats, err := s.category.ListVisibleWithProducts(true)
 	if err != nil {
 		return nil, err
 	}
@@ -59,7 +57,11 @@ func (s *CatalogService) Home(cityID string) (*dto.HomeResponse, error) {
 	if err != nil {
 		return nil, err
 	}
-	cards, err := s.productCards(top, cityID)
+	topVariants, err := s.defaultVariantsFor(top)
+	if err != nil {
+		return nil, err
+	}
+	cards, err := s.variantCards(topVariants, cityID, nil)
 	if err != nil {
 		return nil, err
 	}
@@ -128,11 +130,20 @@ func (s *CatalogService) ProductDetail(productID, cityID string) (*dto.ProductDe
 	if err != nil {
 		return nil, err
 	}
+	variantIDs := make([]string, 0, len(variants))
+	for _, v := range variants {
+		variantIDs = append(variantIDs, v.ID)
+	}
+	imageByVariant, err := s.link.PrimaryImagesByVariants(variantIDs)
+	if err != nil {
+		return nil, err
+	}
 	for _, v := range variants {
 		vd, vErr := s.variantDetail(v, cityID, platMap)
 		if vErr != nil {
 			return nil, vErr
 		}
+		vd.ImageURL = imageByVariant[v.ID]
 		out.Variants = append(out.Variants, vd)
 	}
 
@@ -140,8 +151,30 @@ func (s *CatalogService) ProductDetail(productID, cityID string) (*dto.ProductDe
 	if err != nil {
 		return nil, err
 	}
-	if out.Similar, err = s.productCards(similar, cityID); err != nil {
+	similarVariants, err := s.defaultVariantsFor(similar)
+	if err != nil {
 		return nil, err
+	}
+	if out.Similar, err = s.variantCards(similarVariants, cityID, nil); err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
+func (s *CatalogService) defaultVariantsFor(products []domain.Product) ([]domain.ProductVariant, error) {
+	ids := make([]string, 0, len(products))
+	for _, p := range products {
+		ids = append(ids, p.ID)
+	}
+	defaults, err := s.variant.DefaultsForProducts(ids)
+	if err != nil {
+		return nil, err
+	}
+	out := make([]domain.ProductVariant, 0, len(products))
+	for _, p := range products {
+		if v, ok := defaults[p.ID]; ok {
+			out = append(out, v)
+		}
 	}
 	return out, nil
 }
@@ -186,22 +219,33 @@ func (s *CatalogService) variantDetail(v domain.ProductVariant, cityID string, p
 	return vd, nil
 }
 
-func (s *CatalogService) ProductsByCategory(categoryID, cityID string, page query.Page) ([]dto.ProductCardDTO, query.Meta, error) {
+func (s *CatalogService) ProductsByCategory(categoryID, cityID string, platformCodes []string, page query.Page) ([]dto.VariantSearchItemDTO, query.Meta, error) {
 	products, total, err := s.product.ListByCategory(categoryID, page)
 	if err != nil {
 		return nil, query.Meta{}, err
 	}
-	cards, err := s.productCards(products, cityID)
-	return cards, query.BuildMeta(total, page), err
+	return s.variantCardsForProducts(products, total, cityID, platformCodes, page)
 }
 
-func (s *CatalogService) Search(term, cityID string, page query.Page) ([]dto.ProductCardDTO, query.Meta, error) {
-	products, total, err := s.product.Search(term, page)
+func (s *CatalogService) ProductsBySubcategory(subcategoryID, cityID string, platformCodes []string, page query.Page) ([]dto.VariantSearchItemDTO, query.Meta, error) {
+	products, total, err := s.product.ListBySubcategory(subcategoryID, page)
 	if err != nil {
 		return nil, query.Meta{}, err
 	}
-	cards, err := s.productCards(products, cityID)
-	return cards, query.BuildMeta(total, page), err
+	return s.variantCardsForProducts(products, total, cityID, platformCodes, page)
+}
+
+func (s *CatalogService) variantCardsForProducts(products []domain.Product, total int64, cityID string, platformCodes []string, page query.Page) ([]dto.VariantSearchItemDTO, query.Meta, error) {
+	productIDs := make([]string, 0, len(products))
+	for _, p := range products {
+		productIDs = append(productIDs, p.ID)
+	}
+	variants, err := s.variant.ListByProducts(productIDs)
+	if err != nil {
+		return nil, query.Meta{}, err
+	}
+	items, err := s.variantCards(variants, cityID, platformCodes)
+	return items, query.BuildMeta(total, page), err
 }
 
 func (s *CatalogService) SearchVariants(term, cityID string, platformCodes []string, page query.Page) ([]dto.VariantSearchItemDTO, query.Meta, error) {
@@ -213,56 +257,81 @@ func (s *CatalogService) SearchVariants(term, cityID string, platformCodes []str
 		return []dto.VariantSearchItemDTO{}, query.BuildMeta(0, page), nil
 	}
 
-	plats, err := s.platforms.ListEnabled()
+	productIDs := make([]string, 0, len(products))
+	for _, p := range products {
+		productIDs = append(productIDs, p.ID)
+	}
+	variants, err := s.variant.ListByProducts(productIDs)
 	if err != nil {
 		return nil, query.Meta{}, err
 	}
+	items, err := s.variantCards(variants, cityID, platformCodes)
+	if err != nil {
+		return nil, query.Meta{}, err
+	}
+	return items, query.BuildMeta(total, page), nil
+}
+
+func (s *CatalogService) variantCards(variants []domain.ProductVariant, cityID string, platformCodes []string) ([]dto.VariantSearchItemDTO, error) {
+	items := make([]dto.VariantSearchItemDTO, 0, len(variants))
+	if len(variants) == 0 {
+		return items, nil
+	}
+	plats, err := s.platforms.ListEnabled()
+	if err != nil {
+		return nil, err
+	}
 	platByID := make(map[string]domain.Platform, len(plats))
+	for _, p := range plats {
+		platByID[p.ID] = p
+	}
 	want := make(map[string]bool, len(platformCodes))
 	for _, code := range platformCodes {
 		want[code] = true
 	}
-	for _, p := range plats {
-		platByID[p.ID] = p
-	}
 
-	productIDs := make([]string, 0, len(products))
-	brandIDs := make([]string, 0, len(products))
-	prodByID := make(map[string]domain.Product, len(products))
-	for _, p := range products {
-		productIDs = append(productIDs, p.ID)
-		prodByID[p.ID] = p
+	productIDs := make([]string, 0, len(variants))
+	variantIDs := make([]string, 0, len(variants))
+	seenProduct := make(map[string]bool)
+	for _, v := range variants {
+		variantIDs = append(variantIDs, v.ID)
+		if !seenProduct[v.ProductID] {
+			seenProduct[v.ProductID] = true
+			productIDs = append(productIDs, v.ProductID)
+		}
+	}
+	prods, err := s.product.FindByIDs(productIDs)
+	if err != nil {
+		return nil, err
+	}
+	brandIDs := make([]string, 0, len(prods))
+	for _, p := range prods {
 		if p.BrandID != nil {
 			brandIDs = append(brandIDs, *p.BrandID)
 		}
 	}
 	brands, err := s.brand.FindByIDs(brandIDs)
 	if err != nil {
-		return nil, query.Meta{}, err
-	}
-	variants, err := s.variant.ListByProducts(productIDs)
-	if err != nil {
-		return nil, query.Meta{}, err
-	}
-	variantIDs := make([]string, 0, len(variants))
-	for _, v := range variants {
-		variantIDs = append(variantIDs, v.ID)
+		return nil, err
 	}
 	prices, err := s.price.ListByVariantsCity(variantIDs, cityID)
 	if err != nil {
-		return nil, query.Meta{}, err
+		return nil, err
 	}
 	priceByVariant := make(map[string][]domain.PlatformPrice, len(variantIDs))
 	for _, pr := range prices {
 		priceByVariant[pr.VariantID] = append(priceByVariant[pr.VariantID], pr)
 	}
+	imageByVariant, err := s.link.PrimaryImagesByVariants(variantIDs)
+	if err != nil {
+		return nil, err
+	}
 
-	items := make([]dto.VariantSearchItemDTO, 0, len(variants))
 	for _, v := range variants {
-		prod := prodByID[v.ProductID]
+		prod := prods[v.ProductID]
 		row := dto.VariantSearchItemDTO{
 			VariantID: v.ID, ProductID: v.ProductID, ProductName: prod.Name,
-			ImageURL: strPtr(prod.ImageURL), PackLabel: packLabel(v),
+			ImageURL: imageByVariant[v.ID], PackLabel: packLabel(v),
 			ReferencePrices: []dto.ReferencePriceDTO{},
 		}
 		if prod.BrandID != nil {
@@ -301,63 +370,19 @@ func (s *CatalogService) SearchVariants(term, cityID string, platformCodes []str
 		}
 		items = append(items, row)
 	}
-	return items, query.BuildMeta(total, page), nil
+	return items, nil
 }
 
-func (s *CatalogService) Deals(cityID string) ([]dto.ProductCardDTO, error) {
-	products, err := s.product.ListDeals(cityID, 30)
+func (s *CatalogService) Deals(cityID string, platformCodes []string) ([]dto.VariantSearchItemDTO, error) {
+	ids, err := s.product.ListDealVariantIDs(cityID, 30)
 	if err != nil {
 		return nil, err
 	}
-	return s.productCards(products, cityID)
-}
-
-func (s *CatalogService) productCards(products []domain.Product, cityID string) ([]dto.ProductCardDTO, error) {
-	if len(products) == 0 {
-		return []dto.ProductCardDTO{}, nil
-	}
-	productIDs := make([]string, 0, len(products))
-	brandIDs := make([]string, 0, len(products))
-	for _, p := range products {
-		productIDs = append(productIDs, p.ID)
-		if p.BrandID != nil {
-			brandIDs = append(brandIDs, *p.BrandID)
-		}
-	}
-	brands, err := s.brand.FindByIDs(brandIDs)
+	variants, err := s.variant.ListByIDsOrdered(ids)
 	if err != nil {
 		return nil, err
 	}
-	defaults, err := s.variant.DefaultsForProducts(productIDs)
-	if err != nil {
-		return nil, err
-	}
-	variantIDs := make([]string, 0, len(defaults))
-	for _, v := range defaults {
-		variantIDs = append(variantIDs, v.ID)
-	}
-	summaries, err := s.summary.GetMany(variantIDs, cityID)
-	if err != nil {
-		return nil, err
-	}
-
-	cards := make([]dto.ProductCardDTO, 0, len(products))
-	for _, p := range products {
-		card := dto.ProductCardDTO{ProductID: p.ID, Name: p.Name, ImageURL: strPtr(p.ImageURL)}
-		if p.BrandID != nil {
-			if b, ok := brands[*p.BrandID]; ok {
-				card.BrandName = b.Name
-			}
-		}
-		if dv, ok := defaults[p.ID]; ok {
-			card.DefaultVariantID = dv.ID
-			if sum, ok := summaries[dv.ID]; ok && sum.MinPricePaise != nil {
-				card.StartingPrice = dto.MoneyPtr(sum.MinPricePaise)
-			}
-		}
-		cards = append(cards, card)
-	}
-	return cards, nil
+	return s.variantCards(variants, cityID, platformCodes)
 }
 
 func (s *CatalogService) platformMap() (map[string]domain.Platform, error) {

@@ -212,8 +212,6 @@ func (a *App) buildRouter() *gin.Engine {
 	v1.RegisterPresignedURLRoutes(r, a.AuthDeps)
 	// Mobile-contract stub routes. cart/wishlist/product-detail were dropped in
 	// the master merge — consumer.go implements those for real on the same paths.
-	v1.RegisterAddressRoutes(r)
-	v1.RegisterTopDealsRoutes(r)
 	v1.RegisterSettingsRoutes(r)
 
 	v1.RegisterConsumerRoutes(r, v1.ConsumerDeps{

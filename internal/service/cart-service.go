@@ -1,6 +1,9 @@
 package service
 
 import (
+	"strconv"
+	"strings"
+
 	"grocerics-backend/internal/domain"
 	"grocerics-backend/internal/dto"
 	"grocerics-backend/internal/errs"
@@ -8,6 +11,21 @@ import (
 
 	"gorm.io/gorm"
 )
+
+func leadingMinutes(s *string) (int, bool) {
+	if s == nil {
+		return 0, false
+	}
+	fields := strings.Fields(*s)
+	if len(fields) == 0 {
+		return 0, false
+	}
+	n, err := strconv.Atoi(fields[0])
+	if err != nil {
+		return 0, false
+	}
+	return n, true
+}
 
 type CartService struct {
 	cart     *repository.CartRepository
@@ -19,6 +37,7 @@ type CartService struct {
 	platform *repository.PlatformRepository
 	eta      *repository.PlatformDeliveryETARepository
 	wishlist *repository.WishlistRepository
+	link     *repository.ProductPlatformLinkRepository
 }
 
 func NewCartService(db *gorm.DB) *CartService {
@@ -32,6 +51,7 @@ func NewCartService(db *gorm.DB) *CartService {
 		platform: repository.NewPlatformRepository(db),
 		eta:      repository.NewPlatformDeliveryETARepository(db),
 		wishlist: repository.NewWishlistRepository(db),
+		link:     repository.NewProductPlatformLinkRepository(db),
 	}
 }
 
@@ -143,6 +163,10 @@ func (s *CartService) buildResponse(lines []breakdownLine, cityID, pincode strin
 	if err != nil {
 		return nil, err
 	}
+	imageByVariant, err := s.link.PrimaryImagesByVariants(variantIDs)
+	if err != nil {
+		return nil, err
+	}
 	prices, err := s.price.ListByVariantsCity(variantIDs, cityID)
 	if err != nil {
 		return nil, err
@@ -173,7 +197,7 @@ func (s *CartService) buildResponse(lines []breakdownLine, cityID, pincode strin
 
 	for _, l := range lines {
 		v := variants[l.VariantID]
-		line := dto.CartLineDTO{ItemID: l.ID, VariantID: l.VariantID, PackLabel: packLabel(v), Quantity: l.Quantity}
+		line := dto.CartLineDTO{ItemID: l.ID, VariantID: l.VariantID, PackLabel: packLabel(v), Quantity: l.Quantity, ImageURL: imageByVariant[l.VariantID]}
 		if p, ok := products[v.ProductID]; ok {
 			line.ProductName = p.Name
 		}
@@ -192,6 +216,8 @@ func (s *CartService) buildResponse(lines []breakdownLine, cityID, pincode strin
 		if m, ok := etaByPlatform[plat.ID]; ok {
 			eta := m
 			b.DeliveryETAMinutes = &eta
+		} else if mins, ok := leadingMinutes(plat.DeliveryETAText); ok {
+			b.DeliveryETAMinutes = &mins
 		}
 		var itemTotal, availTotal int64
 		for _, l := range lines {
@@ -211,7 +237,10 @@ func (s *CartService) buildResponse(lines []breakdownLine, cityID, pincode strin
 		b.ItemTotal = dto.Money(itemTotal)
 		b.AvailableTotal = dto.Money(availTotal)
 		resp.Platforms = append(resp.Platforms, b)
-		if availTotal > 0 && (cheapestTotal < 0 || availTotal < cheapestTotal) {
+		// is_cheapest only among platforms carrying the WHOLE basket (no
+		// unavailable/missing lines). If none do, nobody is flagged.
+		fullCoverage := len(b.UnavailableItemIDs) == 0 && len(b.AvailableItemIDs) > 0
+		if fullCoverage && (cheapestTotal < 0 || availTotal < cheapestTotal) {
 			cheapestTotal = availTotal
 			cheapestIdx = len(resp.Platforms) - 1
 		}

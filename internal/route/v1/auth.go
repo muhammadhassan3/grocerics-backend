@@ -33,6 +33,7 @@ func RegisterAuthRoutes(r *gin.Engine, d AuthDeps) {
 	// --- client (mobile, OTP) ---
 	g.POST("/phone-login", phoneLogin(d.Client))
 	g.POST("/verify-phone-otp", verifyPhoneOTP(d.Client))
+	g.POST("/phone-refresh", phoneRefresh(d.Client))
 	g.POST("/mobile-register", mobileRegister(d.Client))
 
 	client := r.Group("/auth")
@@ -211,12 +212,12 @@ type VerifyPhoneOTPRequest struct {
 }
 
 // @Summary Verify phone OTP (client)
-// @Description Verify the OTP and issue client tokens. Creates the client account on first successful login (find-or-create by phone).
+// @Description Verify the OTP and issue client tokens. Creates the client account on first successful login (find-or-create by phone). `data.is_new` is true when this call created the account, so the app can route first-time users to onboarding.
 // @Tags Auth
 // @Accept json
 // @Produce json
 // @Param verifyPhoneOTPRequest body VerifyPhoneOTPRequest true "Verify phone OTP request payload"
-// @Success 200 {object} dto.Response{data=dto.TokenResponse}
+// @Success 200 {object} dto.Response{data=dto.ClientAuthResponse}
 // @Router /auth/verify-phone-otp [post]
 func verifyPhoneOTP(svc *service.ClientAuthService) gin.HandlerFunc {
 	return func(c *gin.Context) {
@@ -231,6 +232,35 @@ func verifyPhoneOTP(svc *service.ClientAuthService) gin.HandlerFunc {
 			return
 		}
 		c.JSON(200, dto.Response{Status: "success", Message: "OTP verified successfully", Data: res})
+	}
+}
+
+type PhoneRefreshRequest struct {
+	RefreshToken string `json:"refresh_token" binding:"required"`
+}
+
+// @Summary Refresh client token
+// @Description Exchange a valid client refresh_token (from verify-phone-otp) for a fresh access + refresh pair. Stateless; rejects admin tokens. Use this instead of /auth/refresh, which is admin-only.
+// @Tags Auth
+// @Accept json
+// @Produce json
+// @Param phoneRefreshRequest body PhoneRefreshRequest true "Client refresh token payload"
+// @Success 200 {object} dto.Response{data=dto.ClientAuthResponse}
+// @Failure 401 {object} dto.Response
+// @Router /auth/phone-refresh [post]
+func phoneRefresh(svc *service.ClientAuthService) gin.HandlerFunc {
+	return func(c *gin.Context) {
+		var req PhoneRefreshRequest
+		if err := c.ShouldBindJSON(&req); err != nil {
+			c.Error(errs.BadRequest("VALIDATION", util.ParseValidationError(err).Error()))
+			return
+		}
+		res, err := svc.RefreshToken(req.RefreshToken)
+		if err != nil {
+			c.Error(err)
+			return
+		}
+		c.JSON(200, dto.Response{Status: "success", Message: "token refreshed", Data: res})
 	}
 }
 
