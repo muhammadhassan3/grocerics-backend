@@ -195,12 +195,12 @@ type BatchLinkResult struct {
 	Failed []BatchLinkFailure `json:"failed,omitempty"`
 }
 
-func (s *LinkingService) Credits() (int, error) {
+func (s *LinkingService) Credits() (int, int, error) {
 	c, err := s.qc.Credits(context.Background())
 	if err != nil {
-		return 0, errs.Internal("QC_CREDITS_FAILED", err)
+		return 0, 0, errs.Internal("QC_CREDITS_FAILED", err)
 	}
-	return c.Remaining, nil
+	return c.Remaining, c.Used, nil
 }
 
 func (s *LinkingService) resolvePlatform(platformCode string) (*domain.Platform, error) {

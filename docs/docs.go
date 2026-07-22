@@ -7929,6 +7929,9 @@ const docTemplate = `{
             "properties": {
                 "credits_remaining": {
                     "type": "integer"
+                },
+                "credits_used": {
+                    "type": "integer"
                 }
             }
         },

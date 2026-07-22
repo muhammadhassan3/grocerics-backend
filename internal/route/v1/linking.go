@@ -103,6 +103,7 @@ func listPlatforms(d LinkingDeps) gin.HandlerFunc {
 
 type CreditsResponse struct {
 	CreditsRemaining int `json:"credits_remaining"`
+	CreditsUsed      int `json:"credits_used"`
 }
 
 // @Summary QuickCommerce credits remaining
@@ -114,12 +115,12 @@ type CreditsResponse struct {
 // @Router /v1/credits [get]
 func qcCredits(d LinkingDeps) gin.HandlerFunc {
 	return func(c *gin.Context) {
-		n, err := d.Linking.Credits()
+		n, u, err := d.Linking.Credits()
 		if err != nil {
 			c.Error(err)
 			return
 		}
-		ok(c, CreditsResponse{CreditsRemaining: n})
+		ok(c, CreditsResponse{CreditsRemaining: n, CreditsUsed: u})
 	}
 }
 

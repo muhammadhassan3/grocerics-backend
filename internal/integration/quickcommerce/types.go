@@ -62,4 +62,5 @@ type GroupETAResult struct {
 
 type Credits struct {
 	Remaining int `json:"credits_remaining"`
+	Used      int `json:"credits_used"`
 }

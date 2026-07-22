@@ -9,6 +9,9 @@ RUN --mount=type=cache,target=/root/.cache/go-build \
     --mount=type=cache,target=/go/pkg/mod \
     go install github.com/swaggo/swag/cmd/swag@v1.16.6
 
+# Node js for redocly
+RUN apk add --no-cache nodejs npm && npm install -g @redocly/cli
+
 COPY go.mod go.sum ./
 RUN --mount=type=cache,target=/go/pkg/mod go mod download
 COPY . .
@@ -18,6 +21,9 @@ COPY . .
 RUN --mount=type=cache,target=/root/.cache/go-build \
     --mount=type=cache,target=/go/pkg/mod \
     swag init -g cmd/main.go -o docs
+
+RUN redocly build-docs ./docs/swagger.json -o ./docs/redoc-static.html
+
 RUN --mount=type=cache,target=/root/.cache/go-build \
     --mount=type=cache,target=/go/pkg/mod \
     CGO_ENABLED=0 GOOS=linux go build -o /out/api ./cmd
@@ -27,5 +33,6 @@ FROM alpine:3.20
 RUN apk add --no-cache ca-certificates && adduser -D -u 10001 app
 USER app
 COPY --from=build /out/api /usr/local/bin/api
+COPY --from=build /src/docs/redoc-static.html /docs/redoc-static.html
 EXPOSE 8080
 ENTRYPOINT ["api"]
