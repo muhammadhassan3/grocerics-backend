@@ -234,6 +234,7 @@ func (a *App) buildRouter() *gin.Engine {
 
 	docs.SwaggerInfo.BasePath = "/"
 	r.GET("/swagger/*any", ginSwagger.WrapHandler(swaggerFile.Handler))
+	r.StaticFile("/redoc", "./docs/redoc-static.html")
 	return r
 }
 
