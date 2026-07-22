@@ -56,11 +56,6 @@ definitions:
       image_url:
         description: URL of the banner image
         type: string
-      is_active:
-        description: |-
-          Manual on/off switch. Can only turn a banner OFF — it never forces one
-          live outside its date window.
-        type: boolean
       is_live:
         description: |-
           Derived, read-only: whether the banner is actually showing right now
@@ -68,6 +63,11 @@ definitions:
         type: boolean
       start_date:
         description: Date the banner becomes visible, RFC3339
+        type: string
+      status:
+        description: |-
+          Manual on/off switch. Can only turn a banner OFF — it never forces one
+          live outside its date window.
         type: string
       title:
         description: Admin-facing name, so banners are distinguishable in the grid
@@ -277,9 +277,6 @@ definitions:
       default_pincode:
         description: Pincode used as the default QuickCommerce location anchor
         type: string
-      enabled:
-        description: Whether the city is serviceable
-        type: boolean
       lat:
         description: Latitude of the city's QuickCommerce location anchor
         type: number
@@ -294,6 +291,9 @@ definitions:
         type: string
       state:
         description: State the city sits in
+        type: string
+      status:
+        description: 'Serviceability status: "active" | "disabled"'
         type: string
     type: object
   dto.ClientAuthResponse:
@@ -638,9 +638,6 @@ definitions:
       display_order:
         description: Sort order in pickers
         type: integer
-      enabled:
-        description: Whether the platform is enabled
-        type: boolean
       logo_url:
         description: URL of the platform's logo
         type: string
@@ -654,6 +651,9 @@ definitions:
       searchable:
         description: True when qc_name is set, i.e. the platform can be searched/linked.
         type: boolean
+      status:
+        description: 'Platform status: "active" | "disabled"'
+        type: string
     type: object
   dto.PlatformPriceChipDTO:
     properties:
@@ -3112,6 +3112,31 @@ paths:
       security:
       - BearerAuth: []
       summary: List all cities (admin)
+      tags:
+      - cities
+  /v1/cities/reorder:
+    patch:
+      consumes:
+      - application/json
+      description: Persist a new city order. Send the full list of city IDs in the
+        desired order; each id's position becomes its display_order.
+      parameters:
+      - description: Ordered city IDs
+        in: body
+        name: request
+        required: true
+        schema:
+          $ref: '#/definitions/v1.ReorderRequest'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/dto.Response'
+      security:
+      - BearerAuth: []
+      summary: Reorder cities (admin)
       tags:
       - cities
   /v1/credits:

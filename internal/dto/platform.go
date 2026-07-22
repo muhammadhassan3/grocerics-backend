@@ -20,8 +20,8 @@ type PlatformItem struct {
 	LogoURL string `json:"logo_url,omitempty"`
 	// Fallback delivery ETA copy, e.g. "10 Mins"
 	DeliveryETAText string `json:"delivery_eta_text,omitempty"`
-	// Whether the platform is enabled
-	Enabled bool `json:"enabled"`
+	// Platform status: "active" | "disabled"
+	Status string `json:"status"`
 	// Sort order in pickers
 	DisplayOrder int `json:"display_order"`
 	// Creation timestamp, RFC3339

@@ -20,8 +20,8 @@ type CityItem struct {
 	Lng *float64 `json:"lng,omitempty"`
 	// Pincode used as the default QuickCommerce location anchor
 	DefaultPincode string `json:"default_pincode,omitempty"`
-	// Whether the city is serviceable
-	Enabled bool `json:"enabled"`
+	// Serviceability status: "active" | "disabled"
+	Status string `json:"status"`
 }
 
 // @Swagger:model Cities

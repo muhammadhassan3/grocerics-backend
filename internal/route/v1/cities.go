@@ -29,7 +29,7 @@ func toCityDTO(c domain.City) dto.CityItem {
 		Lat:            c.Lat,
 		Lng:            c.Lng,
 		DefaultPincode: util.Deref(c.DefaultPincode),
-		Enabled:        c.Enabled,
+		Status:         dto.StatusLabel(c.Enabled),
 	}
 }
 
@@ -43,7 +43,32 @@ func RegisterCityRoutes(r *gin.Engine, d CityDeps) {
 	admin.GET("/cities/:id", getCityByID(d))
 	admin.POST("/cities", createCity(d))
 	admin.PATCH("/cities", updateCity(d))
+	admin.PATCH("/cities/reorder", reorderCities(d))
 	admin.DELETE("/cities", deleteCity(d))
+}
+
+// @Summary Reorder cities (admin)
+// @Description Persist a new city order. Send the full list of city IDs in the desired order; each id's position becomes its display_order.
+// @Tags cities
+// @Accept json
+// @Produce json
+// @Security BearerAuth
+// @Param request body ReorderRequest true "Ordered city IDs"
+// @Success 200 {object} dto.Response
+// @Router /v1/cities/reorder [patch]
+func reorderCities(d CityDeps) gin.HandlerFunc {
+	return func(c *gin.Context) {
+		var req ReorderRequest
+		if err := c.ShouldBindJSON(&req); err != nil {
+			c.Error(errs.BadRequest("VALIDATION", util.ParseValidationError(err).Error()))
+			return
+		}
+		if err := d.Cities.Reorder(req.IDs); err != nil {
+			c.Error(err)
+			return
+		}
+		c.JSON(200, dto.Response{Status: "success", Message: "Cities reordered"})
+	}
 }
 
 // @Summary List all cities (admin)

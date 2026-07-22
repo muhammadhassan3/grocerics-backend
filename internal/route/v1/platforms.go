@@ -70,7 +70,7 @@ func toPlatformDTO(p domain.Platform) dto.PlatformItem {
 		Searchable:      qc != "",
 		LogoURL:         util.Deref(p.LogoURL),
 		DeliveryETAText: util.Deref(p.DeliveryETAText),
-		Enabled:         p.Enabled,
+		Status:          dto.StatusLabel(p.Enabled),
 		DisplayOrder:    p.DisplayOrder,
 		CreatedAt:       p.CreatedAt.Format(time.RFC3339),
 	}

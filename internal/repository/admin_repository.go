@@ -2,6 +2,8 @@ package repository
 
 import (
 	"context"
+	"strconv"
+	"strings"
 
 	"grocerics-backend/internal/domain"
 	"grocerics-backend/internal/query"
@@ -26,16 +28,24 @@ func adminReorder[T any](db *gorm.DB, ids []string, idx string) error {
 	if len(ids) == 0 {
 		return nil
 	}
-	err := db.WithContext(context.Background()).Transaction(func(tx *gorm.DB) error {
-		var zero T
-		for i, id := range ids {
-			if err := tx.Model(&zero).Where("id = ? AND deleted_at IS NULL", id).
-				Update("display_order", i).Error; err != nil {
-				return err
-			}
-		}
-		return nil
-	})
+	var zero T
+	stmt := &gorm.Statement{DB: db}
+	if err := stmt.Parse(&zero); err != nil {
+		return util.ParseDatabaseError(err, idx)
+	}
+	var b strings.Builder
+	b.WriteString("UPDATE ")
+	b.WriteString(stmt.Table)
+	b.WriteString(" SET display_order = CASE id::text")
+	args := make([]any, 0, len(ids)+1)
+	for i, id := range ids {
+		b.WriteString(" WHEN ? THEN ")
+		b.WriteString(strconv.Itoa(i))
+		args = append(args, id)
+	}
+	b.WriteString(" END WHERE id::text IN ? AND deleted_at IS NULL")
+	args = append(args, ids)
+	err := db.WithContext(context.Background()).Exec(b.String(), args...).Error
 	return util.ParseDatabaseError(err, idx)
 }
 
@@ -311,6 +321,10 @@ func (r *CityRepository) SoftDelete(id, adminID string) error {
 	return adminSoftDelete[domain.City](r.db, id, adminID, "idx_cities_")
 }
 
+func (r *CityRepository) Reorder(ids []string) error {
+	return adminReorder[domain.City](r.db, ids, "idx_cities_")
+}
+
 func (r *CityRepository) ListAdmin(p query.Page, search string) ([]domain.City, int64, error) {
 	ctx := context.Background()
 	q := gorm.G[domain.City](r.db).Where("deleted_at IS NULL")
@@ -321,7 +335,7 @@ func (r *CityRepository) ListAdmin(p query.Page, search string) ([]domain.City, 
 	if err != nil {
 		return nil, 0, util.ParseDatabaseError(err, "idx_cities_")
 	}
-	items, err := q.Order("name").Limit(p.Limit()).Offset(p.Offset()).Find(ctx)
+	items, err := q.Order("display_order, name").Limit(p.Limit()).Offset(p.Offset()).Find(ctx)
 	if err != nil {
 		return nil, 0, util.ParseDatabaseError(err, "idx_cities_")
 	}
