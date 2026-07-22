@@ -2012,6 +2012,45 @@ const docTemplate = `{
                 }
             }
         },
+        "/v1/cities/reorder": {
+            "patch": {
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
+                "description": "Persist a new city order. Send the full list of city IDs in the desired order; each id's position becomes its display_order.",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "cities"
+                ],
+                "summary": "Reorder cities (admin)",
+                "parameters": [
+                    {
+                        "description": "Ordered city IDs",
+                        "name": "request",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/v1.ReorderRequest"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/dto.Response"
+                        }
+                    }
+                }
+            }
+        },
         "/v1/cities/{id}": {
             "get": {
                 "security": [
@@ -5831,16 +5870,16 @@ const docTemplate = `{
                     "description": "URL of the banner image",
                     "type": "string"
                 },
-                "is_active": {
-                    "description": "Manual on/off switch. Can only turn a banner OFF — it never forces one\nlive outside its date window.",
-                    "type": "boolean"
-                },
                 "is_live": {
                     "description": "Derived, read-only: whether the banner is actually showing right now\n(is_active AND inside the date window). This is what the grid should display.",
                     "type": "boolean"
                 },
                 "start_date": {
                     "description": "Date the banner becomes visible, RFC3339",
+                    "type": "string"
+                },
+                "status": {
+                    "description": "Manual on/off switch. Can only turn a banner OFF — it never forces one\nlive outside its date window.",
                     "type": "string"
                 },
                 "title": {
@@ -6150,10 +6189,6 @@ const docTemplate = `{
                     "description": "Pincode used as the default QuickCommerce location anchor",
                     "type": "string"
                 },
-                "enabled": {
-                    "description": "Whether the city is serviceable",
-                    "type": "boolean"
-                },
                 "lat": {
                     "description": "Latitude of the city's QuickCommerce location anchor",
                     "type": "number"
@@ -6172,6 +6207,10 @@ const docTemplate = `{
                 },
                 "state": {
                     "description": "State the city sits in",
+                    "type": "string"
+                },
+                "status": {
+                    "description": "Serviceability status: \"active\" | \"disabled\"",
                     "type": "string"
                 }
             }
@@ -6695,10 +6734,6 @@ const docTemplate = `{
                     "description": "Sort order in pickers",
                     "type": "integer"
                 },
-                "enabled": {
-                    "description": "Whether the platform is enabled",
-                    "type": "boolean"
-                },
                 "logo_url": {
                     "description": "URL of the platform's logo",
                     "type": "string"
@@ -6714,6 +6749,10 @@ const docTemplate = `{
                 "searchable": {
                     "description": "True when qc_name is set, i.e. the platform can be searched/linked.",
                     "type": "boolean"
+                },
+                "status": {
+                    "description": "Platform status: \"active\" | \"disabled\"",
+                    "type": "string"
                 }
             }
         },

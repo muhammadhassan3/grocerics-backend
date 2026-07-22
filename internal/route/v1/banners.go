@@ -42,7 +42,7 @@ func toBannerDTO(b domain.Banner) dto.BannerItem {
 		StartDate: util.FmtDate(b.StartDate),
 		EndDate:   util.FmtDate(b.EndDate),
 		ImageURL:  b.ImageURL,
-		IsActive:  b.IsActive,
+		Status:    dto.StatusLabel(b.IsActive),
 		IsLive:    b.IsLive(time.Now()),
 		CreatedAt: b.CreatedAt.Format(time.RFC3339),
 	}

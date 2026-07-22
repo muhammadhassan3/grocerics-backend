@@ -19,7 +19,7 @@ func (r *CityRepository) ListEnabled() ([]domain.City, error) {
 	ctx := context.Background()
 	items, err := gorm.G[domain.City](r.db).
 		Where("enabled AND deleted_at IS NULL").
-		Order("name").
+		Order("display_order, name").
 		Find(ctx)
 	if err != nil {
 		return nil, util.ParseDatabaseError(err, "idx_cities_")

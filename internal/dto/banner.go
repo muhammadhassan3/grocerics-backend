@@ -23,7 +23,7 @@ type BannerItem struct {
 	ImageURL string `json:"image_url"`
 	// Manual on/off switch. Can only turn a banner OFF — it never forces one
 	// live outside its date window.
-	IsActive bool `json:"is_active"`
+	Status string `json:"status"`
 	// Derived, read-only: whether the banner is actually showing right now
 	// (is_active AND inside the date window). This is what the grid should display.
 	IsLive bool `json:"is_live"`
