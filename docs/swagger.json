@@ -16,7 +16,7 @@
                         "BearerAuth": []
                     }
                 ],
-                "description": "Delete the authenticated client's account. STUB — deletion not yet wired.",
+                "description": "Soft-delete the authenticated client's account. Immediately invalidates all tokens (auth re-checks the user row each request); the phone number is freed for a fresh sign-up.",
                 "produces": [
                     "application/json"
                 ],
@@ -322,6 +322,40 @@
                     },
                     "401": {
                         "description": "Unauthorized",
+                        "schema": {
+                            "$ref": "#/definitions/dto.Response"
+                        }
+                    }
+                }
+            }
+        },
+        "/auth/resend-otp": {
+            "post": {
+                "description": "Re-issue a login OTP for the phone. Invalidates the previous code and starts a fresh 5-minute TTL. MOCK — the code is printed to the server logs AND returned as data.otp_code (dev only).",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Auth"
+                ],
+                "summary": "Resend phone OTP (client)",
+                "parameters": [
+                    {
+                        "description": "Phone number payload",
+                        "name": "mobileLoginRequest",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/dto.MobileLoginRequest"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
                         "schema": {
                             "$ref": "#/definitions/dto.Response"
                         }
@@ -1053,6 +1087,76 @@
                                     }
                                 }
                             ]
+                        }
+                    }
+                }
+            }
+        },
+        "/v1/brands/{brand_id}/products": {
+            "get": {
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
+                "description": "Paginated grid of variant cards for all products of a brand in the user's city. Variant-first — one card per pack. Optional ?platforms= filters which reference prices are shown.",
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "consumer"
+                ],
+                "summary": "Variants of a brand (PLP)",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "Brand ID",
+                        "name": "brand_id",
+                        "in": "path",
+                        "required": true
+                    },
+                    {
+                        "type": "string",
+                        "description": "comma-separated platform codes; omitted = all enabled",
+                        "name": "platforms",
+                        "in": "query"
+                    },
+                    {
+                        "type": "integer",
+                        "description": "page number (default 1)",
+                        "name": "page",
+                        "in": "query"
+                    },
+                    {
+                        "type": "integer",
+                        "description": "page size, max 100 (default 20)",
+                        "name": "page_size",
+                        "in": "query"
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "allOf": [
+                                {
+                                    "$ref": "#/definitions/dto.Response"
+                                },
+                                {
+                                    "type": "object",
+                                    "properties": {
+                                        "data": {
+                                            "$ref": "#/definitions/dto.VariantSearchListDTO"
+                                        }
+                                    }
+                                }
+                            ]
+                        }
+                    },
+                    "401": {
+                        "description": "Unauthorized",
+                        "schema": {
+                            "$ref": "#/definitions/dto.Response"
                         }
                     }
                 }
@@ -2300,43 +2404,6 @@
                                     "properties": {
                                         "data": {
                                             "type": "string"
-                                        }
-                                    }
-                                }
-                            ]
-                        }
-                    }
-                }
-            }
-        },
-        "/v1/dashboard/mobile": {
-            "get": {
-                "security": [
-                    {
-                        "BearerAuth": []
-                    }
-                ],
-                "description": "STUB — out of scope for the admin dashboard slice; overlaps /v1/home.",
-                "produces": [
-                    "application/json"
-                ],
-                "tags": [
-                    "dashboard"
-                ],
-                "summary": "Get mobile dashboard data",
-                "responses": {
-                    "200": {
-                        "description": "OK",
-                        "schema": {
-                            "allOf": [
-                                {
-                                    "$ref": "#/definitions/dto.Response"
-                                },
-                                {
-                                    "type": "object",
-                                    "properties": {
-                                        "data": {
-                                            "$ref": "#/definitions/dto.DashboardMobile"
                                         }
                                     }
                                 }
@@ -5880,24 +5947,6 @@
                 }
             }
         },
-        "dto.BannerMobileItem": {
-            "description": "A promotional banner shown on the mobile dashboard.",
-            "type": "object",
-            "properties": {
-                "banner_id": {
-                    "description": "Unique identifier for the banner",
-                    "type": "string"
-                },
-                "deeplink": {
-                    "description": "App deeplink to navigate to when the banner is tapped",
-                    "type": "string"
-                },
-                "image_url": {
-                    "description": "URL of the banner image",
-                    "type": "string"
-                }
-            }
-        },
         "dto.Banners": {
             "description": "Paginated list of banners.",
             "type": "object",
@@ -6262,40 +6311,6 @@
                 "wednesday": {
                     "description": "Active users on Wednesday",
                     "type": "integer"
-                }
-            }
-        },
-        "dto.DashboardMobile": {
-            "description": "Envelope for the mobile app's home dashboard endpoint.",
-            "type": "object",
-            "properties": {
-                "banners": {
-                    "description": "Promotional banners for the mobile dashboard",
-                    "type": "array",
-                    "items": {
-                        "$ref": "#/definitions/dto.BannerMobileItem"
-                    }
-                },
-                "top_stores": {
-                    "description": "Featured stores for the mobile dashboard",
-                    "type": "array",
-                    "items": {
-                        "$ref": "#/definitions/dto.TopStoreMobileItem"
-                    }
-                },
-                "trending_categories": {
-                    "description": "Trending product categories for the mobile dashboard",
-                    "type": "array",
-                    "items": {
-                        "$ref": "#/definitions/dto.TrendingCategoryMobileItem"
-                    }
-                },
-                "trending_items": {
-                    "description": "Trending products for the mobile dashboard",
-                    "type": "array",
-                    "items": {
-                        "$ref": "#/definitions/dto.TrendingItemMobileItem"
-                    }
                 }
             }
         },
@@ -7270,68 +7285,6 @@
                 "search_count": {
                     "description": "Number of times the product was searched for",
                     "type": "integer"
-                }
-            }
-        },
-        "dto.TopStoreMobileItem": {
-            "description": "A featured store shown on the mobile dashboard.",
-            "type": "object",
-            "properties": {
-                "eta": {
-                    "description": "Estimated delivery time for the store, e.g. \"10 mins\"",
-                    "type": "string"
-                },
-                "image_url": {
-                    "description": "URL of the store's display image",
-                    "type": "string"
-                },
-                "store_id": {
-                    "description": "Unique identifier for the store",
-                    "type": "string"
-                },
-                "store_name": {
-                    "description": "Display name of the store",
-                    "type": "string"
-                }
-            }
-        },
-        "dto.TrendingCategoryMobileItem": {
-            "description": "A trending product category shown on the mobile dashboard.",
-            "type": "object",
-            "properties": {
-                "category_id": {
-                    "description": "Unique identifier for the category",
-                    "type": "string"
-                },
-                "category_name": {
-                    "description": "Display name of the category",
-                    "type": "string"
-                },
-                "image_url": {
-                    "description": "URL of the category's display image",
-                    "type": "string"
-                }
-            }
-        },
-        "dto.TrendingItemMobileItem": {
-            "description": "A trending product shown on the mobile dashboard.",
-            "type": "object",
-            "properties": {
-                "image_url": {
-                    "description": "URL of the product's display image",
-                    "type": "string"
-                },
-                "item_id": {
-                    "description": "Unique identifier for the product",
-                    "type": "string"
-                },
-                "item_name": {
-                    "description": "Display name of the product",
-                    "type": "string"
-                },
-                "lowest_price": {
-                    "description": "Lowest price for the product across tracked delivery platforms",
-                    "type": "number"
                 }
             }
         },

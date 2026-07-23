@@ -66,7 +66,12 @@ func (s *CatalogService) Home(cityID string) (*dto.HomeResponse, error) {
 		return nil, err
 	}
 
-	resp := &dto.HomeResponse{TrendingItems: cards}
+	resp := &dto.HomeResponse{
+		Banners:       []dto.BannerCardDTO{},
+		TopStores:     []dto.PlatformDTO{},
+		Categories:    []dto.CategoryCardDTO{},
+		TrendingItems: cards,
+	}
 	for _, b := range banners {
 		card := dto.BannerCardDTO{ImageURL: b.ImageURL, TargetType: string(b.TargetType)}
 		if b.TargetID != nil {
@@ -229,6 +234,14 @@ func (s *CatalogService) ProductsByCategory(categoryID, cityID string, platformC
 
 func (s *CatalogService) ProductsBySubcategory(subcategoryID, cityID string, platformCodes []string, page query.Page) ([]dto.VariantSearchItemDTO, query.Meta, error) {
 	products, total, err := s.product.ListBySubcategory(subcategoryID, page)
+	if err != nil {
+		return nil, query.Meta{}, err
+	}
+	return s.variantCardsForProducts(products, total, cityID, platformCodes, page)
+}
+
+func (s *CatalogService) ProductsByBrand(brandID, cityID string, platformCodes []string, page query.Page) ([]dto.VariantSearchItemDTO, query.Meta, error) {
+	products, total, err := s.product.ListByBrand(brandID, page)
 	if err != nil {
 		return nil, query.Meta{}, err
 	}

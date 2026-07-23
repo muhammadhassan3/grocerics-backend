@@ -32,8 +32,6 @@ func RegisterDashboardRoutes(r *gin.Engine, d DashboardDeps) {
 	group.GET("/dashboard/stats", getDashboardStats(d))
 	group.GET("/dashboard/live-price-comparison", getLivePriceComparison(d))
 	group.GET("/dashboard/top-searched-products", getTopSearchedProducts(d))
-
-	group.GET("/dashboard/mobile", getDashboardMobile()) // out of scope for Slice D (mobile stub)
 }
 
 func buildStats(d DashboardDeps) (dto.DashboardStats, error) {
@@ -267,19 +265,3 @@ func getTopSearchedProducts(d DashboardDeps) gin.HandlerFunc {
 	}
 }
 
-// @Summary Get mobile dashboard data
-// @Description STUB — out of scope for the admin dashboard slice; overlaps /v1/home.
-// @Tags dashboard
-// @Produce json
-// @Success 200 {object} dto.Response{data=dto.DashboardMobile}
-// @Security BearerAuth
-// @Router /v1/dashboard/mobile [get]
-func getDashboardMobile() gin.HandlerFunc {
-	return func(c *gin.Context) {
-		c.JSON(200, dto.Response{
-			Data:    dto.DashboardMobile{},
-			Message: "Dashboard data fetched successfully",
-			Status:  "success",
-		})
-	}
-}

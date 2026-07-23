@@ -73,19 +73,6 @@ definitions:
         description: Admin-facing name, so banners are distinguishable in the grid
         type: string
     type: object
-  dto.BannerMobileItem:
-    description: A promotional banner shown on the mobile dashboard.
-    properties:
-      banner_id:
-        description: Unique identifier for the banner
-        type: string
-      deeplink:
-        description: App deeplink to navigate to when the banner is tapped
-        type: string
-      image_url:
-        description: URL of the banner image
-        type: string
-    type: object
   dto.Banners:
     description: Paginated list of banners.
     properties:
@@ -336,30 +323,6 @@ definitions:
       wednesday:
         description: Active users on Wednesday
         type: integer
-    type: object
-  dto.DashboardMobile:
-    description: Envelope for the mobile app's home dashboard endpoint.
-    properties:
-      banners:
-        description: Promotional banners for the mobile dashboard
-        items:
-          $ref: '#/definitions/dto.BannerMobileItem'
-        type: array
-      top_stores:
-        description: Featured stores for the mobile dashboard
-        items:
-          $ref: '#/definitions/dto.TopStoreMobileItem'
-        type: array
-      trending_categories:
-        description: Trending product categories for the mobile dashboard
-        items:
-          $ref: '#/definitions/dto.TrendingCategoryMobileItem'
-        type: array
-      trending_items:
-        description: Trending products for the mobile dashboard
-        items:
-          $ref: '#/definitions/dto.TrendingItemMobileItem'
-        type: array
     type: object
   dto.DashboardResponse:
     description: Envelope for the admin dashboard endpoint.
@@ -1019,51 +982,6 @@ definitions:
       search_count:
         description: Number of times the product was searched for
         type: integer
-    type: object
-  dto.TopStoreMobileItem:
-    description: A featured store shown on the mobile dashboard.
-    properties:
-      eta:
-        description: Estimated delivery time for the store, e.g. "10 mins"
-        type: string
-      image_url:
-        description: URL of the store's display image
-        type: string
-      store_id:
-        description: Unique identifier for the store
-        type: string
-      store_name:
-        description: Display name of the store
-        type: string
-    type: object
-  dto.TrendingCategoryMobileItem:
-    description: A trending product category shown on the mobile dashboard.
-    properties:
-      category_id:
-        description: Unique identifier for the category
-        type: string
-      category_name:
-        description: Display name of the category
-        type: string
-      image_url:
-        description: URL of the category's display image
-        type: string
-    type: object
-  dto.TrendingItemMobileItem:
-    description: A trending product shown on the mobile dashboard.
-    properties:
-      image_url:
-        description: URL of the product's display image
-        type: string
-      item_id:
-        description: Unique identifier for the product
-        type: string
-      item_name:
-        description: Display name of the product
-        type: string
-      lowest_price:
-        description: Lowest price for the product across tracked delivery platforms
-        type: number
     type: object
   dto.UserData:
     description: User data associated with the authenticated user.
@@ -1933,8 +1851,9 @@ info:
 paths:
   /auth/delete:
     delete:
-      description: Delete the authenticated client's account. STUB — deletion not
-        yet wired.
+      description: Soft-delete the authenticated client's account. Immediately invalidates
+        all tokens (auth re-checks the user row each request); the phone number is
+        freed for a fresh sign-up.
       produces:
       - application/json
       responses:
@@ -2131,6 +2050,30 @@ paths:
           schema:
             $ref: '#/definitions/dto.Response'
       summary: Refresh admin token
+      tags:
+      - Auth
+  /auth/resend-otp:
+    post:
+      consumes:
+      - application/json
+      description: Re-issue a login OTP for the phone. Invalidates the previous code
+        and starts a fresh 5-minute TTL. MOCK — the code is printed to the server
+        logs AND returned as data.otp_code (dev only).
+      parameters:
+      - description: Phone number payload
+        in: body
+        name: mobileLoginRequest
+        required: true
+        schema:
+          $ref: '#/definitions/dto.MobileLoginRequest'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/dto.Response'
+      summary: Resend phone OTP (client)
       tags:
       - Auth
   /auth/reset-password:
@@ -2515,6 +2458,50 @@ paths:
       summary: Get brand by ID
       tags:
       - brands
+  /v1/brands/{brand_id}/products:
+    get:
+      description: Paginated grid of variant cards for all products of a brand in
+        the user's city. Variant-first — one card per pack. Optional ?platforms= filters
+        which reference prices are shown.
+      parameters:
+      - description: Brand ID
+        in: path
+        name: brand_id
+        required: true
+        type: string
+      - description: comma-separated platform codes; omitted = all enabled
+        in: query
+        name: platforms
+        type: string
+      - description: page number (default 1)
+        in: query
+        name: page
+        type: integer
+      - description: page size, max 100 (default 20)
+        in: query
+        name: page_size
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            allOf:
+            - $ref: '#/definitions/dto.Response'
+            - properties:
+                data:
+                  $ref: '#/definitions/dto.VariantSearchListDTO'
+              type: object
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/dto.Response'
+      security:
+      - BearerAuth: []
+      summary: Variants of a brand (PLP)
+      tags:
+      - consumer
   /v1/brands/reorder:
     patch:
       consumes:
@@ -3253,26 +3240,6 @@ paths:
       security:
       - BearerAuth: []
       summary: Get live price comparison
-      tags:
-      - dashboard
-  /v1/dashboard/mobile:
-    get:
-      description: STUB — out of scope for the admin dashboard slice; overlaps /v1/home.
-      produces:
-      - application/json
-      responses:
-        "200":
-          description: OK
-          schema:
-            allOf:
-            - $ref: '#/definitions/dto.Response'
-            - properties:
-                data:
-                  $ref: '#/definitions/dto.DashboardMobile'
-              type: object
-      security:
-      - BearerAuth: []
-      summary: Get mobile dashboard data
       tags:
       - dashboard
   /v1/dashboard/stats:

@@ -81,6 +81,13 @@ func (s *ClientAuthService) VerifyOTP(phone, code string) (*dto.ClientAuthRespon
 	return s.issueTokens(u, isNew), nil
 }
 
+func (s *ClientAuthService) DeleteAccount(userID string) error {
+	if err := s.users.SoftDelete(userID); err != nil {
+		return errs.Internal("ACCOUNT_DELETE_FAILED", err)
+	}
+	return nil
+}
+
 func (s *ClientAuthService) RefreshToken(refreshToken string) (*dto.ClientAuthResponse, error) {
 	claims, err := s.jwt.Validate(refreshToken)
 	if err != nil {
