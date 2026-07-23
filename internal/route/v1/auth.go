@@ -35,10 +35,11 @@ func RegisterAuthRoutes(r *gin.Engine, d AuthDeps) {
 	g.POST("/verify-phone-otp", verifyPhoneOTP(d.Client))
 	g.POST("/phone-refresh", phoneRefresh(d.Client))
 	g.POST("/mobile-register", mobileRegister(d.Client))
+	g.POST("/resend-otp", resendOTP(d.Client))
 
 	client := r.Group("/auth")
 	client.Use(middleware.AuthMiddleware(d.Auth), middleware.ClientOnly())
-	client.DELETE("/delete", deleteAccount())
+	client.DELETE("/delete", deleteAccount(d.Client))
 }
 
 type LoginRequest struct {
@@ -293,16 +294,44 @@ func mobileRegister(svc *service.ClientAuthService) gin.HandlerFunc {
 	}
 }
 
+// @Summary Resend phone OTP (client)
+// @Description Re-issue a login OTP for the phone. Invalidates the previous code and starts a fresh 5-minute TTL. MOCK — the code is printed to the server logs AND returned as data.otp_code (dev only).
+// @Tags Auth
+// @Accept json
+// @Produce json
+// @Param mobileLoginRequest body dto.MobileLoginRequest true "Phone number payload"
+// @Success 200 {object} dto.Response
+// @Router /auth/resend-otp [post]
+func resendOTP(svc *service.ClientAuthService) gin.HandlerFunc {
+	return func(c *gin.Context) {
+		var req dto.MobileLoginRequest
+		if err := c.ShouldBindJSON(&req); err != nil {
+			c.Error(errs.BadRequest("VALIDATION", util.ParseValidationError(err).Error()))
+			return
+		}
+		code, err := svc.RequestOTP(req.PhoneNumber)
+		if err != nil {
+			c.Error(err)
+			return
+		}
+		// TODO(dev-only): mock returns the code so the app/testers skip the logs.
+		c.JSON(200, dto.Response{Status: "success", Message: "OTP code resent", Data: gin.H{"otp_code": code}})
+	}
+}
+
 // @Summary Delete account (client)
-// @Description Delete the authenticated client's account. STUB — deletion not yet wired.
+// @Description Soft-delete the authenticated client's account. Immediately invalidates all tokens (auth re-checks the user row each request); the phone number is freed for a fresh sign-up.
 // @Tags Auth
 // @Produce json
 // @Security BearerAuth
 // @Success 200 {object} dto.Response
 // @Router /auth/delete [delete]
-func deleteAccount() gin.HandlerFunc {
+func deleteAccount(svc *service.ClientAuthService) gin.HandlerFunc {
 	return func(c *gin.Context) {
-		_ = auth.MustUser(c)
-		c.JSON(200, dto.Response{Status: "success", Message: "user deleted"})
+		if err := svc.DeleteAccount(auth.MustUser(c).ID); err != nil {
+			c.Error(err)
+			return
+		}
+		c.JSON(200, dto.Response{Status: "success", Message: "account deleted"})
 	}
 }

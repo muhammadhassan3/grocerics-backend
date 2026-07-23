@@ -143,6 +143,12 @@ func (r *ProductRepository) ListBySubcategory(subcategoryID string, p query.Page
 	return paginateProducts(ctx, q, p)
 }
 
+func (r *ProductRepository) ListByBrand(brandID string, p query.Page) ([]domain.Product, int64, error) {
+	ctx := context.Background()
+	q := gorm.G[domain.Product](r.db).Where("brand_id = ? AND status = 'active' AND deleted_at IS NULL", brandID)
+	return paginateProducts(ctx, q, p)
+}
+
 // SearchByNameOrBrand matches active products whose name OR brand name contains
 // the term (case-insensitive, partial). Powers the variant search screen.
 func (r *ProductRepository) SearchByNameOrBrand(term string, p query.Page) ([]domain.Product, int64, error) {

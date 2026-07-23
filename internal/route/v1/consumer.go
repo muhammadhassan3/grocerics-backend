@@ -37,6 +37,7 @@ func RegisterConsumerRoutes(r *gin.Engine, d ConsumerDeps) {
 	g.GET("/home", getHome(d))
 	g.GET("/categories/:id/products", getCategoryProducts(d))
 	g.GET("/subcategories/:subcategory_id/products", getSubcategoryProducts(d))
+	g.GET("/brands/:brand_id/products", getBrandProducts(d))
 	g.GET("/search/variants", searchVariants(d))
 	g.GET("/deals", getDeals(d))
 	g.GET("/products/:id", getProduct(d))
@@ -162,6 +163,33 @@ func getSubcategoryProducts(d ConsumerDeps) gin.HandlerFunc {
 			return
 		}
 		items, meta, err := d.Catalog.ProductsBySubcategory(c.Param("subcategory_id"), cityID, util.SplitCSV(c.Query("platforms")), query.PageFromContext(c))
+		if err != nil {
+			c.Error(err)
+			return
+		}
+		ok(c, dto.VariantSearchListDTO{Items: items, Meta: meta})
+	}
+}
+
+// @Summary Variants of a brand (PLP)
+// @Description Paginated grid of variant cards for all products of a brand in the user's city. Variant-first — one card per pack. Optional ?platforms= filters which reference prices are shown.
+// @Tags consumer
+// @Produce json
+// @Security BearerAuth
+// @Param brand_id path string true "Brand ID"
+// @Param platforms query string false "comma-separated platform codes; omitted = all enabled"
+// @Param page query int false "page number (default 1)"
+// @Param page_size query int false "page size, max 100 (default 20)"
+// @Success 200 {object} dto.Response{data=dto.VariantSearchListDTO}
+// @Failure 401 {object} dto.Response
+// @Router /v1/brands/{brand_id}/products [get]
+func getBrandProducts(d ConsumerDeps) gin.HandlerFunc {
+	return func(c *gin.Context) {
+		cityID, _, good := resolveCity(c, d)
+		if !good {
+			return
+		}
+		items, meta, err := d.Catalog.ProductsByBrand(c.Param("brand_id"), cityID, util.SplitCSV(c.Query("platforms")), query.PageFromContext(c))
 		if err != nil {
 			c.Error(err)
 			return
