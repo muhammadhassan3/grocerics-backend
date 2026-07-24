@@ -7,6 +7,7 @@ import (
 
 	"grocerics-backend/internal/domain"
 	"grocerics-backend/internal/dto"
+	"grocerics-backend/internal/errs"
 	"grocerics-backend/internal/query"
 	"grocerics-backend/internal/repository"
 	"grocerics-backend/internal/util"
@@ -468,6 +469,33 @@ func (s *CatalogService) platformMap() (map[string]domain.Platform, error) {
 		m[p.ID] = p
 	}
 	return m, nil
+}
+
+func (s *CatalogService) StoreVariants(userID, storeCode, cityID string, platformCodes []string, page query.Page) ([]dto.VariantSearchItemDTO, query.Meta, error) {
+	pl, err := s.platforms.FindByCode(storeCode)
+	if err != nil {
+		return nil, query.Meta{}, err
+	}
+	if pl == nil || !pl.Enabled {
+		return nil, query.Meta{}, errs.NotFound("STORE_NOT_FOUND", "store not found")
+	}
+	wl, err := s.wishlistSet(userID)
+	if err != nil {
+		return nil, query.Meta{}, err
+	}
+	ids, total, err := s.product.ListVariantIDsByPlatformCity(pl.ID, cityID, page)
+	if err != nil {
+		return nil, query.Meta{}, err
+	}
+	variants, err := s.variant.ListByIDsOrdered(ids)
+	if err != nil {
+		return nil, query.Meta{}, err
+	}
+	items, err := s.variantCards(variants, cityID, platformCodes, wl)
+	if err != nil {
+		return nil, query.Meta{}, err
+	}
+	return items, query.BuildMeta(total, page), nil
 }
 
 func (s *CatalogService) TrendingItems(userID, cityID string, platformCodes []string, page query.Page) ([]dto.VariantSearchItemDTO, query.Meta, error) {

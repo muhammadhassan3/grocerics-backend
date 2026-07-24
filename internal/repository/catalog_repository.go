@@ -230,6 +230,28 @@ func (r *ProductRepository) ListDealVariantIDs(cityID string, limit int) ([]stri
 	return ids, nil
 }
 
+func (r *ProductRepository) ListVariantIDsByPlatformCity(platformID, cityID string, p query.Page) ([]string, int64, error) {
+	ctx := context.Background()
+	base := func() *gorm.DB {
+		return r.db.WithContext(ctx).
+			Table("platform_prices pp").
+			Joins("JOIN product_variants v ON v.id = pp.variant_id").
+			Joins("JOIN products p ON p.id = v.product_id").
+			Where("pp.platform_id = ? AND pp.city_id = ? AND pp.available", platformID, cityID).
+			Where("p.status = 'active' AND p.deleted_at IS NULL AND v.deleted_at IS NULL")
+	}
+	var total int64
+	if err := base().Distinct("v.id").Count(&total).Error; err != nil {
+		return nil, 0, util.ParseDatabaseError(err, "idx_product_variants_")
+	}
+	var ids []string
+	if err := base().Distinct("v.id").Order("v.id").
+		Limit(p.Limit()).Offset(p.Offset()).Pluck("v.id", &ids).Error; err != nil {
+		return nil, 0, util.ParseDatabaseError(err, "idx_product_variants_")
+	}
+	return ids, total, nil
+}
+
 func paginateProducts(ctx context.Context, q gorm.ChainInterface[domain.Product], p query.Page) ([]domain.Product, int64, error) {
 	total, err := q.Count(ctx, "*")
 	if err != nil {

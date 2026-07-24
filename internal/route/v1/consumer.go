@@ -44,6 +44,7 @@ func RegisterConsumerRoutes(r *gin.Engine, d ConsumerDeps) {
 	g.GET("/stores", getStores(d))
 	g.GET("/top-categories", getTopCategories(d))
 	g.GET("/trending", getTrending(d))
+	g.GET("/stores/:code/variants", getStoreVariants(d))
 
 	g.GET("/cart", getCart(d))
 	g.POST("/cart/items", addCartItem(d))
@@ -287,6 +288,33 @@ func getProduct(d ConsumerDeps) gin.HandlerFunc {
 			return
 		}
 		ok(c, detail)
+	}
+}
+
+// @Summary Variants a store carries (see all)
+// @Description Paginated variant cards for the variants a store (platform) carries in the user's city. Cards show all enabled platforms' reference prices for comparison. Optional ?platforms= narrows which reference prices show.
+// @Tags consumer
+// @Produce json
+// @Security BearerAuth
+// @Param code path string true "Platform code, e.g. blinkit"
+// @Param platforms query string false "comma-separated platform codes; omitted = all enabled"
+// @Param page query int false "page number (default 1)"
+// @Param page_size query int false "page size, max 100 (default 20)"
+// @Success 200 {object} dto.Response{data=dto.VariantSearchListDTO}
+// @Failure 404 {object} dto.Response
+// @Router /v1/stores/{code}/variants [get]
+func getStoreVariants(d ConsumerDeps) gin.HandlerFunc {
+	return func(c *gin.Context) {
+		cityID, _, good := resolveCity(c, d)
+		if !good {
+			return
+		}
+		items, meta, err := d.Catalog.StoreVariants(auth.MustUser(c).ID, c.Param("code"), cityID, util.SplitCSV(c.Query("platforms")), query.PageFromContext(c))
+		if err != nil {
+			c.Error(err)
+			return
+		}
+		ok(c, dto.VariantSearchListDTO{Items: items, Meta: meta})
 	}
 }
 
