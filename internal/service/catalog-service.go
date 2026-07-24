@@ -59,6 +59,15 @@ func (s *CatalogService) wishlistSet(userID string) (map[string]bool, error) {
 	return set, nil
 }
 
+const homePreviewCap = 6
+
+func capList[T any](xs []T, n int) []T {
+	if len(xs) > n {
+		return xs[:n]
+	}
+	return xs
+}
+
 func (s *CatalogService) Home(userID, cityID string) (*dto.HomeResponse, error) {
 	wl, err := s.wishlistSet(userID)
 	if err != nil {
@@ -76,6 +85,9 @@ func (s *CatalogService) Home(userID, cityID string) (*dto.HomeResponse, error) 
 	if err != nil {
 		return nil, err
 	}
+	banners = capList(banners, homePreviewCap)
+	plats = capList(plats, homePreviewCap)
+	cats = capList(cats, homePreviewCap)
 	top, err := s.product.ListTop(10)
 	if err != nil {
 		return nil, err
