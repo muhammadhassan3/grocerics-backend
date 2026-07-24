@@ -75,9 +75,10 @@ func (r *UserRepository) Count() (int64, error) {
 }
 
 func (r *UserRepository) SoftDelete(userID string) error {
-	_, err := gorm.G[domain.User](r.db).
+	err := r.db.WithContext(context.Background()).
+		Model(&domain.User{}).
 		Where("id = ? AND deleted_at IS NULL", userID).
-		Delete(context.Background())
+		Update("deleted_at", gorm.Expr("now()")).Error
 	if err != nil {
 		return util.ParseDatabaseError(err, "idx_users_")
 	}
