@@ -7416,6 +7416,9 @@ const docTemplate = `{
                 "image_url": {
                     "type": "string"
                 },
+                "in_wishlist": {
+                    "type": "boolean"
+                },
                 "pack_label": {
                     "description": "\"500 gm\"",
                     "type": "string"
@@ -7443,6 +7446,9 @@ const docTemplate = `{
                 },
                 "image_url": {
                     "type": "string"
+                },
+                "in_wishlist": {
+                    "type": "boolean"
                 },
                 "pack_label": {
                     "type": "string"

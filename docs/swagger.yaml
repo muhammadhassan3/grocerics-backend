@@ -1041,6 +1041,8 @@ definitions:
         $ref: '#/definitions/dto.MoneyDTO'
       image_url:
         type: string
+      in_wishlist:
+        type: boolean
       pack_label:
         description: '"500 gm"'
         type: string
@@ -1060,6 +1062,8 @@ definitions:
         type: string
       image_url:
         type: string
+      in_wishlist:
+        type: boolean
       pack_label:
         type: string
       product_id:
