@@ -53,7 +53,11 @@ func (s *AdminAuthService) tokens(a *domain.Admin) (*dto.TokenResponse, error) {
 	}); err != nil {
 		return nil, errs.Internal("REFRESH_TOKEN_PERSIST_FAILED", err)
 	}
-	return &dto.TokenResponse{AccessToken: access, RefreshToken: refresh}, nil
+	return &dto.TokenResponse{
+		AccessToken:  access,
+		RefreshToken: refresh,
+		UserData:     dto.UserData{ID: a.ID, Name: a.Name, Role: string(domain.RoleAdmin)},
+	}, nil
 }
 
 func (s *AdminAuthService) Login(email, password string) (*dto.TokenResponse, error) {
@@ -95,7 +99,11 @@ func (s *AdminAuthService) RefreshToken(refreshToken string) (*dto.TokenResponse
 	if _, err := s.refreshTokens.Update(existing); err != nil {
 		return nil, errs.Internal("REFRESH_TOKEN_ROTATE_FAILED", err)
 	}
-	return &dto.TokenResponse{AccessToken: access, RefreshToken: newRefresh}, nil
+	return &dto.TokenResponse{
+		AccessToken:  access,
+		RefreshToken: newRefresh,
+		UserData:     dto.UserData{ID: a.ID, Name: a.Name, Role: string(domain.RoleAdmin)},
+	}, nil
 }
 
 func (s *AdminAuthService) Logout(refreshToken, adminID string) error {
