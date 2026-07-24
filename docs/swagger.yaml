@@ -5177,6 +5177,45 @@ paths:
       summary: List top categories
       tags:
       - consumer
+  /v1/trending:
+    get:
+      description: Paginated variant cards for all trending products (is_top_item)
+        in the user's city — the standalone "see all" version of home's trending_items
+        (home caps at 10). Optional ?platforms= filters which reference prices show.
+      parameters:
+      - description: comma-separated platform codes; omitted = all enabled
+        in: query
+        name: platforms
+        type: string
+      - description: page number (default 1)
+        in: query
+        name: page
+        type: integer
+      - description: page size, max 100 (default 20)
+        in: query
+        name: page_size
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            allOf:
+            - $ref: '#/definitions/dto.Response'
+            - properties:
+                data:
+                  $ref: '#/definitions/dto.VariantSearchListDTO'
+              type: object
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/dto.Response'
+      security:
+      - BearerAuth: []
+      summary: Trending items (see all)
+      tags:
+      - consumer
   /v1/users:
     get:
       description: Paginated list of mobile clients (name, phone, status).

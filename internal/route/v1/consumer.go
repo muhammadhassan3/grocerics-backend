@@ -43,6 +43,7 @@ func RegisterConsumerRoutes(r *gin.Engine, d ConsumerDeps) {
 	g.GET("/products/:id", getProduct(d))
 	g.GET("/stores", getStores(d))
 	g.GET("/top-categories", getTopCategories(d))
+	g.GET("/trending", getTrending(d))
 
 	g.GET("/cart", getCart(d))
 	g.POST("/cart/items", addCartItem(d))
@@ -286,6 +287,32 @@ func getProduct(d ConsumerDeps) gin.HandlerFunc {
 			return
 		}
 		ok(c, detail)
+	}
+}
+
+// @Summary Trending items (see all)
+// @Description Paginated variant cards for all trending products (is_top_item) in the user's city — the standalone "see all" version of home's trending_items (home caps at 10). Optional ?platforms= filters which reference prices show.
+// @Tags consumer
+// @Produce json
+// @Security BearerAuth
+// @Param platforms query string false "comma-separated platform codes; omitted = all enabled"
+// @Param page query int false "page number (default 1)"
+// @Param page_size query int false "page size, max 100 (default 20)"
+// @Success 200 {object} dto.Response{data=dto.VariantSearchListDTO}
+// @Failure 401 {object} dto.Response
+// @Router /v1/trending [get]
+func getTrending(d ConsumerDeps) gin.HandlerFunc {
+	return func(c *gin.Context) {
+		cityID, _, good := resolveCity(c, d)
+		if !good {
+			return
+		}
+		items, meta, err := d.Catalog.TrendingItems(auth.MustUser(c).ID, cityID, util.SplitCSV(c.Query("platforms")), query.PageFromContext(c))
+		if err != nil {
+			c.Error(err)
+			return
+		}
+		ok(c, dto.VariantSearchListDTO{Items: items, Meta: meta})
 	}
 }
 

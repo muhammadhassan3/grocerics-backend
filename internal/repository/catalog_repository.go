@@ -186,6 +186,12 @@ func (r *ProductRepository) SearchByNameOrBrand(term string, p query.Page) ([]do
 	return paginateProducts(ctx, q, p)
 }
 
+func (r *ProductRepository) ListTopPaged(p query.Page) ([]domain.Product, int64, error) {
+	ctx := context.Background()
+	q := gorm.G[domain.Product](r.db).Where("is_top_item AND status = 'active' AND deleted_at IS NULL")
+	return paginateProducts(ctx, q, p)
+}
+
 func (r *ProductRepository) ListTop(limit int) ([]domain.Product, error) {
 	ctx := context.Background()
 	items, err := gorm.G[domain.Product](r.db).

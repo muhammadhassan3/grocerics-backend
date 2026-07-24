@@ -470,6 +470,26 @@ func (s *CatalogService) platformMap() (map[string]domain.Platform, error) {
 	return m, nil
 }
 
+func (s *CatalogService) TrendingItems(userID, cityID string, platformCodes []string, page query.Page) ([]dto.VariantSearchItemDTO, query.Meta, error) {
+	wl, err := s.wishlistSet(userID)
+	if err != nil {
+		return nil, query.Meta{}, err
+	}
+	products, total, err := s.product.ListTopPaged(page)
+	if err != nil {
+		return nil, query.Meta{}, err
+	}
+	variants, err := s.defaultVariantsFor(products)
+	if err != nil {
+		return nil, query.Meta{}, err
+	}
+	items, err := s.variantCards(variants, cityID, platformCodes, wl)
+	if err != nil {
+		return nil, query.Meta{}, err
+	}
+	return items, query.BuildMeta(total, page), nil
+}
+
 func (s *CatalogService) TopCategories(page query.Page) ([]dto.CategoryCardDTO, query.Meta, error) {
 	cats, total, err := s.category.ListVisibleWithProductsPaged(true, page)
 	if err != nil {
