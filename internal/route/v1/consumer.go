@@ -41,6 +41,10 @@ func RegisterConsumerRoutes(r *gin.Engine, d ConsumerDeps) {
 	g.GET("/search/variants", searchVariants(d))
 	g.GET("/deals", getDeals(d))
 	g.GET("/products/:id", getProduct(d))
+	g.GET("/stores", getStores(d))
+	g.GET("/top-categories", getTopCategories(d))
+	g.GET("/trending", getTrending(d))
+	g.GET("/stores/:code/variants", getStoreVariants(d))
 
 	g.GET("/cart", getCart(d))
 	g.POST("/cart/items", addCartItem(d))
@@ -284,6 +288,101 @@ func getProduct(d ConsumerDeps) gin.HandlerFunc {
 			return
 		}
 		ok(c, detail)
+	}
+}
+
+// @Summary Variants a store carries (see all)
+// @Description Paginated variant cards for the variants a store (platform) carries in the user's city. Cards show all enabled platforms' reference prices for comparison. Optional ?platforms= narrows which reference prices show.
+// @Tags consumer
+// @Produce json
+// @Security BearerAuth
+// @Param code path string true "Platform code, e.g. blinkit"
+// @Param platforms query string false "comma-separated platform codes; omitted = all enabled"
+// @Param page query int false "page number (default 1)"
+// @Param page_size query int false "page size, max 100 (default 20)"
+// @Success 200 {object} dto.Response{data=dto.VariantSearchListDTO}
+// @Failure 404 {object} dto.Response
+// @Router /v1/stores/{code}/variants [get]
+func getStoreVariants(d ConsumerDeps) gin.HandlerFunc {
+	return func(c *gin.Context) {
+		cityID, _, good := resolveCity(c, d)
+		if !good {
+			return
+		}
+		items, meta, err := d.Catalog.StoreVariants(auth.MustUser(c).ID, c.Param("code"), cityID, util.SplitCSV(c.Query("platforms")), query.PageFromContext(c))
+		if err != nil {
+			c.Error(err)
+			return
+		}
+		ok(c, dto.VariantSearchListDTO{Items: items, Meta: meta})
+	}
+}
+
+// @Summary Trending items (see all)
+// @Description Paginated variant cards for all trending products (is_top_item) in the user's city — the standalone "see all" version of home's trending_items (home caps at 10). Optional ?platforms= filters which reference prices show.
+// @Tags consumer
+// @Produce json
+// @Security BearerAuth
+// @Param platforms query string false "comma-separated platform codes; omitted = all enabled"
+// @Param page query int false "page number (default 1)"
+// @Param page_size query int false "page size, max 100 (default 20)"
+// @Success 200 {object} dto.Response{data=dto.VariantSearchListDTO}
+// @Failure 401 {object} dto.Response
+// @Router /v1/trending [get]
+func getTrending(d ConsumerDeps) gin.HandlerFunc {
+	return func(c *gin.Context) {
+		cityID, _, good := resolveCity(c, d)
+		if !good {
+			return
+		}
+		items, meta, err := d.Catalog.TrendingItems(auth.MustUser(c).ID, cityID, util.SplitCSV(c.Query("platforms")), query.PageFromContext(c))
+		if err != nil {
+			c.Error(err)
+			return
+		}
+		ok(c, dto.VariantSearchListDTO{Items: items, Meta: meta})
+	}
+}
+
+// @Summary List top categories
+// @Description Paginated list of top categories that have active products — the standalone "see all" version of home's categories (is_top_category + has products). Distinct from the admin-style /v1/categories.
+// @Tags consumer
+// @Produce json
+// @Security BearerAuth
+// @Param page query int false "page number (default 1)"
+// @Param page_size query int false "page size, max 100 (default 20)"
+// @Success 200 {object} dto.Response{data=dto.CategoryListDTO}
+// @Failure 401 {object} dto.Response
+// @Router /v1/top-categories [get]
+func getTopCategories(d ConsumerDeps) gin.HandlerFunc {
+	return func(c *gin.Context) {
+		items, meta, err := d.Catalog.TopCategories(query.PageFromContext(c))
+		if err != nil {
+			c.Error(err)
+			return
+		}
+		ok(c, dto.CategoryListDTO{Items: items, Meta: meta})
+	}
+}
+
+// @Summary List stores (enabled platforms)
+// @Description Paginated list of all enabled delivery platforms — the standalone "see all" version of home's top_stores.
+// @Tags consumer
+// @Produce json
+// @Security BearerAuth
+// @Param page query int false "page number (default 1)"
+// @Param page_size query int false "page size, max 100 (default 20)"
+// @Success 200 {object} dto.Response{data=dto.PlatformListDTO}
+// @Failure 401 {object} dto.Response
+// @Router /v1/stores [get]
+func getStores(d ConsumerDeps) gin.HandlerFunc {
+	return func(c *gin.Context) {
+		items, meta, err := d.Catalog.Stores(query.PageFromContext(c))
+		if err != nil {
+			c.Error(err)
+			return
+		}
+		ok(c, dto.PlatformListDTO{Items: items, Meta: meta})
 	}
 }
 

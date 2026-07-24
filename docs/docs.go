@@ -5197,6 +5197,133 @@ const docTemplate = `{
                 }
             }
         },
+        "/v1/stores": {
+            "get": {
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
+                "description": "Paginated list of all enabled delivery platforms — the standalone \"see all\" version of home's top_stores.",
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "consumer"
+                ],
+                "summary": "List stores (enabled platforms)",
+                "parameters": [
+                    {
+                        "type": "integer",
+                        "description": "page number (default 1)",
+                        "name": "page",
+                        "in": "query"
+                    },
+                    {
+                        "type": "integer",
+                        "description": "page size, max 100 (default 20)",
+                        "name": "page_size",
+                        "in": "query"
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "allOf": [
+                                {
+                                    "$ref": "#/definitions/dto.Response"
+                                },
+                                {
+                                    "type": "object",
+                                    "properties": {
+                                        "data": {
+                                            "$ref": "#/definitions/dto.PlatformListDTO"
+                                        }
+                                    }
+                                }
+                            ]
+                        }
+                    },
+                    "401": {
+                        "description": "Unauthorized",
+                        "schema": {
+                            "$ref": "#/definitions/dto.Response"
+                        }
+                    }
+                }
+            }
+        },
+        "/v1/stores/{code}/variants": {
+            "get": {
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
+                "description": "Paginated variant cards for the variants a store (platform) carries in the user's city. Cards show all enabled platforms' reference prices for comparison. Optional ?platforms= narrows which reference prices show.",
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "consumer"
+                ],
+                "summary": "Variants a store carries (see all)",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "Platform code, e.g. blinkit",
+                        "name": "code",
+                        "in": "path",
+                        "required": true
+                    },
+                    {
+                        "type": "string",
+                        "description": "comma-separated platform codes; omitted = all enabled",
+                        "name": "platforms",
+                        "in": "query"
+                    },
+                    {
+                        "type": "integer",
+                        "description": "page number (default 1)",
+                        "name": "page",
+                        "in": "query"
+                    },
+                    {
+                        "type": "integer",
+                        "description": "page size, max 100 (default 20)",
+                        "name": "page_size",
+                        "in": "query"
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "allOf": [
+                                {
+                                    "$ref": "#/definitions/dto.Response"
+                                },
+                                {
+                                    "type": "object",
+                                    "properties": {
+                                        "data": {
+                                            "$ref": "#/definitions/dto.VariantSearchListDTO"
+                                        }
+                                    }
+                                }
+                            ]
+                        }
+                    },
+                    "404": {
+                        "description": "Not Found",
+                        "schema": {
+                            "$ref": "#/definitions/dto.Response"
+                        }
+                    }
+                }
+            }
+        },
         "/v1/subcategories": {
             "get": {
                 "security": [
@@ -5582,6 +5709,126 @@ const docTemplate = `{
                         "in": "path",
                         "required": true
                     },
+                    {
+                        "type": "string",
+                        "description": "comma-separated platform codes; omitted = all enabled",
+                        "name": "platforms",
+                        "in": "query"
+                    },
+                    {
+                        "type": "integer",
+                        "description": "page number (default 1)",
+                        "name": "page",
+                        "in": "query"
+                    },
+                    {
+                        "type": "integer",
+                        "description": "page size, max 100 (default 20)",
+                        "name": "page_size",
+                        "in": "query"
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "allOf": [
+                                {
+                                    "$ref": "#/definitions/dto.Response"
+                                },
+                                {
+                                    "type": "object",
+                                    "properties": {
+                                        "data": {
+                                            "$ref": "#/definitions/dto.VariantSearchListDTO"
+                                        }
+                                    }
+                                }
+                            ]
+                        }
+                    },
+                    "401": {
+                        "description": "Unauthorized",
+                        "schema": {
+                            "$ref": "#/definitions/dto.Response"
+                        }
+                    }
+                }
+            }
+        },
+        "/v1/top-categories": {
+            "get": {
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
+                "description": "Paginated list of top categories that have active products — the standalone \"see all\" version of home's categories (is_top_category + has products). Distinct from the admin-style /v1/categories.",
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "consumer"
+                ],
+                "summary": "List top categories",
+                "parameters": [
+                    {
+                        "type": "integer",
+                        "description": "page number (default 1)",
+                        "name": "page",
+                        "in": "query"
+                    },
+                    {
+                        "type": "integer",
+                        "description": "page size, max 100 (default 20)",
+                        "name": "page_size",
+                        "in": "query"
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "allOf": [
+                                {
+                                    "$ref": "#/definitions/dto.Response"
+                                },
+                                {
+                                    "type": "object",
+                                    "properties": {
+                                        "data": {
+                                            "$ref": "#/definitions/dto.CategoryListDTO"
+                                        }
+                                    }
+                                }
+                            ]
+                        }
+                    },
+                    "401": {
+                        "description": "Unauthorized",
+                        "schema": {
+                            "$ref": "#/definitions/dto.Response"
+                        }
+                    }
+                }
+            }
+        },
+        "/v1/trending": {
+            "get": {
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
+                "description": "Paginated variant cards for all trending products (is_top_item) in the user's city — the standalone \"see all\" version of home's trending_items (home caps at 10). Optional ?platforms= filters which reference prices show.",
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "consumer"
+                ],
+                "summary": "Trending items (see all)",
+                "parameters": [
                     {
                         "type": "string",
                         "description": "comma-separated platform codes; omitted = all enabled",
@@ -6229,6 +6476,18 @@ const docTemplate = `{
                 }
             }
         },
+        "dto.CategoryListDTO": {
+            "type": "object",
+            "properties": {
+                "items": {
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/dto.CategoryCardDTO"
+                    }
+                },
+                "meta": {}
+            }
+        },
         "dto.Cities": {
             "description": "Paginated list of cities.",
             "type": "object",
@@ -6807,6 +7066,18 @@ const docTemplate = `{
                     "description": "Platform status: \"active\" | \"disabled\"",
                     "type": "string"
                 }
+            }
+        },
+        "dto.PlatformListDTO": {
+            "type": "object",
+            "properties": {
+                "items": {
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/dto.PlatformDTO"
+                    }
+                },
+                "meta": {}
             }
         },
         "dto.PlatformPriceChipDTO": {

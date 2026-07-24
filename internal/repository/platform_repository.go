@@ -106,6 +106,20 @@ func (r *PlatformRepository) FindByIDs(ids []string) (map[string]domain.Platform
 	return out, nil
 }
 
+func (r *PlatformRepository) ListEnabledPaged(p query.Page) ([]domain.Platform, int64, error) {
+	ctx := context.Background()
+	q := gorm.G[domain.Platform](r.db).Where("enabled AND deleted_at IS NULL")
+	total, err := q.Count(ctx, "*")
+	if err != nil {
+		return nil, 0, util.ParseDatabaseError(err, "idx_platforms_")
+	}
+	items, err := q.Order("display_order, display_name").Limit(p.Limit()).Offset(p.Offset()).Find(ctx)
+	if err != nil {
+		return nil, 0, util.ParseDatabaseError(err, "idx_platforms_")
+	}
+	return items, total, nil
+}
+
 func (r *PlatformRepository) FindByCode(code string) (*domain.Platform, error) {
 	ctx := context.Background()
 	data, err := gorm.G[domain.Platform](r.db).Where("code = ? AND deleted_at IS NULL", code).First(ctx)

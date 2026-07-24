@@ -44,6 +44,25 @@ func (r *CategoryRepository) ListVisibleWithProducts(topOnly bool) ([]domain.Cat
 	return items, nil
 }
 
+func (r *CategoryRepository) ListVisibleWithProductsPaged(topOnly bool, p query.Page) ([]domain.Category, int64, error) {
+	ctx := context.Background()
+	q := gorm.G[domain.Category](r.db).
+		Where("status = 'active' AND deleted_at IS NULL").
+		Where("EXISTS (SELECT 1 FROM products p WHERE p.category_id = categories.id AND p.status = 'active' AND p.deleted_at IS NULL)")
+	if topOnly {
+		q = q.Where("is_top_category")
+	}
+	total, err := q.Count(ctx, "*")
+	if err != nil {
+		return nil, 0, util.ParseDatabaseError(err, "idx_categories_")
+	}
+	items, err := q.Order("display_order, name").Limit(p.Limit()).Offset(p.Offset()).Find(ctx)
+	if err != nil {
+		return nil, 0, util.ParseDatabaseError(err, "idx_categories_")
+	}
+	return items, total, nil
+}
+
 func (r *CategoryRepository) FindByID(id string) (*domain.Category, error) {
 	ctx := context.Background()
 	data, err := gorm.G[domain.Category](r.db).Where("id = ? AND deleted_at IS NULL", id).First(ctx)
@@ -167,6 +186,12 @@ func (r *ProductRepository) SearchByNameOrBrand(term string, p query.Page) ([]do
 	return paginateProducts(ctx, q, p)
 }
 
+func (r *ProductRepository) ListTopPaged(p query.Page) ([]domain.Product, int64, error) {
+	ctx := context.Background()
+	q := gorm.G[domain.Product](r.db).Where("is_top_item AND status = 'active' AND deleted_at IS NULL")
+	return paginateProducts(ctx, q, p)
+}
+
 func (r *ProductRepository) ListTop(limit int) ([]domain.Product, error) {
 	ctx := context.Background()
 	items, err := gorm.G[domain.Product](r.db).
@@ -203,6 +228,28 @@ func (r *ProductRepository) ListDealVariantIDs(cityID string, limit int) ([]stri
 		return nil, util.ParseDatabaseError(err, "idx_product_variants_")
 	}
 	return ids, nil
+}
+
+func (r *ProductRepository) ListVariantIDsByPlatformCity(platformID, cityID string, p query.Page) ([]string, int64, error) {
+	ctx := context.Background()
+	base := func() *gorm.DB {
+		return r.db.WithContext(ctx).
+			Table("platform_prices pp").
+			Joins("JOIN product_variants v ON v.id = pp.variant_id").
+			Joins("JOIN products p ON p.id = v.product_id").
+			Where("pp.platform_id = ? AND pp.city_id = ? AND pp.available", platformID, cityID).
+			Where("p.status = 'active' AND p.deleted_at IS NULL AND v.deleted_at IS NULL")
+	}
+	var total int64
+	if err := base().Distinct("v.id").Count(&total).Error; err != nil {
+		return nil, 0, util.ParseDatabaseError(err, "idx_product_variants_")
+	}
+	var ids []string
+	if err := base().Distinct("v.id").Order("v.id").
+		Limit(p.Limit()).Offset(p.Offset()).Pluck("v.id", &ids).Error; err != nil {
+		return nil, 0, util.ParseDatabaseError(err, "idx_product_variants_")
+	}
+	return ids, total, nil
 }
 
 func paginateProducts(ctx context.Context, q gorm.ChainInterface[domain.Product], p query.Page) ([]domain.Product, int64, error) {

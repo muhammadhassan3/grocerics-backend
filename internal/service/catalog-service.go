@@ -7,6 +7,7 @@ import (
 
 	"grocerics-backend/internal/domain"
 	"grocerics-backend/internal/dto"
+	"grocerics-backend/internal/errs"
 	"grocerics-backend/internal/query"
 	"grocerics-backend/internal/repository"
 	"grocerics-backend/internal/util"
@@ -59,6 +60,15 @@ func (s *CatalogService) wishlistSet(userID string) (map[string]bool, error) {
 	return set, nil
 }
 
+const homePreviewCap = 6
+
+func capList[T any](xs []T, n int) []T {
+	if len(xs) > n {
+		return xs[:n]
+	}
+	return xs
+}
+
 func (s *CatalogService) Home(userID, cityID string) (*dto.HomeResponse, error) {
 	wl, err := s.wishlistSet(userID)
 	if err != nil {
@@ -76,6 +86,9 @@ func (s *CatalogService) Home(userID, cityID string) (*dto.HomeResponse, error) 
 	if err != nil {
 		return nil, err
 	}
+	banners = capList(banners, homePreviewCap)
+	plats = capList(plats, homePreviewCap)
+	cats = capList(cats, homePreviewCap)
 	top, err := s.product.ListTop(10)
 	if err != nil {
 		return nil, err
@@ -456,6 +469,77 @@ func (s *CatalogService) platformMap() (map[string]domain.Platform, error) {
 		m[p.ID] = p
 	}
 	return m, nil
+}
+
+func (s *CatalogService) StoreVariants(userID, storeCode, cityID string, platformCodes []string, page query.Page) ([]dto.VariantSearchItemDTO, query.Meta, error) {
+	pl, err := s.platforms.FindByCode(storeCode)
+	if err != nil {
+		return nil, query.Meta{}, err
+	}
+	if pl == nil || !pl.Enabled {
+		return nil, query.Meta{}, errs.NotFound("STORE_NOT_FOUND", "store not found")
+	}
+	wl, err := s.wishlistSet(userID)
+	if err != nil {
+		return nil, query.Meta{}, err
+	}
+	ids, total, err := s.product.ListVariantIDsByPlatformCity(pl.ID, cityID, page)
+	if err != nil {
+		return nil, query.Meta{}, err
+	}
+	variants, err := s.variant.ListByIDsOrdered(ids)
+	if err != nil {
+		return nil, query.Meta{}, err
+	}
+	items, err := s.variantCards(variants, cityID, platformCodes, wl)
+	if err != nil {
+		return nil, query.Meta{}, err
+	}
+	return items, query.BuildMeta(total, page), nil
+}
+
+func (s *CatalogService) TrendingItems(userID, cityID string, platformCodes []string, page query.Page) ([]dto.VariantSearchItemDTO, query.Meta, error) {
+	wl, err := s.wishlistSet(userID)
+	if err != nil {
+		return nil, query.Meta{}, err
+	}
+	products, total, err := s.product.ListTopPaged(page)
+	if err != nil {
+		return nil, query.Meta{}, err
+	}
+	variants, err := s.defaultVariantsFor(products)
+	if err != nil {
+		return nil, query.Meta{}, err
+	}
+	items, err := s.variantCards(variants, cityID, platformCodes, wl)
+	if err != nil {
+		return nil, query.Meta{}, err
+	}
+	return items, query.BuildMeta(total, page), nil
+}
+
+func (s *CatalogService) TopCategories(page query.Page) ([]dto.CategoryCardDTO, query.Meta, error) {
+	cats, total, err := s.category.ListVisibleWithProductsPaged(true, page)
+	if err != nil {
+		return nil, query.Meta{}, err
+	}
+	items := make([]dto.CategoryCardDTO, 0, len(cats))
+	for _, c := range cats {
+		items = append(items, dto.CategoryCardDTO{ID: c.ID, Name: c.Name, Slug: c.Slug, ImageURL: strPtr(c.ImageURL)})
+	}
+	return items, query.BuildMeta(total, page), nil
+}
+
+func (s *CatalogService) Stores(page query.Page) ([]dto.PlatformDTO, query.Meta, error) {
+	plats, total, err := s.platforms.ListEnabledPaged(page)
+	if err != nil {
+		return nil, query.Meta{}, err
+	}
+	items := make([]dto.PlatformDTO, 0, len(plats))
+	for _, p := range plats {
+		items = append(items, platformDTO(p))
+	}
+	return items, query.BuildMeta(total, page), nil
 }
 
 func platformDTO(p domain.Platform) dto.PlatformDTO {
