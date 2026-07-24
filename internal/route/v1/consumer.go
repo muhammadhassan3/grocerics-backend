@@ -42,6 +42,7 @@ func RegisterConsumerRoutes(r *gin.Engine, d ConsumerDeps) {
 	g.GET("/deals", getDeals(d))
 	g.GET("/products/:id", getProduct(d))
 	g.GET("/stores", getStores(d))
+	g.GET("/top-categories", getTopCategories(d))
 
 	g.GET("/cart", getCart(d))
 	g.POST("/cart/items", addCartItem(d))
@@ -285,6 +286,27 @@ func getProduct(d ConsumerDeps) gin.HandlerFunc {
 			return
 		}
 		ok(c, detail)
+	}
+}
+
+// @Summary List top categories
+// @Description Paginated list of top categories that have active products — the standalone "see all" version of home's categories (is_top_category + has products). Distinct from the admin-style /v1/categories.
+// @Tags consumer
+// @Produce json
+// @Security BearerAuth
+// @Param page query int false "page number (default 1)"
+// @Param page_size query int false "page size, max 100 (default 20)"
+// @Success 200 {object} dto.Response{data=dto.CategoryListDTO}
+// @Failure 401 {object} dto.Response
+// @Router /v1/top-categories [get]
+func getTopCategories(d ConsumerDeps) gin.HandlerFunc {
+	return func(c *gin.Context) {
+		items, meta, err := d.Catalog.TopCategories(query.PageFromContext(c))
+		if err != nil {
+			c.Error(err)
+			return
+		}
+		ok(c, dto.CategoryListDTO{Items: items, Meta: meta})
 	}
 }
 

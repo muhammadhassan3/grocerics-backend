@@ -470,6 +470,18 @@ func (s *CatalogService) platformMap() (map[string]domain.Platform, error) {
 	return m, nil
 }
 
+func (s *CatalogService) TopCategories(page query.Page) ([]dto.CategoryCardDTO, query.Meta, error) {
+	cats, total, err := s.category.ListVisibleWithProductsPaged(true, page)
+	if err != nil {
+		return nil, query.Meta{}, err
+	}
+	items := make([]dto.CategoryCardDTO, 0, len(cats))
+	for _, c := range cats {
+		items = append(items, dto.CategoryCardDTO{ID: c.ID, Name: c.Name, Slug: c.Slug, ImageURL: strPtr(c.ImageURL)})
+	}
+	return items, query.BuildMeta(total, page), nil
+}
+
 func (s *CatalogService) Stores(page query.Page) ([]dto.PlatformDTO, query.Meta, error) {
 	plats, total, err := s.platforms.ListEnabledPaged(page)
 	if err != nil {
