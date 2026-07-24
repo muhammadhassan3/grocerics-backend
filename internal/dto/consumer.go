@@ -74,6 +74,16 @@ type VariantSearchListDTO struct {
 	Meta  interface{}            `json:"meta"`
 }
 
+type PlatformListDTO struct {
+	Items []PlatformDTO `json:"items"`
+	Meta  interface{}   `json:"meta"`
+}
+
+type CategoryListDTO struct {
+	Items []CategoryCardDTO `json:"items"`
+	Meta  interface{}       `json:"meta"`
+}
+
 type ProductDetailDTO struct {
 	ProductID   string                 `json:"product_id"`
 	Name        string                 `json:"name"`

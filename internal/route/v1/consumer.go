@@ -41,6 +41,7 @@ func RegisterConsumerRoutes(r *gin.Engine, d ConsumerDeps) {
 	g.GET("/search/variants", searchVariants(d))
 	g.GET("/deals", getDeals(d))
 	g.GET("/products/:id", getProduct(d))
+	g.GET("/stores", getStores(d))
 
 	g.GET("/cart", getCart(d))
 	g.POST("/cart/items", addCartItem(d))
@@ -284,6 +285,27 @@ func getProduct(d ConsumerDeps) gin.HandlerFunc {
 			return
 		}
 		ok(c, detail)
+	}
+}
+
+// @Summary List stores (enabled platforms)
+// @Description Paginated list of all enabled delivery platforms — the standalone "see all" version of home's top_stores.
+// @Tags consumer
+// @Produce json
+// @Security BearerAuth
+// @Param page query int false "page number (default 1)"
+// @Param page_size query int false "page size, max 100 (default 20)"
+// @Success 200 {object} dto.Response{data=dto.PlatformListDTO}
+// @Failure 401 {object} dto.Response
+// @Router /v1/stores [get]
+func getStores(d ConsumerDeps) gin.HandlerFunc {
+	return func(c *gin.Context) {
+		items, meta, err := d.Catalog.Stores(query.PageFromContext(c))
+		if err != nil {
+			c.Error(err)
+			return
+		}
+		ok(c, dto.PlatformListDTO{Items: items, Meta: meta})
 	}
 }
 

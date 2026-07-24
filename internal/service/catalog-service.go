@@ -470,6 +470,18 @@ func (s *CatalogService) platformMap() (map[string]domain.Platform, error) {
 	return m, nil
 }
 
+func (s *CatalogService) Stores(page query.Page) ([]dto.PlatformDTO, query.Meta, error) {
+	plats, total, err := s.platforms.ListEnabledPaged(page)
+	if err != nil {
+		return nil, query.Meta{}, err
+	}
+	items := make([]dto.PlatformDTO, 0, len(plats))
+	for _, p := range plats {
+		items = append(items, platformDTO(p))
+	}
+	return items, query.BuildMeta(total, page), nil
+}
+
 func platformDTO(p domain.Platform) dto.PlatformDTO {
 	return dto.PlatformDTO{Code: p.Code, Name: p.DisplayName, LogoURL: strPtr(p.LogoURL), DeliveryETAText: strPtr(p.DeliveryETAText)}
 }

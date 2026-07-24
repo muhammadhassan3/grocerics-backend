@@ -5189,6 +5189,63 @@
                 }
             }
         },
+        "/v1/stores": {
+            "get": {
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
+                "description": "Paginated list of all enabled delivery platforms — the standalone \"see all\" version of home's top_stores.",
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "consumer"
+                ],
+                "summary": "List stores (enabled platforms)",
+                "parameters": [
+                    {
+                        "type": "integer",
+                        "description": "page number (default 1)",
+                        "name": "page",
+                        "in": "query"
+                    },
+                    {
+                        "type": "integer",
+                        "description": "page size, max 100 (default 20)",
+                        "name": "page_size",
+                        "in": "query"
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "allOf": [
+                                {
+                                    "$ref": "#/definitions/dto.Response"
+                                },
+                                {
+                                    "type": "object",
+                                    "properties": {
+                                        "data": {
+                                            "$ref": "#/definitions/dto.PlatformListDTO"
+                                        }
+                                    }
+                                }
+                            ]
+                        }
+                    },
+                    "401": {
+                        "description": "Unauthorized",
+                        "schema": {
+                            "$ref": "#/definitions/dto.Response"
+                        }
+                    }
+                }
+            }
+        },
         "/v1/subcategories": {
             "get": {
                 "security": [
@@ -6799,6 +6856,18 @@
                     "description": "Platform status: \"active\" | \"disabled\"",
                     "type": "string"
                 }
+            }
+        },
+        "dto.PlatformListDTO": {
+            "type": "object",
+            "properties": {
+                "items": {
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/dto.PlatformDTO"
+                    }
+                },
+                "meta": {}
             }
         },
         "dto.PlatformPriceChipDTO": {

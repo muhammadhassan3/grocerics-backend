@@ -620,6 +620,14 @@ definitions:
         description: 'Platform status: "active" | "disabled"'
         type: string
     type: object
+  dto.PlatformListDTO:
+    properties:
+      items:
+        items:
+          $ref: '#/definitions/dto.PlatformDTO'
+        type: array
+      meta: {}
+    type: object
   dto.PlatformPriceChipDTO:
     properties:
       available:
@@ -4844,6 +4852,40 @@ paths:
       summary: Get Terms and Conditions
       tags:
       - settings
+  /v1/stores:
+    get:
+      description: Paginated list of all enabled delivery platforms — the standalone
+        "see all" version of home's top_stores.
+      parameters:
+      - description: page number (default 1)
+        in: query
+        name: page
+        type: integer
+      - description: page size, max 100 (default 20)
+        in: query
+        name: page_size
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            allOf:
+            - $ref: '#/definitions/dto.Response'
+            - properties:
+                data:
+                  $ref: '#/definitions/dto.PlatformListDTO'
+              type: object
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/dto.Response'
+      security:
+      - BearerAuth: []
+      summary: List stores (enabled platforms)
+      tags:
+      - consumer
   /v1/subcategories:
     delete:
       consumes:
