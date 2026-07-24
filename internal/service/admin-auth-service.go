@@ -56,7 +56,7 @@ func (s *AdminAuthService) tokens(a *domain.Admin) (*dto.TokenResponse, error) {
 	return &dto.TokenResponse{
 		AccessToken:  access,
 		RefreshToken: refresh,
-		UserData:     dto.UserData{ID: a.ID, Name: a.Name, Role: string(domain.RoleAdmin)},
+		UserData:     dto.UserData{ID: a.ID, Name: a.Name, Email: a.Email, Role: string(domain.RoleAdmin)},
 	}, nil
 }
 
@@ -102,7 +102,7 @@ func (s *AdminAuthService) RefreshToken(refreshToken string) (*dto.TokenResponse
 	return &dto.TokenResponse{
 		AccessToken:  access,
 		RefreshToken: newRefresh,
-		UserData:     dto.UserData{ID: a.ID, Name: a.Name, Role: string(domain.RoleAdmin)},
+		UserData:     dto.UserData{ID: a.ID, Name: a.Name, Email: a.Email, Role: string(domain.RoleAdmin)},
 	}, nil
 }
 

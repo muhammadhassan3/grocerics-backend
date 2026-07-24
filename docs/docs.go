@@ -7338,6 +7338,9 @@ const docTemplate = `{
             "description": "User data associated with the authenticated user.",
             "type": "object",
             "properties": {
+                "email": {
+                    "type": "string"
+                },
                 "id": {
                     "type": "string"
                 },

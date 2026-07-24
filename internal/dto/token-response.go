@@ -8,6 +8,7 @@ package dto
 type UserData struct {
 	ID       string `json:"id,omitempty"`
 	Phone    string `json:"phone,omitempty"`
+	Email    string `json:"email,omitempty"`
 	ImageURL string `json:"image_url"`
 	Name     string `json:"name"`
 	Role     string `json:"role"`

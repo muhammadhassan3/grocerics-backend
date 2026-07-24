@@ -988,6 +988,8 @@ definitions:
   dto.UserData:
     description: User data associated with the authenticated user.
     properties:
+      email:
+        type: string
       id:
         type: string
       image_url:
