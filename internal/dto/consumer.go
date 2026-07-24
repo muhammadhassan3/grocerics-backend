@@ -57,6 +57,7 @@ type VariantSearchItemDTO struct {
 	UnitPrice          string              `json:"unit_price,omitempty"`
 	ReferenceFromPaise *int64              `json:"reference_from_paise"`
 	ReferencePrices    []ReferencePriceDTO `json:"reference_prices"`
+	InWishlist         bool                `json:"in_wishlist"`
 }
 
 type ReferencePriceDTO struct {
@@ -91,6 +92,7 @@ type VariantDetailDTO struct {
 	UnitPrice      string                 `json:"unit_price,omitempty"` // "₹72/100gm"
 	AveragePrice   *MoneyDTO              `json:"average_price,omitempty"`
 	PlatformPrices []PlatformPriceChipDTO `json:"platform_prices"`
+	InWishlist     bool                   `json:"in_wishlist"`
 }
 
 type CartResponse struct {

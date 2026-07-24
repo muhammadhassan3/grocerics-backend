@@ -109,7 +109,7 @@ func getHome(d ConsumerDeps) gin.HandlerFunc {
 		if !good {
 			return
 		}
-		home, err := d.Catalog.Home(cityID)
+		home, err := d.Catalog.Home(auth.MustUser(c).ID, cityID)
 		if err != nil {
 			c.Error(err)
 			return
@@ -136,7 +136,7 @@ func getCategoryProducts(d ConsumerDeps) gin.HandlerFunc {
 		if !good {
 			return
 		}
-		items, meta, err := d.Catalog.ProductsByCategory(c.Param("id"), cityID, util.SplitCSV(c.Query("platforms")), query.PageFromContext(c))
+		items, meta, err := d.Catalog.ProductsByCategory(auth.MustUser(c).ID, c.Param("id"), cityID, util.SplitCSV(c.Query("platforms")), query.PageFromContext(c))
 		if err != nil {
 			c.Error(err)
 			return
@@ -163,7 +163,7 @@ func getSubcategoryProducts(d ConsumerDeps) gin.HandlerFunc {
 		if !good {
 			return
 		}
-		items, meta, err := d.Catalog.ProductsBySubcategory(c.Param("subcategory_id"), cityID, util.SplitCSV(c.Query("platforms")), query.PageFromContext(c))
+		items, meta, err := d.Catalog.ProductsBySubcategory(auth.MustUser(c).ID, c.Param("subcategory_id"), cityID, util.SplitCSV(c.Query("platforms")), query.PageFromContext(c))
 		if err != nil {
 			c.Error(err)
 			return
@@ -190,7 +190,7 @@ func getBrandProducts(d ConsumerDeps) gin.HandlerFunc {
 		if !good {
 			return
 		}
-		items, meta, err := d.Catalog.ProductsByBrand(c.Param("brand_id"), cityID, util.SplitCSV(c.Query("platforms")), query.PageFromContext(c))
+		items, meta, err := d.Catalog.ProductsByBrand(auth.MustUser(c).ID, c.Param("brand_id"), cityID, util.SplitCSV(c.Query("platforms")), query.PageFromContext(c))
 		if err != nil {
 			c.Error(err)
 			return
@@ -227,7 +227,7 @@ func searchVariants(d ConsumerDeps) gin.HandlerFunc {
 			}
 		}
 		codes := util.SplitCSV(c.Query("platforms"))
-		items, meta, err := d.Catalog.SearchVariants(term, cityID, codes, query.PageFromContext(c))
+		items, meta, err := d.Catalog.SearchVariants(auth.MustUser(c).ID, term, cityID, codes, query.PageFromContext(c))
 		if err != nil {
 			c.Error(err)
 			return
@@ -250,7 +250,7 @@ func getDeals(d ConsumerDeps) gin.HandlerFunc {
 		if !good {
 			return
 		}
-		items, err := d.Catalog.Deals(cityID, util.SplitCSV(c.Query("platforms")))
+		items, err := d.Catalog.Deals(auth.MustUser(c).ID, cityID, util.SplitCSV(c.Query("platforms")))
 		if err != nil {
 			c.Error(err)
 			return
@@ -274,7 +274,7 @@ func getProduct(d ConsumerDeps) gin.HandlerFunc {
 		if !good {
 			return
 		}
-		detail, err := d.Catalog.ProductDetail(c.Param("id"), cityID)
+		detail, err := d.Catalog.ProductDetail(auth.MustUser(c).ID, c.Param("id"), cityID)
 		if err != nil {
 			c.Error(err)
 			return

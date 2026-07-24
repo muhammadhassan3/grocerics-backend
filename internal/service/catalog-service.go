@@ -24,6 +24,7 @@ type CatalogService struct {
 	image     *repository.ProductImageRepository
 	price     *repository.PlatformPriceRepository
 	link      *repository.ProductPlatformLinkRepository
+	wishlist  *repository.WishlistRepository
 }
 
 func NewCatalogService(db *gorm.DB) *CatalogService {
@@ -37,10 +38,32 @@ func NewCatalogService(db *gorm.DB) *CatalogService {
 		image:     repository.NewProductImageRepository(db),
 		price:     repository.NewPlatformPriceRepository(db),
 		link:      repository.NewProductPlatformLinkRepository(db),
+		wishlist:  repository.NewWishlistRepository(db),
 	}
 }
 
-func (s *CatalogService) Home(cityID string) (*dto.HomeResponse, error) {
+// wishlistSet returns the set of variant IDs in the user's wishlist (empty when
+// userID is blank). Used to stamp in_wishlist on variant cards while browsing.
+func (s *CatalogService) wishlistSet(userID string) (map[string]bool, error) {
+	if userID == "" {
+		return map[string]bool{}, nil
+	}
+	rows, err := s.wishlist.ListByUser(userID)
+	if err != nil {
+		return nil, err
+	}
+	set := make(map[string]bool, len(rows))
+	for _, w := range rows {
+		set[w.VariantID] = true
+	}
+	return set, nil
+}
+
+func (s *CatalogService) Home(userID, cityID string) (*dto.HomeResponse, error) {
+	wl, err := s.wishlistSet(userID)
+	if err != nil {
+		return nil, err
+	}
 	banners, err := s.banners.ListActive()
 	if err != nil {
 		return nil, err
@@ -61,7 +84,7 @@ func (s *CatalogService) Home(cityID string) (*dto.HomeResponse, error) {
 	if err != nil {
 		return nil, err
 	}
-	cards, err := s.variantCards(topVariants, cityID, nil)
+	cards, err := s.variantCards(topVariants, cityID, nil, wl)
 	if err != nil {
 		return nil, err
 	}
@@ -93,7 +116,11 @@ func (s *CatalogService) Home(cityID string) (*dto.HomeResponse, error) {
 	return resp, nil
 }
 
-func (s *CatalogService) ProductDetail(productID, cityID string) (*dto.ProductDetailDTO, error) {
+func (s *CatalogService) ProductDetail(userID, productID, cityID string) (*dto.ProductDetailDTO, error) {
+	wl, err := s.wishlistSet(userID)
+	if err != nil {
+		return nil, err
+	}
 	product, err := s.product.FindByID(productID)
 	if err != nil {
 		return nil, err
@@ -144,7 +171,7 @@ func (s *CatalogService) ProductDetail(productID, cityID string) (*dto.ProductDe
 		return nil, err
 	}
 	for _, v := range variants {
-		vd, vErr := s.variantDetail(v, cityID, platMap)
+		vd, vErr := s.variantDetail(v, cityID, platMap, wl)
 		if vErr != nil {
 			return nil, vErr
 		}
@@ -160,7 +187,7 @@ func (s *CatalogService) ProductDetail(productID, cityID string) (*dto.ProductDe
 	if err != nil {
 		return nil, err
 	}
-	if out.Similar, err = s.variantCards(similarVariants, cityID, nil); err != nil {
+	if out.Similar, err = s.variantCards(similarVariants, cityID, nil, wl); err != nil {
 		return nil, err
 	}
 	return out, nil
@@ -184,8 +211,8 @@ func (s *CatalogService) defaultVariantsFor(products []domain.Product) ([]domain
 	return out, nil
 }
 
-func (s *CatalogService) variantDetail(v domain.ProductVariant, cityID string, platMap map[string]domain.Platform) (dto.VariantDetailDTO, error) {
-	vd := dto.VariantDetailDTO{VariantID: v.ID, PackLabel: packLabel(v)}
+func (s *CatalogService) variantDetail(v domain.ProductVariant, cityID string, platMap map[string]domain.Platform, wl map[string]bool) (dto.VariantDetailDTO, error) {
+	vd := dto.VariantDetailDTO{VariantID: v.ID, PackLabel: packLabel(v), InWishlist: wl[v.ID]}
 	prices, err := s.price.ListByVariantCity(v.ID, cityID)
 	if err != nil {
 		return vd, err
@@ -224,31 +251,43 @@ func (s *CatalogService) variantDetail(v domain.ProductVariant, cityID string, p
 	return vd, nil
 }
 
-func (s *CatalogService) ProductsByCategory(categoryID, cityID string, platformCodes []string, page query.Page) ([]dto.VariantSearchItemDTO, query.Meta, error) {
+func (s *CatalogService) ProductsByCategory(userID, categoryID, cityID string, platformCodes []string, page query.Page) ([]dto.VariantSearchItemDTO, query.Meta, error) {
+	wl, err := s.wishlistSet(userID)
+	if err != nil {
+		return nil, query.Meta{}, err
+	}
 	products, total, err := s.product.ListByCategory(categoryID, page)
 	if err != nil {
 		return nil, query.Meta{}, err
 	}
-	return s.variantCardsForProducts(products, total, cityID, platformCodes, page)
+	return s.variantCardsForProducts(products, total, cityID, platformCodes, page, wl)
 }
 
-func (s *CatalogService) ProductsBySubcategory(subcategoryID, cityID string, platformCodes []string, page query.Page) ([]dto.VariantSearchItemDTO, query.Meta, error) {
+func (s *CatalogService) ProductsBySubcategory(userID, subcategoryID, cityID string, platformCodes []string, page query.Page) ([]dto.VariantSearchItemDTO, query.Meta, error) {
+	wl, err := s.wishlistSet(userID)
+	if err != nil {
+		return nil, query.Meta{}, err
+	}
 	products, total, err := s.product.ListBySubcategory(subcategoryID, page)
 	if err != nil {
 		return nil, query.Meta{}, err
 	}
-	return s.variantCardsForProducts(products, total, cityID, platformCodes, page)
+	return s.variantCardsForProducts(products, total, cityID, platformCodes, page, wl)
 }
 
-func (s *CatalogService) ProductsByBrand(brandID, cityID string, platformCodes []string, page query.Page) ([]dto.VariantSearchItemDTO, query.Meta, error) {
+func (s *CatalogService) ProductsByBrand(userID, brandID, cityID string, platformCodes []string, page query.Page) ([]dto.VariantSearchItemDTO, query.Meta, error) {
+	wl, err := s.wishlistSet(userID)
+	if err != nil {
+		return nil, query.Meta{}, err
+	}
 	products, total, err := s.product.ListByBrand(brandID, page)
 	if err != nil {
 		return nil, query.Meta{}, err
 	}
-	return s.variantCardsForProducts(products, total, cityID, platformCodes, page)
+	return s.variantCardsForProducts(products, total, cityID, platformCodes, page, wl)
 }
 
-func (s *CatalogService) variantCardsForProducts(products []domain.Product, total int64, cityID string, platformCodes []string, page query.Page) ([]dto.VariantSearchItemDTO, query.Meta, error) {
+func (s *CatalogService) variantCardsForProducts(products []domain.Product, total int64, cityID string, platformCodes []string, page query.Page, wl map[string]bool) ([]dto.VariantSearchItemDTO, query.Meta, error) {
 	productIDs := make([]string, 0, len(products))
 	for _, p := range products {
 		productIDs = append(productIDs, p.ID)
@@ -257,11 +296,15 @@ func (s *CatalogService) variantCardsForProducts(products []domain.Product, tota
 	if err != nil {
 		return nil, query.Meta{}, err
 	}
-	items, err := s.variantCards(variants, cityID, platformCodes)
+	items, err := s.variantCards(variants, cityID, platformCodes, wl)
 	return items, query.BuildMeta(total, page), err
 }
 
-func (s *CatalogService) SearchVariants(term, cityID string, platformCodes []string, page query.Page) ([]dto.VariantSearchItemDTO, query.Meta, error) {
+func (s *CatalogService) SearchVariants(userID, term, cityID string, platformCodes []string, page query.Page) ([]dto.VariantSearchItemDTO, query.Meta, error) {
+	wl, err := s.wishlistSet(userID)
+	if err != nil {
+		return nil, query.Meta{}, err
+	}
 	products, total, err := s.product.SearchByNameOrBrand(term, page)
 	if err != nil {
 		return nil, query.Meta{}, err
@@ -278,14 +321,14 @@ func (s *CatalogService) SearchVariants(term, cityID string, platformCodes []str
 	if err != nil {
 		return nil, query.Meta{}, err
 	}
-	items, err := s.variantCards(variants, cityID, platformCodes)
+	items, err := s.variantCards(variants, cityID, platformCodes, wl)
 	if err != nil {
 		return nil, query.Meta{}, err
 	}
 	return items, query.BuildMeta(total, page), nil
 }
 
-func (s *CatalogService) variantCards(variants []domain.ProductVariant, cityID string, platformCodes []string) ([]dto.VariantSearchItemDTO, error) {
+func (s *CatalogService) variantCards(variants []domain.ProductVariant, cityID string, platformCodes []string, wl map[string]bool) ([]dto.VariantSearchItemDTO, error) {
 	items := make([]dto.VariantSearchItemDTO, 0, len(variants))
 	if len(variants) == 0 {
 		return items, nil
@@ -346,6 +389,7 @@ func (s *CatalogService) variantCards(variants []domain.ProductVariant, cityID s
 			VariantID: v.ID, ProductID: v.ProductID, ProductName: prod.Name,
 			ImageURL: imageByVariant[v.ID], PackLabel: packLabel(v),
 			ReferencePrices: []dto.ReferencePriceDTO{},
+			InWishlist:      wl[v.ID],
 		}
 		if prod.BrandID != nil {
 			if b, ok := brands[*prod.BrandID]; ok {
@@ -386,7 +430,11 @@ func (s *CatalogService) variantCards(variants []domain.ProductVariant, cityID s
 	return items, nil
 }
 
-func (s *CatalogService) Deals(cityID string, platformCodes []string) ([]dto.VariantSearchItemDTO, error) {
+func (s *CatalogService) Deals(userID, cityID string, platformCodes []string) ([]dto.VariantSearchItemDTO, error) {
+	wl, err := s.wishlistSet(userID)
+	if err != nil {
+		return nil, err
+	}
 	ids, err := s.product.ListDealVariantIDs(cityID, 30)
 	if err != nil {
 		return nil, err
@@ -395,7 +443,7 @@ func (s *CatalogService) Deals(cityID string, platformCodes []string) ([]dto.Var
 	if err != nil {
 		return nil, err
 	}
-	return s.variantCards(variants, cityID, platformCodes)
+	return s.variantCards(variants, cityID, platformCodes, wl)
 }
 
 func (s *CatalogService) platformMap() (map[string]domain.Platform, error) {
