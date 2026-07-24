@@ -1205,6 +1205,41 @@ const docTemplate = `{
                         }
                     }
                 }
+            },
+            "delete": {
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
+                "description": "Remove every item from the user's cart. Returns the emptied cart (same shape as GET /v1/cart).",
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "consumer"
+                ],
+                "summary": "Clear the cart",
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "allOf": [
+                                {
+                                    "$ref": "#/definitions/dto.Response"
+                                },
+                                {
+                                    "type": "object",
+                                    "properties": {
+                                        "data": {
+                                            "$ref": "#/definitions/dto.CartResponse"
+                                        }
+                                    }
+                                }
+                            ]
+                        }
+                    }
+                }
             }
         },
         "/v1/cart/items": {
@@ -6061,6 +6096,9 @@ const docTemplate = `{
                 },
                 "image_url": {
                     "type": "string"
+                },
+                "in_wishlist": {
+                    "type": "boolean"
                 },
                 "item_id": {
                     "type": "string"

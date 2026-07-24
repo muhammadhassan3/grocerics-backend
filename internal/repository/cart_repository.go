@@ -88,6 +88,15 @@ func (r *CartItemRepository) Delete(itemID string) error {
 	return nil
 }
 
+func (r *CartItemRepository) DeleteByCart(cartID string) error {
+	ctx := context.Background()
+	if _, err := gorm.G[domain.CartItem](r.db).
+		Where("cart_id = ? AND deleted_at IS NULL", cartID).Delete(ctx); err != nil {
+		return util.ParseDatabaseError(err, "idx_cart_items_")
+	}
+	return nil
+}
+
 // ---------- wishlist ----------
 
 type WishlistRepository struct{ db *gorm.DB }

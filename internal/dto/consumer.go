@@ -107,6 +107,7 @@ type CartLineDTO struct {
 	PackLabel    string    `json:"pack_label"`
 	Quantity     int       `json:"quantity"`
 	AveragePrice *MoneyDTO `json:"average_price,omitempty"`
+	InWishlist   bool      `json:"in_wishlist"`
 }
 
 // which items are available, the

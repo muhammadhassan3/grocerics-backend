@@ -46,6 +46,7 @@ func RegisterConsumerRoutes(r *gin.Engine, d ConsumerDeps) {
 	g.POST("/cart/items", addCartItem(d))
 	g.PATCH("/cart/items/:id", updateCartItem(d))
 	g.DELETE("/cart/items/:id", removeCartItem(d))
+	g.DELETE("/cart", clearCart(d))
 
 	g.GET("/wishlist", getWishlist(d))
 	g.POST("/wishlist", addWishlist(d))
@@ -404,6 +405,33 @@ func removeCartItem(d ConsumerDeps) gin.HandlerFunc {
 			return
 		}
 		resp, err := d.Cart.GetCart(auth.MustUser(c).ID, cityID, pincode)
+		if err != nil {
+			c.Error(err)
+			return
+		}
+		ok(c, resp)
+	}
+}
+
+// @Summary Clear the cart
+// @Description Remove every item from the user's cart. Returns the emptied cart (same shape as GET /v1/cart).
+// @Tags consumer
+// @Produce json
+// @Security BearerAuth
+// @Success 200 {object} dto.Response{data=dto.CartResponse}
+// @Router /v1/cart [delete]
+func clearCart(d ConsumerDeps) gin.HandlerFunc {
+	return func(c *gin.Context) {
+		cityID, pincode, good := resolveCity(c, d)
+		if !good {
+			return
+		}
+		uid := auth.MustUser(c).ID
+		if err := d.Cart.ClearCart(uid); err != nil {
+			c.Error(err)
+			return
+		}
+		resp, err := d.Cart.GetCart(uid, cityID, pincode)
 		if err != nil {
 			c.Error(err)
 			return

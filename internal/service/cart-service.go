@@ -79,6 +79,18 @@ func (s *CartService) GetCart(userID, cityID, pincode string) (*dto.CartResponse
 		return nil, err
 	}
 	resp.CartID = cart.ID
+
+	wl, err := s.wishlist.ListByUser(userID)
+	if err != nil {
+		return nil, err
+	}
+	inWishlist := make(map[string]bool, len(wl))
+	for _, w := range wl {
+		inWishlist[w.VariantID] = true
+	}
+	for i := range resp.Items {
+		resp.Items[i].InWishlist = inWishlist[resp.Items[i].VariantID]
+	}
 	return resp, nil
 }
 
@@ -91,7 +103,23 @@ func (s *CartService) GetWishlist(userID, cityID, pincode string) (*dto.CartResp
 	for _, w := range rows {
 		lines = append(lines, breakdownLine{ID: w.ID, VariantID: w.VariantID, Quantity: 1})
 	}
-	return s.buildResponse(lines, cityID, pincode)
+	resp, err := s.buildResponse(lines, cityID, pincode)
+	if err != nil {
+		return nil, err
+	}
+	for i := range resp.Items {
+		resp.Items[i].InWishlist = true
+	}
+	return resp, nil
+}
+
+// ClearCart removes all items from the user's cart.
+func (s *CartService) ClearCart(userID string) error {
+	cart, err := s.cart.FindOrCreateByUser(userID)
+	if err != nil {
+		return err
+	}
+	return s.item.DeleteByCart(cart.ID)
 }
 
 func (s *CartService) AddItem(userID, variantID string, quantity int) error {

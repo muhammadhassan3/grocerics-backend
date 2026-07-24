@@ -146,6 +146,8 @@ definitions:
         $ref: '#/definitions/dto.MoneyDTO'
       image_url:
         type: string
+      in_wishlist:
+        type: boolean
       item_id:
         type: string
       pack_label:
@@ -2533,6 +2535,26 @@ paths:
       tags:
       - brands
   /v1/cart:
+    delete:
+      description: Remove every item from the user's cart. Returns the emptied cart
+        (same shape as GET /v1/cart).
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            allOf:
+            - $ref: '#/definitions/dto.Response'
+            - properties:
+                data:
+                  $ref: '#/definitions/dto.CartResponse'
+              type: object
+      security:
+      - BearerAuth: []
+      summary: Clear the cart
+      tags:
+      - consumer
     get:
       description: The cart plus, for every enabled platform, the available/not-available
         split and totals.
