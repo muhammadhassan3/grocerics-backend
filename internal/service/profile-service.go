@@ -203,17 +203,15 @@ func (s *ProfileService) matchEnabledCity(city string) (*string, error) {
 }
 
 func (s *ProfileService) Onboard(userID, name string, in AddressInput) (*dto.OnboardingResponse, error) {
-	if strings.TrimSpace(in.City) == "" {
-		return nil, errs.BadRequest("LOCATION_REQUIRED", "enable location to continue")
-	}
+	// TODO(temp): city-serviceability gate DISABLED for testing. Any (even
+	// unserved or empty) city is accepted — the address saves with a null city
+	// and Home falls back to the first enabled city. REVERT before prod: restore
+	// the LOCATION_REQUIRED (empty city) and CITY_NOT_SERVICEABLE (unmatched city)
+	// 400s that were here.
 	cityRef, err := s.matchEnabledCity(in.City)
 	if err != nil {
 		return nil, err
 	}
-	if cityRef == nil {
-		return nil, errs.BadRequest("CITY_NOT_SERVICEABLE", "we don't deliver to "+in.City+" yet")
-	}
-	cityID := *cityRef
 	in.IsDefault = true
 
 	var addr *domain.UserAddress
@@ -236,12 +234,12 @@ func (s *ProfileService) Onboard(userID, name string, in AddressInput) (*dto.Onb
 		}
 		addr, err = ar.Create(&domain.UserAddress{
 			UserID: userID, Label: in.Label, Line1: in.Line1, Line2: in.Line2,
-			Pincode: in.Pincode, CityID: &cityID, Lat: in.Lat, Lng: in.Lng, IsDefault: true,
+			Pincode: in.Pincode, CityID: cityRef, Lat: in.Lat, Lng: in.Lng, IsDefault: true,
 		})
 		if err != nil {
 			return err
 		}
-		return ur.SetCurrentCity(userID, &cityID)
+		return ur.SetCurrentCity(userID, cityRef)
 	})
 	if err != nil {
 		return nil, err
